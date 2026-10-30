@@ -1,0 +1,21 @@
+export type Idea = {
+  id: string;
+  sector: string;
+  title: string;
+  pitch: string | null;
+  budget: string | null;
+  budget_min: number | null;
+  revenue: string | null;
+  delai: string | null;
+  difficulty: number | null;
+  market: string | null;
+  model: string | null;
+  competition: string | null;
+  steps: string[];
+  risks: string[];
+  tags: string[];
+  benchmark: string | null;
+  markets: string | null;
+  featured: boolean;
+  is_ai: boolean;
+};
