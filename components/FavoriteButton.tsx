@@ -3,7 +3,9 @@
 import { useState, useTransition } from "react";
 import { toggleFavorite } from "@/app/actions";
 
-export default function FavoriteButton({ ideaId, initial }: { ideaId: string; initial: boolean }) {
+export default function FavoriteButton({
+  ideaId, initial, saveLabel = "☆ Save", savedLabel = "★ Saved",
+}: { ideaId: string; initial: boolean; saveLabel?: string; savedLabel?: string }) {
   const [saved, setSaved] = useState(initial);
   const [pending, start] = useTransition();
 
@@ -21,7 +23,7 @@ export default function FavoriteButton({ ideaId, initial }: { ideaId: string; in
         })
       }
     >
-      {saved ? "★ Enregistré" : "☆ Sauvegarder"}
+      {saved ? savedLabel : saveLabel}
     </button>
   );
 }

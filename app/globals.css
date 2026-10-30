@@ -103,3 +103,11 @@ footer .brand { color: #fff; }
 .gate-lock { border: 1px solid color-mix(in srgb, var(--green) 30%, var(--line)); background: linear-gradient(180deg, var(--green-wash), var(--surface)); border-radius: 14px; padding: 24px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .card-link { display: flex; flex-direction: column; gap: 10px; color: inherit; }
 .card-link:hover h3 { color: var(--green-ink); }
+
+/* language switcher */
+.langsw { display: inline-flex; background: var(--surface-2); border: 1px solid var(--line); border-radius: 9px; padding: 2px; gap: 1px; }
+.langsw button { font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; border: none; background: none; color: var(--ink-3); padding: 5px 9px; border-radius: 7px; }
+.langsw button:hover { color: var(--ink); }
+.langsw button[aria-pressed="true"] { background: var(--surface); color: var(--green-ink); }
+.auth-card .ok { color: var(--green-ink); font-size: 14px; }
+.auth-card .err { color: #b4402a; font-size: 13px; }
