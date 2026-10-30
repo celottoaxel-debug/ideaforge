@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getPlan, isMember } from "@/lib/plan";
-import type { Idea } from "@/lib/types";
+import { IDEAS } from "@/lib/ideas";
 import FavoriteButton from "@/components/FavoriteButton";
 import BuyLifetime from "@/components/BuyLifetime";
 import QuoteForm from "@/components/QuoteForm";
@@ -13,12 +13,8 @@ const DIFF: Record<number, string> = { 1: "Facile", 2: "Intermédiaire", 3: "Exi
 export default async function Home() {
   const supabase = createClient();
 
-  const { data: ideasData } = await supabase
-    .from("ideas")
-    .select("*")
-    .order("featured", { ascending: false })
-    .order("title");
-  const ideas = (ideasData ?? []) as Idea[];
+  // Catalogue servi en statique (figé dans l'app) — aucune conso Supabase.
+  const ideas = IDEAS;
 
   const { data: { user } } = await supabase.auth.getUser();
   const plan = await getPlan();

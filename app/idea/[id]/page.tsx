@@ -1,6 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
 import { getPlan, isMember } from "@/lib/plan";
-import type { Idea } from "@/lib/types";
+import { IDEAS } from "@/lib/ideas";
 import BuyLifetime from "@/components/BuyLifetime";
 import { notFound } from "next/navigation";
 
@@ -9,10 +8,8 @@ export const dynamic = "force-dynamic";
 const DIFF: Record<number, string> = { 1: "Facile", 2: "Intermédiaire", 3: "Exigeant" };
 
 export default async function IdeaPage({ params }: { params: { id: string } }) {
-  const supabase = createClient();
-  const { data } = await supabase.from("ideas").select("*").eq("id", params.id).maybeSingle();
-  if (!data) notFound();
-  const it = data as Idea;
+  const it = IDEAS.find((x) => x.id === params.id);
+  if (!it) notFound();
 
   const plan = await getPlan();
   const member = isMember(plan);
