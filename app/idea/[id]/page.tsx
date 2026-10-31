@@ -1,6 +1,8 @@
+import { createClient } from "@/lib/supabase/server";
 import { getPlan, isMember } from "@/lib/plan";
 import { getLocale, dict } from "@/lib/i18n";
 import { IDEAS } from "@/lib/ideas";
+import type { Idea } from "@/lib/types";
 import { buildPrompt } from "@/lib/prompt";
 import CheckoutButton from "@/components/CheckoutButton";
 import PromptBox from "@/components/PromptBox";
@@ -23,7 +25,15 @@ export function generateMetadata({ params }: { params: { id: string } }): Metada
 }
 
 export default async function IdeaPage({ params }: { params: { id: string } }) {
-  const it = IDEAS.find((x) => x.id === params.id);
+  let it = IDEAS.find((x) => x.id === params.id) as Idea | undefined;
+  if (!it) {
+    // Idée découverte en continu (Supabase) : repli si absente de la base statique.
+    try {
+      const supabase = createClient();
+      const { data } = await supabase.from("ideas").select("*").eq("id", params.id).maybeSingle();
+      if (data) it = data as Idea;
+    } catch {}
+  }
   if (!it) notFound();
 
   const locale = getLocale();

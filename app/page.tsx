@@ -25,10 +25,17 @@ export default async function Home() {
     { ic: "🤖", c: "#7C3AED", h: t.n6_h, p: t.n6_p, ceil: t.n6_c, ex: "Photo AI · Pikzels" },
   ];
 
-  const ideas = IDEAS; // catalogue statique, aucune conso Supabase
-
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
+
+  // Catalogue : base statique (toujours dispo, gratuite) + idées découvertes en continu (Supabase, is_ai=true).
+  // Si Supabase est indisponible, on retombe simplement sur la base statique.
+  let extra: typeof IDEAS = [];
+  try {
+    const { data } = await supabase.from("ideas").select("*").eq("is_ai", true).order("created_at", { ascending: false }).limit(60);
+    if (data) extra = (data as typeof IDEAS).filter((d) => !IDEAS.some((s) => s.id === d.id));
+  } catch {}
+  const ideas = [...extra, ...IDEAS];
   const plan = await getPlan();
   const member = isMember(plan);
 
