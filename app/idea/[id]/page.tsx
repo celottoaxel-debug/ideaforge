@@ -1,7 +1,11 @@
 import { getPlan, isMember } from "@/lib/plan";
 import { getLocale, dict } from "@/lib/i18n";
 import { IDEAS } from "@/lib/ideas";
+import { buildPrompt } from "@/lib/prompt";
 import CheckoutButton from "@/components/CheckoutButton";
+import PromptBox from "@/components/PromptBox";
+import Checklist from "@/components/Checklist";
+import RevenueCalc from "@/components/RevenueCalc";
 import LangSwitcher from "@/components/LangSwitcher";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -57,14 +61,17 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
           </div>
         )}
 
+        <section className="dsec"><h3>{t.calc_h}</h3><RevenueCalc t={t} defaultPrice={29} /></section>
+
         <section className="dsec"><h3>{t.d_market}</h3><p>{member ? it.market : (it.market || "").slice(0, 150) + "…"}</p></section>
 
         {member ? (
           <>
             <section className="dsec"><h3>{t.d_model}</h3><p>{it.model}</p></section>
             <section className="dsec"><h3>{t.d_comp}</h3><p>{it.competition}</p></section>
-            <section className="dsec"><h3>{t.d_steps}</h3><ol>{it.steps?.map((s, i) => <li key={i}>{s}</li>)}</ol></section>
+            {it.steps?.length ? <section className="dsec"><h3>{t.checklist_h}</h3><Checklist id={it.id} steps={it.steps} t={t} /></section> : null}
             <section className="dsec"><h3>{t.d_risks}</h3><ul>{it.risks?.map((s, i) => <li key={i}>{s}</li>)}</ul></section>
+            <section className="dsec"><h3>{t.d_prompt_h}</h3><p style={{ color: "var(--ink-2)", fontSize: 14, marginBottom: 10 }}>{t.d_prompt_sub}</p><PromptBox prompt={buildPrompt(it)} t={t} /></section>
           </>
         ) : (
           <div className="gate-lock">

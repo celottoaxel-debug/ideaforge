@@ -83,6 +83,13 @@ const FR: Dict = {
   n4_h: "Finance & RH des PME", n4_p: "Compta, trésorerie, RH : des marchés énormes, des licornes européennes.", n4_c: "100 M€+ ARR",
   n5_h: "SEO & marketing", n5_p: "Backlinks, audits, affiliation : des micro-outils « ennuyeux » qui impriment.", n5_c: "micro : ~250 k$ ARR",
   n6_h: "IA générative verticale", n6_p: "Photos, avatars, miniatures : marges fortes, accessibles en solo.", n6_c: "~130 k$/mois solo",
+  d_prompt_h: "⚡ Prompt de création", d_prompt_sub: "Colle-le dans Claude, Lovable ou Bolt pour lancer la construction.",
+  prompt_copy: "Copier le prompt", prompt_copied: "Copié ✓",
+  open_claude: "Ouvrir Claude ↗", open_lovable: "Ouvrir Lovable ↗", open_bolt: "Ouvrir Bolt ↗",
+  checklist_h: "Checklist de lancement", checklist_done: "terminé",
+  calc_h: "Calculateur de revenus", calc_price: "Prix (€/mois)", calc_visitors: "Visiteurs / mois",
+  calc_conv: "Taux de conversion (%)", calc_customers: "Clients", calc_mrr: "MRR estimé", calc_arr: "ARR estimé",
+  calc_note: "Estimation indicative — ajuste les valeurs selon ton marché.",
 };
 
 const EN: Dict = {
@@ -151,6 +158,13 @@ const EN: Dict = {
   n4_h: "SMB finance & HR", n4_p: "Accounting, cash flow, HR: huge markets, European unicorns.", n4_c: "€100M+ ARR",
   n5_h: "SEO & marketing", n5_p: "Backlinks, audits, affiliation: \"boring\" micro-tools that print cash.", n5_c: "micro: ~$250K ARR",
   n6_h: "Vertical generative AI", n6_p: "Photos, avatars, thumbnails: strong margins, reachable solo.", n6_c: "~$130K/mo solo",
+  d_prompt_h: "⚡ Build prompt", d_prompt_sub: "Paste it into Claude, Lovable or Bolt to start building.",
+  prompt_copy: "Copy the prompt", prompt_copied: "Copied ✓",
+  open_claude: "Open Claude ↗", open_lovable: "Open Lovable ↗", open_bolt: "Open Bolt ↗",
+  checklist_h: "Launch checklist", checklist_done: "done",
+  calc_h: "Revenue calculator", calc_price: "Price (€/mo)", calc_visitors: "Visitors / month",
+  calc_conv: "Conversion rate (%)", calc_customers: "Customers", calc_mrr: "Estimated MRR", calc_arr: "Estimated ARR",
+  calc_note: "Indicative estimate — adjust the values to your market.",
 };
 
 const ES: Dict = {
@@ -219,6 +233,13 @@ const ES: Dict = {
   n4_h: "Finanzas & RRHH de pymes", n4_p: "Contabilidad, tesorería, RRHH: mercados enormes, unicornios europeos.", n4_c: "100 M€+ ARR",
   n5_h: "SEO & marketing", n5_p: "Backlinks, auditorías, afiliación: micro-herramientas «aburridas» que imprimen dinero.", n5_c: "micro: ~250 k$ ARR",
   n6_h: "IA generativa vertical", n6_p: "Fotos, avatares, miniaturas: márgenes altos, al alcance en solitario.", n6_c: "~130 k$/mes solo",
+  d_prompt_h: "⚡ Prompt de creación", d_prompt_sub: "Pégalo en Claude, Lovable o Bolt para empezar a construir.",
+  prompt_copy: "Copiar el prompt", prompt_copied: "Copiado ✓",
+  open_claude: "Abrir Claude ↗", open_lovable: "Abrir Lovable ↗", open_bolt: "Abrir Bolt ↗",
+  checklist_h: "Checklist de lanzamiento", checklist_done: "hecho",
+  calc_h: "Calculadora de ingresos", calc_price: "Precio (€/mes)", calc_visitors: "Visitantes / mes",
+  calc_conv: "Tasa de conversión (%)", calc_customers: "Clientes", calc_mrr: "MRR estimado", calc_arr: "ARR estimado",
+  calc_note: "Estimación indicativa — ajusta los valores a tu mercado.",
 };
 
 const DICTS: Record<Locale, Dict> = { fr: FR, en: EN, es: ES };

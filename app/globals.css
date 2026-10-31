@@ -269,3 +269,34 @@ footer .brand .mk { background: rgba(255,255,255,.14); }
 .tag-plan.lifetime { background: var(--green-wash); color: var(--green-ink); }
 .tag-plan.monthly { background: color-mix(in srgb, var(--amber) 16%, transparent); color: var(--amber); }
 .tag-plan.free { background: var(--surface-2); color: var(--ink-3); }
+
+/* ---------- prompt box ---------- */
+.promptbox { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--surface); }
+.prompt-pre { margin: 0; padding: 16px; background: var(--forest); color: #e6f2ed; font-family: var(--mono); font-size: 12.5px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; max-height: 320px; overflow: auto; }
+.prompt-actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px; border-top: 1px solid var(--line-2); }
+.prompt-actions .btn { font-size: 13px; }
+
+/* ---------- checklist ---------- */
+.checklist { border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; background: var(--surface); }
+.cl-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.cl-prog { font-size: 12.5px; color: var(--green-ink); font-weight: 600; white-space: nowrap; }
+.cl-bar { flex: 1; height: 8px; background: var(--surface-2); border-radius: 999px; overflow: hidden; border: 1px solid var(--line-2); }
+.cl-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--green), var(--green-deep)); transition: width .2s; }
+.checklist ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.checklist label { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 14.5px; line-height: 1.5; }
+.checklist input { width: auto; margin-top: 3px; accent-color: var(--green); flex: none; }
+.cl-done { color: var(--ink-3); text-decoration: line-through; }
+
+/* ---------- revenue calculator ---------- */
+.calc { border: 1px solid var(--line); border-radius: 14px; padding: 18px; background: var(--surface); }
+.calc-inputs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+@media (max-width: 560px) { .calc-inputs { grid-template-columns: 1fr; } }
+.calc-inputs label { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
+.calc-inputs input { font-family: var(--mono); }
+.calc-out { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin-top: 16px; }
+.calc-out > div { background: var(--surface); padding: 14px; display: flex; flex-direction: column; gap: 4px; }
+.calc-out > div.hot { background: var(--green-wash); }
+.calc-k { font-size: 11px; color: var(--ink-3); font-weight: 600; }
+.calc-v { font-size: 20px; font-weight: 600; letter-spacing: -.02em; }
+.calc-out .hot .calc-v { color: var(--green-ink); }
+.calc-note { font-size: 12px; color: var(--ink-3); margin: 10px 0 0; }

@@ -18,4 +18,5 @@ export type Idea = {
   markets: string | null;
   featured: boolean;
   is_ai: boolean;
+  prompt?: string | null;
 };
