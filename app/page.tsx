@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getPlan, isMember } from "@/lib/plan";
+import { isAdminEmail } from "@/lib/admin";
 import { getLocale, dict } from "@/lib/i18n";
 import { IDEAS } from "@/lib/ideas";
 import FavoriteButton from "@/components/FavoriteButton";
@@ -46,6 +47,7 @@ export default async function Home() {
           <a className="btn" href="#pricing">{t.nav_pricing}</a>
           <a className="btn" href="#devis">{t.nav_devis}</a>
           <LangSwitcher current={locale} />
+          {isAdminEmail(user?.email) && <a className="btn" href="/admin">Admin</a>}
           {member && <span className="pill" style={{ background: "var(--green-wash)", color: "var(--green-ink)", fontWeight: 600 }}>{t.nav_member}</span>}
           {user ? <a className="btn dark" href="/auth/signout">{t.nav_logout}</a> : <a className="btn dark" href="/login">{t.nav_login}</a>}
         </div>
