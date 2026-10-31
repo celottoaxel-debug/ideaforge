@@ -3,7 +3,7 @@ import { getPlan, isMember } from "@/lib/plan";
 import { isAdminEmail } from "@/lib/admin";
 import { getLocale, dict } from "@/lib/i18n";
 import { IDEAS } from "@/lib/ideas";
-import FavoriteButton from "@/components/FavoriteButton";
+import CatalogGrid from "@/components/CatalogGrid";
 import CheckoutButton from "@/components/CheckoutButton";
 import QuoteForm from "@/components/QuoteForm";
 import Newsletter from "@/components/Newsletter";
@@ -14,7 +14,6 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   const locale = getLocale();
   const t = dict(locale);
-  const diff: Record<number, string> = { 1: t.diff1, 2: t.diff2, 3: t.diff3 };
 
   const NICHES = [
     { ic: "📊", c: "#4B7BF5", h: t.n1_h, p: t.n1_p, ceil: t.n1_c, ex: "Plausible · Fathom" },
@@ -104,25 +103,15 @@ export default async function Home() {
             <h2>{t.cat_h2}</h2>
             <p>{member ? t.cat_sub_member : t.cat_sub_free}</p>
           </div>
-          <div className="grid">
-            {ideas.map((it) => (
-              <div className="card" key={it.id}>
-                <a href={`/idea/${it.id}`} className="card-link">
-                  <span className="sector">{it.sector}</span>
-                  <h3>{it.title}</h3>
-                  {it.pitch && <p className="pitch">{it.pitch}</p>}
-                  {it.benchmark && <div className="bench">📈 {it.benchmark}</div>}
-                  {it.difficulty && <span className="pill">{diff[it.difficulty]}</span>}
-                  <div className="stats">
-                    <div className="stat"><span className="k">{t.ticket}</span><span className="v">{it.budget}</span></div>
-                    <div className="stat"><span className="k">{t.potential}</span><span className="v">{it.revenue}</span></div>
-                    <div className="stat"><span className="k">{t.delai}</span><span className="v">{it.delai}</span></div>
-                  </div>
-                </a>
-                <FavoriteButton ideaId={it.id} initial={favSet.has(it.id)} saveLabel={t.fav_save} savedLabel={t.fav_saved} />
-              </div>
-            ))}
-          </div>
+          <CatalogGrid
+            ideas={ideas}
+            favIds={[...favSet]}
+            labels={{
+              ticket: t.ticket, potential: t.potential, delai: t.delai,
+              d1: t.diff1, d2: t.diff2, d3: t.diff3,
+              save: t.fav_save, saved: t.fav_saved, seeAll: t.cat_see_all, seeLess: t.cat_see_less,
+            }}
+          />
         </div>
       </section>
 
