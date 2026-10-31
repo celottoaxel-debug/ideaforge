@@ -15,6 +15,15 @@ export default async function Home() {
   const t = dict(locale);
   const diff: Record<number, string> = { 1: t.diff1, 2: t.diff2, 3: t.diff3 };
 
+  const NICHES = [
+    { ic: "📊", c: "#4B7BF5", h: t.n1_h, p: t.n1_p, ceil: t.n1_c, ex: "Plausible · Fathom" },
+    { ic: "✍️", c: "#22a86a", h: t.n2_h, p: t.n2_p, ceil: t.n2_c, ex: "Kit · Hypefury" },
+    { ic: "⭐", c: "#e09b13", h: t.n3_h, p: t.n3_p, ceil: t.n3_c, ex: "Senja · Testimonial.to" },
+    { ic: "💶", c: "#003d30", h: t.n4_h, p: t.n4_p, ceil: t.n4_c, ex: "Pennylane · Factorial" },
+    { ic: "🔎", c: "#0D96F6", h: t.n5_h, p: t.n5_p, ceil: t.n5_c, ex: "Linkody · Rewardful" },
+    { ic: "🤖", c: "#7C3AED", h: t.n6_h, p: t.n6_p, ceil: t.n6_c, ex: "Photo AI · Pikzels" },
+  ];
+
   const ideas = IDEAS; // catalogue statique, aucune conso Supabase
 
   const supabase = createClient();
@@ -48,6 +57,35 @@ export default async function Home() {
           <h1>{t.hero_h1a}<span className="hl">{t.hero_h1b}</span></h1>
           <p>{t.hero_lede} {ideas.length} {t.ideas_online}.</p>
           {!member && <div style={{ marginTop: 20 }}><a className="btn primary" href="#pricing">{t.hero_cta}</a></div>}
+
+          <div className="mock" aria-hidden="true">
+            <div className="mock-bar"><i /><i /><i /><span className="addr mono">ideaforge.app</span></div>
+            <div className="mock-body">
+              <div className="m-panel">
+                <div className="m-h">{t.mock_pain}<span className="m-tag">{t.mock_ai}</span></div>
+                <div className="m-row"><span className="m-ic" style={{ background: "#FF4500" }}>R</span><div className="m-meta"><b>Gestion de notes</b><span>Forum · 4 200</span></div><span className="m-rate">★ 2,9</span></div>
+                <div className="m-row"><span className="m-ic" style={{ background: "#2563EB" }}>T</span><div className="m-meta"><b>Suivi d&apos;habitudes</b><span>App Store · 1 100</span></div><span className="m-rate">★ 3,4</span></div>
+                <div className="m-row"><span className="m-ic" style={{ background: "#7C3AED" }}>C</span><div className="m-meta"><b>Facturation freelance</b><span>Forum · 2 800</span></div><span className="m-rate">★ 3,1</span></div>
+              </div>
+              <div className="m-panel">
+                <div className="m-h">{t.mock_rev}<span className="m-tag green">€ MRR</span></div>
+                <div className="m-row"><span className="m-ic" style={{ background: "#22a86a" }}>M</span><div className="m-meta"><b>Meal-prep sportif</b><span>abonnement</span></div><span className="m-big">8,4 k€</span></div>
+                <div className="m-row"><span className="m-ic" style={{ background: "#0D96F6" }}>C</span><div className="m-meta"><b>Conciergerie</b><span>commission</span></div><span className="m-big">11 k€</span></div>
+                <div className="m-row"><span className="m-ic" style={{ background: "#e09b13" }}>T</span><div className="m-meta"><b>Micro-torréfaction</b><span>B2C</span></div><span className="m-big">6,2 k€</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="how">
+        <div className="wrap">
+          <div className="sec-head"><span className="eyebrow">{t.how_eye}</span><h2>{t.how_h2}</h2><p>{t.how_sub}</p></div>
+          <div className="how3">
+            <div className="step"><span className="n">01</span><h3>{t.how1_h}</h3><p>{t.how1_p}</p></div>
+            <div className="step"><span className="n">02</span><h3>{t.how2_h}</h3><p>{t.how2_p}</p></div>
+            <div className="step"><span className="n">03</span><h3>{t.how3_h}</h3><p>{t.how3_p}</p></div>
+          </div>
         </div>
       </section>
 
@@ -74,6 +112,22 @@ export default async function Home() {
                 </a>
                 <FavoriteButton ideaId={it.id} initial={favSet.has(it.id)} saveLabel={t.fav_save} savedLabel={t.fav_saved} />
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="niches" style={{ background: "var(--surface-2)", borderBlock: "1px solid var(--line)" }}>
+        <div className="wrap">
+          <div className="sec-head"><span className="eyebrow">{t.niche_eye}</span><h2>{t.niche_h2}</h2><p>{t.niche_sub}</p></div>
+          <div className="niche-grid">
+            {NICHES.map((n, i) => (
+              <article className="niche" key={i}>
+                <div className="niche-top"><span className="niche-ic" style={{ background: n.c }}>{n.ic}</span></div>
+                <h3>{n.h}</h3>
+                <p>{n.p}</p>
+                <div className="niche-foot"><span className="niche-ceil mono">{n.ceil}</span><span className="niche-ex">{n.ex}</span></div>
+              </article>
             ))}
           </div>
         </div>

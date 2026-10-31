@@ -69,6 +69,20 @@ const FR: Dict = {
   success_title: "🎉 Bienvenue, membre !", success_sub: "Ton paiement est confirmé. Toutes les fiches, prompts et la génération sont débloqués.",
   success_cta: "Explorer le catalogue complet →",
   fav_save: "☆ Sauvegarder", fav_saved: "★ Enregistré",
+  mock_pain: "Douleurs repérées", mock_rev: "Revenus vérifiés", mock_ai: "✦ Analyse IA",
+  how_eye: "Comment ça marche", how_h2: "De la donnée brute à une idée actionnable",
+  how_sub: "Trois sources croisées pour ne garder que les pistes à demande prouvée.",
+  how1_h: "On écoute le marché", how1_p: "Plaintes de forums et avis négatifs d'apps révèlent les douleurs récurrentes.",
+  how2_h: "On vérifie l'argent", how2_p: "On ne garde que les modèles aux revenus attestés : MRR, marges, croissance.",
+  how3_h: "On te livre la fiche", how3_p: "Marché, modèle, concurrence, étapes et risques — plus le prompt pour lancer.",
+  niche_eye: "Niches qui fonctionnent", niche_h2: "Où l'argent se fait déjà (US · FR · ESP)",
+  niche_sub: "Des familles de produits aux plafonds de revenus prouvés. Estimations publiques, à vérifier.",
+  n1_h: "Analytics & privacy", n1_p: "Fin des cookies tiers et RGPD : les stats web légères cartonnent.", n1_c: "jusqu'à ~3 M$ ARR",
+  n2_h: "Outils créateurs", n2_p: "Newsletters, réseaux, miniatures : l'économie des créateurs paie des outils récurrents.", n2_c: "jusqu'à ~40 M$ ARR",
+  n3_h: "Preuve sociale", n3_p: "Chaque business en ligne veut des témoignages ; les collecter reste pénible.", n3_c: "jusqu'à ~1 M$ ARR",
+  n4_h: "Finance & RH des PME", n4_p: "Compta, trésorerie, RH : des marchés énormes, des licornes européennes.", n4_c: "100 M€+ ARR",
+  n5_h: "SEO & marketing", n5_p: "Backlinks, audits, affiliation : des micro-outils « ennuyeux » qui impriment.", n5_c: "micro : ~250 k$ ARR",
+  n6_h: "IA générative verticale", n6_p: "Photos, avatars, miniatures : marges fortes, accessibles en solo.", n6_c: "~130 k$/mois solo",
 };
 
 const EN: Dict = {
@@ -123,6 +137,20 @@ const EN: Dict = {
   success_title: "🎉 Welcome, member!", success_sub: "Your payment is confirmed. All sheets, prompts and generation are unlocked.",
   success_cta: "Explore the full catalog →",
   fav_save: "☆ Save", fav_saved: "★ Saved",
+  mock_pain: "Pains detected", mock_rev: "Verified revenue", mock_ai: "✦ AI analysis",
+  how_eye: "How it works", how_h2: "From raw data to an actionable idea",
+  how_sub: "Three cross-checked sources to keep only leads with proven demand.",
+  how1_h: "We listen to the market", how1_p: "Forum complaints and negative app reviews reveal recurring pains.",
+  how2_h: "We verify the money", how2_p: "We keep only models with attested revenue: MRR, margins, growth.",
+  how3_h: "We hand you the sheet", how3_p: "Market, model, competition, steps and risks — plus the prompt to launch.",
+  niche_eye: "Niches that work", niche_h2: "Where money is already made (US · FR · ESP)",
+  niche_sub: "Product families with proven revenue ceilings. Public estimates, to verify.",
+  n1_h: "Analytics & privacy", n1_p: "End of third-party cookies and GDPR: lightweight web stats thrive.", n1_c: "up to ~$3M ARR",
+  n2_h: "Creator tools", n2_p: "Newsletters, social, thumbnails: the creator economy pays for recurring tools.", n2_c: "up to ~$40M ARR",
+  n3_h: "Social proof", n3_p: "Every online business wants testimonials; collecting them stays painful.", n3_c: "up to ~$1M ARR",
+  n4_h: "SMB finance & HR", n4_p: "Accounting, cash flow, HR: huge markets, European unicorns.", n4_c: "€100M+ ARR",
+  n5_h: "SEO & marketing", n5_p: "Backlinks, audits, affiliation: \"boring\" micro-tools that print cash.", n5_c: "micro: ~$250K ARR",
+  n6_h: "Vertical generative AI", n6_p: "Photos, avatars, thumbnails: strong margins, reachable solo.", n6_c: "~$130K/mo solo",
 };
 
 const ES: Dict = {
@@ -177,6 +205,20 @@ const ES: Dict = {
   success_title: "🎉 ¡Bienvenido, miembro!", success_sub: "Tu pago está confirmado. Todas las fichas, prompts y la generación están desbloqueados.",
   success_cta: "Explorar el catálogo completo →",
   fav_save: "☆ Guardar", fav_saved: "★ Guardado",
+  mock_pain: "Dolores detectados", mock_rev: "Ingresos verificados", mock_ai: "✦ Análisis IA",
+  how_eye: "Cómo funciona", how_h2: "Del dato bruto a una idea accionable",
+  how_sub: "Tres fuentes cruzadas para quedarnos solo con pistas de demanda probada.",
+  how1_h: "Escuchamos el mercado", how1_p: "Quejas de foros y reseñas negativas de apps revelan los dolores recurrentes.",
+  how2_h: "Verificamos el dinero", how2_p: "Solo conservamos modelos con ingresos acreditados: MRR, márgenes, crecimiento.",
+  how3_h: "Te entregamos la ficha", how3_p: "Mercado, modelo, competencia, pasos y riesgos — más el prompt para lanzar.",
+  niche_eye: "Nichos que funcionan", niche_h2: "Dónde ya se gana dinero (US · FR · ESP)",
+  niche_sub: "Familias de productos con techos de ingresos probados. Estimaciones públicas, a verificar.",
+  n1_h: "Analítica & privacidad", n1_p: "Fin de las cookies de terceros y RGPD: las estadísticas web ligeras arrasan.", n1_c: "hasta ~3 M$ ARR",
+  n2_h: "Herramientas para creadores", n2_p: "Newsletters, redes, miniaturas: la economía de creadores paga herramientas recurrentes.", n2_c: "hasta ~40 M$ ARR",
+  n3_h: "Prueba social", n3_p: "Todo negocio online quiere testimonios; recopilarlos sigue siendo penoso.", n3_c: "hasta ~1 M$ ARR",
+  n4_h: "Finanzas & RRHH de pymes", n4_p: "Contabilidad, tesorería, RRHH: mercados enormes, unicornios europeos.", n4_c: "100 M€+ ARR",
+  n5_h: "SEO & marketing", n5_p: "Backlinks, auditorías, afiliación: micro-herramientas «aburridas» que imprimen dinero.", n5_c: "micro: ~250 k$ ARR",
+  n6_h: "IA generativa vertical", n6_p: "Fotos, avatares, miniaturas: márgenes altos, al alcance en solitario.", n6_c: "~130 k$/mes solo",
 };
 
 const DICTS: Record<Locale, Dict> = { fr: FR, en: EN, es: ES };
