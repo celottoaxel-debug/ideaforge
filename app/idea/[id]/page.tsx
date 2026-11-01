@@ -4,6 +4,7 @@ import { getLocale, dict } from "@/lib/i18n";
 import { IDEAS } from "@/lib/ideas";
 import type { Idea } from "@/lib/types";
 import { buildPrompt } from "@/lib/prompt";
+import { scoreIdea, buildStack } from "@/lib/score";
 import CheckoutButton from "@/components/CheckoutButton";
 import PromptBox from "@/components/PromptBox";
 import Checklist from "@/components/Checklist";
@@ -70,6 +71,34 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
             <div style={{ fontFamily: "var(--mono)", fontWeight: 600 }}>📈 {it.benchmark}</div>
           </div>
         )}
+
+        {(() => {
+          const sc = scoreIdea(it!);
+          const bars = [
+            { k: t.s_demand, v: sc.demand },
+            { k: t.s_comp, v: sc.competition },
+            { k: t.s_margin, v: sc.margin },
+            { k: t.s_speed, v: sc.speed },
+          ];
+          return (
+            <section className="dsec">
+              <h3>{t.score_label}</h3>
+              <div className="scorebox">
+                <div className="score-big"><span className="mono">{sc.score}</span><small>/100</small></div>
+                <div className="score-bars">
+                  {bars.map((b) => (
+                    <div className="score-row" key={b.k}>
+                      <span className="score-lbl">{b.k}</span>
+                      <div className="score-track"><i style={{ width: `${b.v}%` }} /></div>
+                      <span className="score-num mono">{b.v}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="stack-line"><span className="stack-k">{t.stack_label} :</span> <span className="mono">{buildStack(it!)}</span></div>
+            </section>
+          );
+        })()}
 
         <section className="dsec"><h3>{t.calc_h}</h3><RevenueCalc t={t} defaultPrice={29} /></section>
 

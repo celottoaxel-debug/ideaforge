@@ -103,15 +103,7 @@ export default async function Home() {
             <h2>{t.cat_h2}</h2>
             <p>{member ? t.cat_sub_member : t.cat_sub_free}</p>
           </div>
-          <CatalogGrid
-            ideas={ideas}
-            favIds={[...favSet]}
-            labels={{
-              ticket: t.ticket, potential: t.potential, delai: t.delai,
-              d1: t.diff1, d2: t.diff2, d3: t.diff3,
-              save: t.fav_save, saved: t.fav_saved, seeAll: t.cat_see_all, seeLess: t.cat_see_less,
-            }}
-          />
+          <CatalogGrid ideas={ideas} favIds={[...favSet]} t={t} />
         </div>
       </section>
 
