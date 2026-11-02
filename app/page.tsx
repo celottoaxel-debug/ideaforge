@@ -50,6 +50,7 @@ export default async function Home() {
         <div className="wrap nav-in">
           <a className="brand" href="/"><span className="mk">IF</span> IdeaForge</a>
           <a className="btn" href="#catalogue">{t.nav_catalogue}</a>
+          <a className="btn" href="/radar">{t.radar_nav}</a>
           <a className="btn" href="#pricing">{t.nav_pricing}</a>
           <a className="btn" href="#devis">{t.nav_devis}</a>
           <LangSwitcher current={locale} />

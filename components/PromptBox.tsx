@@ -25,6 +25,7 @@ export default function PromptBox({ prompt, t }: { prompt: string; t: D }) {
         <a className="btn" href="https://claude.ai/new" target="_blank" rel="noopener">{t.open_claude}</a>
         <a className="btn" href="https://lovable.dev" target="_blank" rel="noopener">{t.open_lovable}</a>
         <a className="btn" href={`https://bolt.new/?prompt=${enc}`} target="_blank" rel="noopener">{t.open_bolt}</a>
+        <a className="btn" href="https://stackblitz.com/fork/nextjs" target="_blank" rel="noopener">{t.open_stackblitz}</a>
       </div>
     </div>
   );

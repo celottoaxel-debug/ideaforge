@@ -6,6 +6,7 @@ import type { Idea } from "@/lib/types";
 import { buildPrompt } from "@/lib/prompt";
 import { scoreIdea, buildStack } from "@/lib/score";
 import CheckoutButton from "@/components/CheckoutButton";
+import ProofPanel from "@/components/ProofPanel";
 import PromptBox from "@/components/PromptBox";
 import Checklist from "@/components/Checklist";
 import RevenueCalc from "@/components/RevenueCalc";
@@ -100,6 +101,8 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
           );
         })()}
 
+        <section className="dsec"><h3>{t.proof_h}</h3><p style={{ color: "var(--ink-2)", fontSize: 14, marginBottom: 10 }}>{t.proof_sub}</p><ProofPanel it={it!} t={t} /></section>
+
         <section className="dsec"><h3>{t.calc_h}</h3><RevenueCalc t={t} defaultPrice={29} /></section>
 
         <section className="dsec"><h3>{t.d_market}</h3><p>{member ? it.market : (it.market || "").slice(0, 150) + "…"}</p></section>
@@ -109,8 +112,18 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
             <section className="dsec"><h3>{t.d_model}</h3><p>{it.model}</p></section>
             <section className="dsec"><h3>{t.d_comp}</h3><p>{it.competition}</p></section>
             {it.steps?.length ? <section className="dsec"><h3>{t.checklist_h}</h3><Checklist id={it.id} steps={it.steps} t={t} /></section> : null}
+            {it.steps?.length ? (
+              <section className="dsec"><h3>{t.plan_h}</h3>
+                <ol className="plan30">
+                  {it.steps.slice(0, 4).map((s, i) => (
+                    <li key={i}><span className="plan-w mono">{t.plan_week} {i + 1}</span><span>{s}</span></li>
+                  ))}
+                  {it.steps.length > 4 ? <li><span className="plan-w mono">{t.plan_week} 4+</span><span>{it.steps.slice(4).join(" · ")}</span></li> : null}
+                </ol>
+              </section>
+            ) : null}
             <section className="dsec"><h3>{t.d_risks}</h3><ul>{it.risks?.map((s, i) => <li key={i}>{s}</li>)}</ul></section>
-            <section className="dsec"><h3>{t.d_prompt_h}</h3><p style={{ color: "var(--ink-2)", fontSize: 14, marginBottom: 10 }}>{t.d_prompt_sub}</p><PromptBox prompt={buildPrompt(it)} t={t} /></section>
+            <section className="dsec"><h3>{t.kit_h}</h3><p style={{ color: "var(--ink-2)", fontSize: 14, marginBottom: 10 }}>{t.kit_sub}</p><PromptBox prompt={buildPrompt(it)} t={t} /></section>
           </>
         ) : (
           <div className="gate-lock">
