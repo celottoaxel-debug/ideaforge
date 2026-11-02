@@ -372,3 +372,21 @@ footer .brand .mk { background: rgba(255,255,255,.14); }
 .val-out { border-top: 1px solid var(--line); padding-top: 22px; }
 .val-sec { font-size: 13px; font-family: var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); margin: 26px 0 10px; }
 .validator .panel label { display: flex; flex-direction: column; gap: 6px; }
+
+/* ---------- validator : AI report, share, print ---------- */
+.val-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ai-block { margin-top: 18px; }
+.ai-report { border: 1px solid color-mix(in srgb, var(--green) 28%, var(--line)); border-radius: 14px; padding: 18px; background: var(--surface); }
+.ai-verdict { display: flex; gap: 14px; align-items: flex-start; }
+.ai-verdict .ai-score { font-size: 26px; font-weight: 600; color: var(--green-ink); flex: none; }
+.ai-verdict p { margin: 0; font-size: 14.5px; line-height: 1.6; }
+.ai-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 7px; font-size: 14px; line-height: 1.5; }
+
+@media print {
+  .nav, footer, .no-print, .langsw, .hero .stat, .hero p, .hero > .wrap > div { display: none !important; }
+  .hero { padding: 10px 0 0 !important; }
+  .val-out { border: none !important; padding-top: 0 !important; }
+  body { background: #fff; }
+  a[href]::after { content: ""; }
+  .proof-item { break-inside: avoid; }
+}

@@ -31,7 +31,7 @@ export default function ValidatePage() {
 
       <section style={{ paddingTop: 10 }}>
         <div className="wrap" style={{ maxWidth: 760 }}>
-          <Validator t={t} />
+          <Validator t={t} locale={locale} />
         </div>
       </section>
 
