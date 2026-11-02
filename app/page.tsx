@@ -49,6 +49,7 @@ export default async function Home() {
       <header className="nav">
         <div className="wrap nav-in">
           <a className="brand" href="/"><span className="mk">IF</span> IdeaForge</a>
+          <a className="btn" href="/validate">{t.val_nav}</a>
           <a className="btn" href="#catalogue">{t.nav_catalogue}</a>
           <a className="btn" href="/radar">{t.radar_nav}</a>
           <a className="btn" href="#pricing">{t.nav_pricing}</a>
@@ -65,7 +66,10 @@ export default async function Home() {
           <div className="stat">● {t.hero_stat}</div>
           <h1>{t.hero_h1a}<span className="hl">{t.hero_h1b}</span></h1>
           <p>{t.hero_lede} {ideas.length} {t.ideas_online}.</p>
-          {!member && <div style={{ marginTop: 20 }}><a className="btn primary" href="#pricing">{t.hero_cta}</a></div>}
+          <div style={{ marginTop: 22, display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+            <a className="btn primary" href="/validate">⚡ {t.val_nav}</a>
+            {!member && <a className="btn" href="#pricing">{t.hero_cta}</a>}
+          </div>
 
           <div className="mock" aria-hidden="true">
             <div className="mock-bar"><i /><i /><i /><span className="addr mono">ideaforge.app</span></div>
