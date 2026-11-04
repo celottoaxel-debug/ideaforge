@@ -39,7 +39,7 @@ https://TON-DOMAINE/auth/callback
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = `sb_publishable_lZKLF-xV6dQMjnJnJJGqmA_wylbnBVQ`
    - `NEXT_PUBLIC_SITE_URL` = `https://TON-DOMAINE`
 4. Déploie. Ajoute l'URL `https://TON-DOMAINE/auth/callback` dans les Redirect URLs Supabase.
-5. Branche ton nom de domaine (`ideaforge.app`) dans Vercel → *Domains*.
+5. Branche ton nom de domaine (`ideaforges.io`) dans Vercel → *Domains*.
 
 ## Structure
 

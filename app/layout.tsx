@@ -5,7 +5,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { getLocale } from "@/lib/i18n";
 import "./globals.css";
 
-const site = process.env.NEXT_PUBLIC_SITE_URL || "https://ideaforge-two-beryl.vercel.app";
+const site = process.env.NEXT_PUBLIC_SITE_URL || "https://ideaforges.io";
 
 export const metadata: Metadata = {
   metadataBase: new URL(site),

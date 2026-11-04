@@ -72,7 +72,7 @@ export default async function Home() {
           </div>
 
           <div className="mock" aria-hidden="true">
-            <div className="mock-bar"><i /><i /><i /><span className="addr mono">ideaforge.app</span></div>
+            <div className="mock-bar"><i /><i /><i /><span className="addr mono">ideaforges.io</span></div>
             <div className="mock-body">
               <div className="m-panel">
                 <div className="m-h">{t.mock_pain}<span className="m-tag">{t.mock_ai}</span></div>
