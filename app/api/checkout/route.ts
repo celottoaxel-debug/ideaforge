@@ -34,6 +34,8 @@ export async function POST(request: Request) {
       success_url: `${site}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${site}/#pricing`,
       allow_promotion_codes: true,
+      // Pour retrouver l'utilisateur quand l'abonnement mensuel est résilié.
+      ...(plan === "monthly" ? { subscription_data: { metadata: { user_id: user.id, plan } } } : {}),
     });
     return NextResponse.json({ url: session.url });
   } catch (e) {
