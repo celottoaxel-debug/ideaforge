@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import type Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { grantFromCheckoutSession, grantPlan } from "@/lib/grant";
+import { onCheckoutExpired } from "@/lib/email/flows";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,12 @@ export async function POST(request: Request) {
     // Paiement réussi (carte) ou paiement différé finalement réussi (virement, etc.).
     if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
       await grantFromCheckoutSession(event.data.object as Stripe.Checkout.Session);
+    }
+
+    // Paiement abandonné : la session Stripe a expiré sans paiement => e-mail de relance.
+    if (event.type === "checkout.session.expired") {
+      const s = event.data.object as Stripe.Checkout.Session;
+      await onCheckoutExpired(s.client_reference_id || s.metadata?.user_id);
     }
 
     // Fin d'abonnement mensuel : on repasse en free (sauf si la personne a aussi l'accès à vie).

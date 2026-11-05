@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 // Enregistre une demande de devis (table quote_requests — insertion ouverte à tous).
@@ -29,8 +30,11 @@ export async function subscribeNewsletter(formData: FormData) {
   const { error } = await supabase
     .from("newsletter_subscribers")
     .insert({ email, locale: "fr", source: "drop" });
-  // 23505 = doublon (déjà inscrit) : on considère ça comme un succès.
+  // 23505 = doublon (déjà inscrit) : on considère ça comme un succès, et on réabonne si la personne s'était désinscrite.
   if (error && error.code !== "23505") return { ok: false, error: error.message };
+  if (error?.code === "23505" && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    await createAdminClient().from("newsletter_subscribers").update({ unsubscribed_at: null }).ilike("email", email);
+  }
   return { ok: true };
 }
 

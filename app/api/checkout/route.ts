@@ -34,6 +34,8 @@ export async function POST(request: Request) {
       success_url: `${site}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${site}/#pricing`,
       allow_promotion_codes: true,
+      // Expire au bout de 2 h sans paiement => Stripe envoie checkout.session.expired => e-mail de relance.
+      expires_at: Math.floor(Date.now() / 1000) + 2 * 60 * 60,
       // Pour retrouver l'utilisateur quand l'abonnement mensuel est résilié.
       ...(plan === "monthly" ? { subscription_data: { metadata: { user_id: user.id, plan } } } : {}),
     });
