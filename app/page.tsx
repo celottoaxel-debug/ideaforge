@@ -128,7 +128,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {!member && (
+      {(
         <section id="pricing" style={{ background: "var(--surface-2)", borderBlock: "1px solid var(--line)" }}>
           <div className="wrap">
             <div className="sec-head"><h2>{t.price_h2}</h2><p>{t.price_sub}</p></div>
@@ -137,7 +137,9 @@ export default async function Home() {
                 <span className="pname">{t.p_monthly}</span>
                 <div className="price"><span className="amt">39€</span><span className="per">{t.per_month}</span></div>
                 <ul><li>{t.p_m_f1}</li><li>{t.p_m_f2}</li><li>{t.p_m_f3}</li></ul>
-                <CheckoutButton plan="monthly" label={t.p_m_cta} redirecting={t.redirecting} unavailable={t.pay_unavailable} className="btn" />
+                {member
+                  ? <span className="btn" style={{ justifyContent: "center", width: "100%" }}>{t.nav_member}</span>
+                  : <CheckoutButton plan="monthly" label={t.p_m_cta} redirecting={t.redirecting} unavailable={t.pay_unavailable} className="btn" />}
               </div>
               <div className="plan feat">
                 <span className="badge">{t.most_chosen}</span>
@@ -148,7 +150,9 @@ export default async function Home() {
                   <li className="bonus">{t.p_l_b1}</li><li className="bonus">{t.p_l_b2}</li>
                 </ul>
                 <div className="compare">{t.compare}</div>
-                <CheckoutButton plan="lifetime" label={t.p_l_cta} redirecting={t.redirecting} unavailable={t.pay_unavailable} />
+                {member
+                  ? <span className="btn primary" style={{ justifyContent: "center", width: "100%" }}>{t.nav_member}</span>
+                  : <CheckoutButton plan="lifetime" label={t.p_l_cta} redirecting={t.redirecting} unavailable={t.pay_unavailable} />}
                 <div className="guarantee">{t.guarantee}</div>
               </div>
             </div>
