@@ -391,3 +391,63 @@ footer .brand .mk { background: rgba(255,255,255,.14); }
   a[href]::after { content: ""; }
   .proof-item { break-inside: avoid; }
 }
+
+/* ---------- Dossier complet d'une idée ---------- */
+.dz { display: flex; flex-direction: column; gap: 34px; margin: 34px 0 10px; }
+.dz-sec { border-top: 1px solid var(--line); padding-top: 26px; }
+.dz-head { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 18px; }
+.dz-num { font-size: 12px; font-weight: 700; color: var(--green-ink); background: var(--green-wash); border-radius: 8px; padding: 5px 8px; line-height: 1; margin-top: 4px; }
+.dz-head h2 { font-size: 21px; letter-spacing: -0.015em; line-height: 1.25; margin: 0; }
+.dz-head p { color: var(--ink-2); font-size: 14px; line-height: 1.55; margin: 6px 0 0; }
+.dz-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+@media (max-width: 640px) { .dz-kpis { grid-template-columns: repeat(2, 1fr); } }
+.dz-kpi { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; box-shadow: var(--shadow-sm); }
+.dz-kpi .k { font-family: var(--mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+.dz-kpi .v { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.dz-kpi .n { font-size: 12px; color: var(--ink-3); }
+.dz-kpi.hot { background: var(--forest); border-color: var(--forest); color: #fff; }
+.dz-kpi.hot .k, .dz-kpi.hot .n { color: rgba(255,255,255,.65); }
+.dz-kpi.good .v, .pos { color: var(--green-ink); }
+.dz-kpi.mid .v { color: var(--amber); }
+.dz-kpi.bad .v, .neg { color: #d13d42; }
+.dz-chart { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 16px 10px; box-shadow: var(--shadow-sm); margin-bottom: 14px; }
+.dz-chart.narrow svg { max-width: 600px; margin: 0 auto; }
+.dz-tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); }
+.dz-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.dz-table th { text-align: left; font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; padding: 11px 14px; background: var(--surface-2); border-bottom: 1px solid var(--line); white-space: nowrap; }
+.dz-table td { padding: 11px 14px; border-bottom: 1px solid var(--line-2); color: var(--ink); line-height: 1.45; vertical-align: top; }
+.dz-table tr:last-child td { border-bottom: 0; }
+.dz-table .n { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.dz-table tr.hi td { background: color-mix(in srgb, var(--green-wash) 70%, transparent); }
+.dz-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 8px; vertical-align: 1px; }
+.dz-facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+@media (max-width: 640px) { .dz-facts { grid-template-columns: 1fr; } }
+.dz-fact { border-radius: var(--radius-sm); padding: 18px; background: linear-gradient(180deg, var(--green-wash), var(--surface)); border: 1px solid color-mix(in srgb, var(--green) 25%, var(--line)); display: flex; flex-direction: column; gap: 6px; }
+.dz-fact .v { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; color: var(--green-deep); }
+.dz-fact .l { font-size: 13.5px; color: var(--ink-2); line-height: 1.45; }
+.dz-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+@media (max-width: 640px) { .dz-two { grid-template-columns: 1fr; } }
+.dz-box { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 16px; background: var(--surface); }
+.dz-box .k, .dz-example .k { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 6px; }
+.dz-box p { margin: 0; font-size: 14.5px; line-height: 1.6; }
+.dz-example { margin: 0; border-left: 3px solid var(--green); background: var(--surface-2); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 16px 18px; font-size: 15px; line-height: 1.65; color: var(--ink); }
+.dz-bars { display: flex; flex-direction: column; gap: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+.dz-bar-top { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+.dz-track { height: 10px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
+.dz-track i { display: block; height: 100%; border-radius: 99px; }
+.dz-bar-note { font-size: 13px; color: var(--ink-3); margin-top: 5px; line-height: 1.45; }
+.dz-road { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0; border-left: 2px solid var(--green-wash); }
+.dz-road li { display: grid; grid-template-columns: 74px 1fr; gap: 12px; padding: 10px 0 10px 16px; position: relative; font-size: 14.5px; line-height: 1.55; }
+.dz-road li::before { content: ""; position: absolute; left: -6px; top: 16px; width: 10px; height: 10px; border-radius: 50%; background: var(--green); }
+.dz-road .w { font-size: 12px; color: var(--green-ink); font-weight: 700; padding-top: 2px; }
+.dz-method { color: var(--ink-2); font-size: 14px; line-height: 1.6; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; margin: 0; }
+.dz-locked { border: 1px dashed color-mix(in srgb, var(--green) 40%, var(--line)); border-radius: var(--radius); padding: 20px 22px; background: var(--surface-2); }
+.dz-locked-h { font-weight: 700; margin-bottom: 10px; }
+.dz-locked ol { columns: 2; column-gap: 28px; margin: 0; padding-left: 20px; color: var(--ink-2); font-size: 14px; line-height: 1.9; }
+@media (max-width: 640px) { .dz-locked ol { columns: 1; } }
+.dz-funnel { display: flex; flex-direction: column; gap: 12px; align-items: center; padding: 6px 0; }
+.dz-fstep { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.dz-fbar { height: 40px; border-radius: 10px; display: grid; place-items: center; min-width: 90px; }
+.dz-fbar span { font-weight: 700; font-size: 16px; color: var(--ink); }
+.dz-fstep:last-child .dz-fbar span { color: #fff; }
+.dz-flabel { font-size: 13px; color: var(--ink-2); text-align: center; }
