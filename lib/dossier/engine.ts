@@ -146,8 +146,9 @@ export function sensitivity(d: Dossier) {
 }
 
 // Repli pour les idées sans dossier rédigé (ex. idées découvertes par l'IA) : hypothèses déduites de la fiche.
-export function fallbackDossier(it: IdeaLike & { pitch?: string | null; market?: string | null }): Dossier {
-  const local = !/SaaS|IA|Tech/i.test(it.sector);
+export function fallbackDossier(it: IdeaLike & { pitch?: string | null; market?: string | null; is_ai?: boolean | null }): Dossier {
+  // Les idées découvertes par l'IA sont toutes des logiciels / outils en ligne, quel que soit leur secteur.
+  const local = !it.is_ai && !/SaaS|IA|Tech/i.test(it.sector);
   const nums = (it.revenue || "").match(/\d+/g)?.map(Number) ?? [];
   const highK = nums.length >= 2 ? nums[1] : 15; // borne haute en k€/mois
   const price = local ? 45 : it.difficulty === 3 ? 49 : 19;
