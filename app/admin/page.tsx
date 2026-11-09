@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail, PRICE_MONTHLY, PRICE_LIFETIME, euro } from "@/lib/admin";
+import AdminEmailTest from "@/components/AdminEmailTest";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Admin", robots: { index: false } };
@@ -111,6 +112,8 @@ export default async function AdminPage() {
             </div>
           ))}
         </div>
+
+        <AdminEmailTest />
 
         <h2 style={{ fontSize: 20, margin: "34px 0 12px" }}>Membres ({total})</h2>
         <div className="tablewrap">

@@ -35,6 +35,28 @@ export function emailEnabled() {
   return !!process.env.RESEND_API_KEY;
 }
 
+// Variante qui renvoie le message d'erreur de Resend (utilisée par le test du panel admin).
+export async function sendEmailDetailed(e: Email): Promise<{ ok: boolean; error?: string }> {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) return { ok: false, error: "RESEND_API_KEY absente dans Vercel (ou pas encore redéployé)" };
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify(payload(e)),
+    });
+    if (res.ok) return { ok: true };
+    const body = await res.text();
+    let msg = body;
+    try { msg = JSON.parse(body).message ?? body; } catch {}
+    return { ok: false, error: `Resend ${res.status} : ${msg}` };
+  } catch (err) {
+    return { ok: false, error: `Erreur réseau : ${err instanceof Error ? err.message : String(err)}` };
+  }
+}
+
+export const fromAddress = () => FROM;
+
 // Un e-mail. Ne lève jamais d'erreur : renvoie false et logue si l'envoi échoue.
 export async function sendEmail(e: Email): Promise<boolean> {
   const key = process.env.RESEND_API_KEY;
