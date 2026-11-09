@@ -471,3 +471,21 @@ footer .brand .mk { background: rgba(255,255,255,.14); }
 .legal-links a { color: rgba(255,255,255,.85); text-decoration: underline; text-underline-offset: 3px; }
 .buy-terms { font-size: 11.5px; color: var(--ink-3); text-align: center; margin: 8px 0 0; line-height: 1.4; }
 .buy-terms a { color: inherit; text-decoration: underline; }
+
+/* ---------- Pack de prompts ---------- */
+.pack { max-width: 860px; padding-block: 34px 40px; }
+.pack h1 { font-size: clamp(30px, 5vw, 44px); letter-spacing: -0.025em; margin: 6px 0 10px; }
+.pack .sector { font-family: var(--mono); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--green-ink); font-weight: 600; }
+.pack-lede { color: var(--ink-2); font-size: 16px; line-height: 1.6; max-width: 62ch; }
+.pack-toc { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; margin: 22px 0 10px; }
+.pack-toc a { display: flex; justify-content: space-between; gap: 8px; border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 14px; font-weight: 600; color: var(--ink); }
+.pack-toc a .mono { color: var(--green-ink); }
+.pack-sec { margin-top: 34px; scroll-margin-top: 80px; }
+.pack-sec h2 { font-size: 22px; letter-spacing: -0.015em; margin: 0 0 4px; }
+.pack-intro { color: var(--ink-2); font-size: 14.5px; margin: 0 0 14px; }
+.pack-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; margin-bottom: 12px; box-shadow: var(--shadow-sm); }
+.pack-card-h { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 10px; }
+.pack-card-h h3 { font-size: 16.5px; margin: 0; }
+.pack-n { font-size: 12px; font-weight: 700; color: var(--green-ink); background: var(--green-wash); border-radius: 8px; padding: 4px 7px; margin-top: 1px; }
+.pack-when { font-size: 13px; color: var(--ink-3); }
+.pack-card .prompt-pre { margin-bottom: 12px; border-radius: 12px; }

@@ -34,6 +34,7 @@ export default async function Compte({ searchParams }: { searchParams: { billing
                 <a className="btn primary" href="/api/billing/portal" style={{ textDecoration: "none" }}>Gérer / résilier mon abonnement</a>
               </>
             )}
+            {(plan === "lifetime" || plan === "monthly") && <p>🎁 Ton bonus : <a href="/prompts">le pack de 50 prompts</a>.</p>}
             {plan === "lifetime" && <p>Ton accès à vie n’a pas d’abonnement : aucun prélèvement à venir. Pour un remboursement dans les 14 jours, écris à ideasforges.io@gmail.com.</p>}
             {plan !== "monthly" && plan !== "lifetime" && <p>Tu n’as pas d’abonnement en cours. <a href="/#pricing">Voir les offres</a>.</p>}
 

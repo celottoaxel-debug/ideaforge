@@ -57,6 +57,7 @@ export default async function Home() {
           <LangSwitcher current={locale} />
           {isAdminEmail(user?.email) && <a className="btn" href="/admin">Admin</a>}
           {member && <span className="pill" style={{ background: "var(--green-wash)", color: "var(--green-ink)", fontWeight: 600 }}>{t.nav_member}</span>}
+          <a className="btn" href="/prompts">🎁 50 prompts</a>
           {user && <a className="btn" href="/compte">Mon compte</a>}
           {user ? <a className="btn dark" href="/auth/signout">{t.nav_logout}</a> : <a className="btn dark" href="/login">{t.nav_login}</a>}
         </div>
