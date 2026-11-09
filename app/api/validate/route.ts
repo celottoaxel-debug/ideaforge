@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { askClaude } from "@/lib/anthropic";
 import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
@@ -32,15 +33,9 @@ Réponds UNIQUEMENT avec un objet JSON (en ${lang}), sans texte autour :
 {"score":number (0-100, réaliste),"verdict":string (2-3 phrases franches),"competitors":[{"name":string,"note":string}] (3 à 5 concurrents réels probables),"market":string (ordre de grandeur de la taille de marché + source de raisonnement),"angles":[string] (3 angles de différenciation concrets),"risks":[string] (2-3 risques clés)}`;
 
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({ model: "claude-sonnet-5-5", max_tokens: 1600, messages: [{ role: "user", content: prompt }] }),
-    });
-    const data = await res.json();
-    const out: string = data?.content?.[0]?.text ?? "";
+    const out = (await askClaude(prompt, 3000)).replace(/```(?:json)?/gi, "");
     const s = out.indexOf("{"), e = out.lastIndexOf("}");
-    if (s === -1 || e === -1) throw new Error("no json");
+    if (s === -1 || e <= s) throw new Error("pas d'objet JSON dans la réponse");
     const report = JSON.parse(out.slice(s, e + 1));
     return NextResponse.json({ ok: true, report });
   } catch (err) {

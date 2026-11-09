@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { askClaude, extractJsonArray } from "@/lib/anthropic";
 
 
 // Moteur de découverte "24/7" : appelé par Vercel Cron (voir vercel.json).
@@ -28,17 +29,7 @@ Français, chiffres réalistes. Aucun texte hors du JSON.`;
 
   let ideas: Record<string, unknown>[] = [];
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({ model: "claude-sonnet-5-5", max_tokens: 3000, messages: [{ role: "user", content: prompt }] }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(`Anthropic ${res.status} : ${data?.error?.message ?? "erreur inconnue"}`);
-    const text: string = data?.content?.[0]?.text ?? "";
-    const start = text.indexOf("["), end = text.lastIndexOf("]");
-    if (start === -1 || end === -1) throw new Error("no JSON array in model reply");
-    ideas = JSON.parse(text.slice(start, end + 1));
+    ideas = extractJsonArray(await askClaude(prompt, 8000)) as Record<string, unknown>[];
   } catch (e) {
     return { ok: false, error: `Génération IA échouée : ${e instanceof Error ? e.message : String(e)}` };
   }
