@@ -7,9 +7,9 @@ export type PaidPlan = "lifetime" | "monthly";
 
 // Donne le plan à l'utilisateur. Upsert : marche même si la ligne profiles n'existe pas encore.
 // Renvoie le plan précédent (pour savoir si c'est un nouveau paiement).
-export async function grantPlan(userId: string, plan: PaidPlan | "free", email?: string | null): Promise<string | null> {
+export async function grantPlan(userId: string, plan: PaidPlan | "free", email?: string | null): Promise<{ plan: string | null; locale: string | null }> {
   const admin = createAdminClient();
-  const { data: prev } = await admin.from("profiles").select("plan").eq("id", userId).maybeSingle();
+  const { data: prev } = await admin.from("profiles").select("plan, locale").eq("id", userId).maybeSingle();
   const row: Record<string, string> = { id: userId, plan };
   if (email) row.email = email;
   const { error } = await admin.from("profiles").upsert(row, { onConflict: "id" });
@@ -17,7 +17,7 @@ export async function grantPlan(userId: string, plan: PaidPlan | "free", email?:
     console.error("[grantPlan] échec", userId, plan, error.message);
     throw new Error(error.message);
   }
-  return (prev?.plan as string | undefined) ?? null;
+  return { plan: (prev?.plan as string | undefined) ?? null, locale: (prev?.locale as string | undefined) ?? null };
 }
 
 // Vérifie une session Checkout auprès de Stripe et débloque le plan si elle est payée.
@@ -41,8 +41,8 @@ export async function grantFromCheckoutSession(
   const previous = await grantPlan(userId, plan, email);
 
   // Alerte « nouveau paiement » une seule fois (la page succès et le webhook passent tous deux ici).
-  if (previous !== plan) {
-    try { await onPayment(email, plan, session.amount_total, session.currency); } catch (e) { console.error("[email] onPayment", e); }
+  if (previous.plan !== plan) {
+    try { await onPayment(email, plan, session.amount_total, session.currency, previous.locale); } catch (e) { console.error("[email] onPayment", e); }
   }
   return plan;
 }

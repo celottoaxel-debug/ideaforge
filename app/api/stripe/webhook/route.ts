@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import type Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
-import { grantFromCheckoutSession, grantPlan } from "@/lib/grant";
-import { onCheckoutExpired } from "@/lib/email/flows";
+import { grantFromCheckoutSession } from "@/lib/grant";
+import { onCheckoutExpired, onSubscriptionEnded } from "@/lib/email/flows";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     if (event.type === "customer.subscription.deleted") {
       const sub = event.data.object as Stripe.Subscription;
       const userId = sub.metadata?.user_id;
-      if (userId) await grantPlan(userId, "free");
+      if (userId) await onSubscriptionEnded(userId);
     }
   } catch (e) {
     // 500 => Stripe réessaiera automatiquement.

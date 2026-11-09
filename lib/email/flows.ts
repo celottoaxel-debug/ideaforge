@@ -5,7 +5,7 @@ import { ADMIN_EMAILS } from "@/lib/admin";
 import { sendEmail, sendBatch, emailEnabled, type Email } from "@/lib/email/resend";
 import { siteUrl, unsubUrl } from "@/lib/email/unsubscribe";
 import {
-  lang, welcomeEmail, adminSignupEmail, adminPaymentEmail, abandonedEmail, nurtureEmail, dropEmail, type MailIdea,
+  lang, welcomeEmail, adminSignupEmail, adminPaymentEmail, abandonedEmail, nurtureEmail, dropEmail, memberWelcomeEmail, winbackEmail, type MailIdea,
 } from "@/lib/email/templates";
 
 const DAY = 86_400_000;
@@ -50,9 +50,13 @@ export async function onSignIn(userId: string, provider?: string) {
   }
 }
 
-// ---------- Paiement : alerte admin ----------
-export async function onPayment(email: string | null | undefined, plan: string, amountCents: number | null, currency: string | null) {
+// ---------- Paiement : e-mail de bienvenue membre + alerte admin ----------
+export async function onPayment(email: string | null | undefined, plan: string, amountCents: number | null, currency: string | null, locale?: string | null) {
   if (!emailEnabled()) return;
+  if (email) {
+    const w = memberWelcomeEmail(plan, lang(locale), siteUrl());
+    await sendEmail({ to: email, ...w, tag: "member_welcome" });
+  }
   const amount = amountCents != null
     ? new Intl.NumberFormat("fr-FR", { style: "currency", currency: (currency || "eur").toUpperCase() }).format(amountCents / 100)
     : "?";
@@ -157,4 +161,20 @@ export async function runWeeklyDrop() {
   const sent = await sendBatch(mails);
   if (sent > 0) await admin.from("newsletter_subscribers").update({ last_drop_at: new Date().toISOString() }).in("id", subs.map((s) => s.id));
   return sent;
+}
+
+// ---------- Abonnement mensuel résilié : repasse en gratuit + propose l'accès à vie ----------
+// Ne touche pas un compte qui a entre-temps pris l'accès à vie.
+export async function onSubscriptionEnded(userId: string) {
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("profiles")
+    .update({ plan: "free" })
+    .eq("id", userId)
+    .eq("plan", "monthly")
+    .select("email, locale, email_opt_out")
+    .maybeSingle();
+  if (!data?.email || data.email_opt_out || !emailEnabled()) return;
+  const u = unsubUrl(data.email);
+  await sendEmail({ to: data.email, ...winbackEmail(lang(data.locale), siteUrl(), u), unsubscribeUrl: u, tag: "winback" });
 }

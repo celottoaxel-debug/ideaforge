@@ -202,3 +202,29 @@ export function confirmSignupTemplate(site: string): Rendered {
     p(`<span style="font-size:13px;color:${C.ink3}">EN · Confirm your email to activate your account. ES · Confirma tu correo para activar tu cuenta.<br>Si tu n'as rien demandé, ignore simplement cet e-mail.</span>`);
   return done("Confirme ton inscription à IdeaForge", layout({ body, preheader: "Plus qu'un clic pour activer ton compte.", lang: "fr", site }));
 }
+
+// ---------- 7. Bienvenue membre (après achat) ----------
+const MEMBER = {
+  fr: { s: "C'est parti : ton accès membre est actif ✅", pre: "Tout le catalogue est débloqué. Voici comment en tirer le maximum.", eb: "Merci pour ta confiance", h: "Ton accès membre est actif", life: "l'accès à vie", month: "l'abonnement mensuel", intro: (p: string) => `Merci d'avoir pris ${p} ! Tout est débloqué : fiches complètes, dossiers chiffrés, prompts et génération d'idées. Pour avancer vite :`, steps: ["<b>Choisis 3 idées</b> dans le catalogue et compare leurs dossiers (point mort, LTV/CAC, budget).", "<b>Passe la meilleure au validateur</b> pour voir les preuves de demande en direct.", "<b>Copie le prompt « Lancer avec Claude »</b> de la fiche pour construire ton MVP."], cta: "Ouvrir le catalogue complet", ps: "Garantie 14 jours : si ça ne te convient pas, réponds simplement à cet e-mail et tu es remboursé." },
+  en: { s: "You're in: your member access is live ✅", pre: "The whole catalog is unlocked. Here's how to make the most of it.", eb: "Thank you", h: "Your member access is live", life: "lifetime access", month: "the monthly plan", intro: (p: string) => `Thanks for getting ${p}! Everything is unlocked: full sheets, detailed financial files, prompts and idea generation. To move fast:`, steps: ["<b>Pick 3 ideas</b> and compare their files (break-even, LTV/CAC, budget).", "<b>Run the best one through the validator</b> to see live demand proof.", "<b>Copy the “Launch with Claude” prompt</b> to build your MVP."], cta: "Open the full catalog", ps: "14-day guarantee: if it's not for you, just reply to this email and you'll be refunded." },
+  es: { s: "Listo: tu acceso de miembro está activo ✅", pre: "Todo el catálogo está desbloqueado. Así le sacas el máximo partido.", eb: "Gracias por tu confianza", h: "Tu acceso de miembro está activo", life: "el acceso de por vida", month: "la suscripción mensual", intro: (p: string) => `¡Gracias por elegir ${p}! Todo está desbloqueado: fichas completas, dossiers con cifras, prompts y generación de ideas. Para avanzar rápido:`, steps: ["<b>Elige 3 ideas</b> y compara sus dossiers (punto de equilibrio, LTV/CAC, presupuesto).", "<b>Pasa la mejor por el validador</b> para ver pruebas de demanda en directo.", "<b>Copia el prompt «Lanzar con Claude»</b> para construir tu MVP."], cta: "Abrir el catálogo completo", ps: "Garantía de 14 días: si no te convence, responde a este correo y te reembolsamos." },
+};
+
+export function memberWelcomeEmail(plan: string, l: Lang, site: string): Rendered {
+  const t = MEMBER[l];
+  const body = eyebrow(t.eb) + h1(t.h) + p(t.intro(plan === "monthly" ? t.month : t.life)) + list(t.steps) + button(t.cta, `${site}/#catalogue`) + p(`<span style="font-size:14px;color:${C.ink3}">${t.ps}</span>`);
+  return done(t.s, layout({ body, preheader: t.pre, lang: l, site }));
+}
+
+// ---------- 8. Abonnement mensuel résilié : proposer l'accès à vie ----------
+const WINBACK = {
+  fr: { s: "Ton abonnement est terminé (et une option plus simple)", pre: "Garde tout pour toujours, en un seul paiement.", eb: "Abonnement terminé", h: "Merci d'avoir été membre", intro: "Ton abonnement mensuel vient de se terminer, tu repasses en compte gratuit. Si tu veux garder les fiches complètes et les dossiers sans abonnement, l'accès à vie reste disponible : <b>129 € une seule fois</b>, soit moins de 4 mois d'abonnement, avec la garantie 14 jours.", cta: "Passer à l'accès à vie", ps: "Une remarque sur ce qui t'a manqué ? Réponds à cet e-mail, ça nous aide vraiment." },
+  en: { s: "Your subscription has ended (and a simpler option)", pre: "Keep everything forever, with a single payment.", eb: "Subscription ended", h: "Thanks for being a member", intro: "Your monthly plan just ended and you're back on a free account. To keep full sheets and files without a subscription, lifetime access is still available: <b>€129 once</b>, less than 4 months of subscription, with the 14-day guarantee.", cta: "Get lifetime access", ps: "Anything we could do better? Just reply, it really helps." },
+  es: { s: "Tu suscripción ha terminado (y una opción más sencilla)", pre: "Consérvalo todo para siempre, con un solo pago.", eb: "Suscripción terminada", h: "Gracias por haber sido miembro", intro: "Tu suscripción mensual acaba de terminar y vuelves a una cuenta gratuita. Para conservar las fichas y dossiers sin suscripción, el acceso de por vida sigue disponible: <b>129 € una sola vez</b>, menos de 4 meses de suscripción, con la garantía de 14 días.", cta: "Pasar al acceso de por vida", ps: "¿Algo que podamos mejorar? Responde a este correo, nos ayuda mucho." },
+};
+
+export function winbackEmail(l: Lang, site: string, unsub: string): Rendered {
+  const t = WINBACK[l];
+  const body = eyebrow(t.eb) + h1(t.h) + p(t.intro) + button(t.cta, `${site}/#pricing`) + p(`<span style="font-size:14px;color:${C.ink3}">${t.ps}</span>`);
+  return done(t.s, layout({ body, preheader: t.pre, lang: l, site, unsub, marketing: true }));
+}
