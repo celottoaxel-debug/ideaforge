@@ -18,6 +18,7 @@ export const metadata: Metadata = {
     "Plus de 90 idées de business et de SaaS analysées et chiffrées : budget de départ, revenus projetés sur 24 mois, concurrents, risques et plan de lancement. Valide ton idée et lance-la avec l'IA.",
   keywords: ["idées de business", "idée d'entreprise", "idée business rentable", "micro-SaaS", "business IA", "idées SaaS", "business ideas", "ideas de negocio"],
   applicationName: "IdeaForge",
+  appleWebApp: { capable: true, title: "IdeaForge", statusBarStyle: "default" },
   authors: [{ name: "Axel Celotto" }],
   creator: "IdeaForge",
   openGraph: {
