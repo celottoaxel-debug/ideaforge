@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail, PRICE_MONTHLY, PRICE_LIFETIME, euro } from "@/lib/admin";
 import AdminEmailTest from "@/components/AdminEmailTest";
+import AdminRunJobs from "@/components/AdminRunJobs";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Admin", robots: { index: false } };
@@ -111,6 +112,26 @@ export default async function AdminPage() {
               <div className="tile-s">{t.s}</div>
             </div>
           ))}
+        </div>
+
+        <div className="card" style={{ margin: "18px 0" }}>
+          <b>Configuration (variables Vercel)</b>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(230px,1fr))", gap: "4px 16px", marginTop: 10, fontSize: 14 }}>
+            {([
+              ["CRON_SECRET", "tâches quotidiennes (idées, relances)"],
+              ["ANTHROPIC_API_KEY", "découverte d'idées, validateur IA"],
+              ["RESEND_API_KEY", "e-mails"],
+              ["STRIPE_SECRET_KEY", "paiements"],
+              ["STRIPE_WEBHOOK_SECRET", "webhook Stripe"],
+              ["STRIPE_LIFETIME_PRICE_ID", "prix accès à vie"],
+              ["STRIPE_MONTHLY_PRICE_ID", "prix abonnement"],
+              ["SUPABASE_SERVICE_ROLE_KEY", "accès serveur à la base"],
+              ["NEXT_PUBLIC_SITE_URL", "adresse du site"],
+            ] as const).map(([k, why]) => (
+              <div key={k}>{process.env[k] ? "✅" : "❌"} <span className="mono" style={{ fontSize: 12 }}>{k}</span> <span style={{ color: "var(--ink-3)", fontSize: 12 }}>— {why}</span></div>
+            ))}
+          </div>
+          <AdminRunJobs />
         </div>
 
         <AdminEmailTest />

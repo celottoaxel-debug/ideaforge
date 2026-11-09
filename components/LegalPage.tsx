@@ -41,7 +41,7 @@ export function LegalFooter() {
       <div className="wrap">
         <div className="brand"><span className="mk">IF</span> IdeaForge</div>
         <p className="legal-links">
-          <a href="/mentions-legales">Mentions légales</a> · <a href="/cgv">CGV</a> · <a href="/confidentialite">Confidentialité</a>
+          <a href="/mentions-legales">Mentions légales</a> · <a href="/cgv">CGV</a> · <a href="/confidentialite">Confidentialité</a> · <a href="/compte">Gérer / résilier mon abonnement</a>
         </p>
         <p style={{ marginTop: 8 }}>© 2026 IdeaForge</p>
       </div>

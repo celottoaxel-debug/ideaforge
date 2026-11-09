@@ -57,6 +57,7 @@ export default async function Home() {
           <LangSwitcher current={locale} />
           {isAdminEmail(user?.email) && <a className="btn" href="/admin">Admin</a>}
           {member && <span className="pill" style={{ background: "var(--green-wash)", color: "var(--green-ink)", fontWeight: 600 }}>{t.nav_member}</span>}
+          {user && <a className="btn" href="/compte">Mon compte</a>}
           {user ? <a className="btn dark" href="/auth/signout">{t.nav_logout}</a> : <a className="btn dark" href="/login">{t.nav_login}</a>}
         </div>
       </header>
@@ -157,9 +158,7 @@ export default async function Home() {
               </div>
             </div>
             <div className="places">
-              <div className="places-head"><span>{t.places_label}</span><span className="mono">158 / 200</span></div>
-              <div className="places-bar"><i style={{ width: "79%" }} /></div>
-              <div className="places-note">{t.places_note}</div>
+              <div className="places-note" style={{ marginTop: 0, textAlign: "center" }}>{t.places_note}</div>
             </div>
           </div>
         </section>
@@ -180,7 +179,7 @@ export default async function Home() {
         <div className="wrap">
           <div className="brand"><span className="mk">IF</span> IdeaForge</div>
           <p style={{ marginTop: 12 }}>© 2026 IdeaForge — {t.foot_tag}</p>
-          <p className="legal-links"><a href="/mentions-legales">Mentions légales</a> · <a href="/cgv">CGV</a> · <a href="/confidentialite">Confidentialité</a></p>
+          <p className="legal-links"><a href="/mentions-legales">Mentions légales</a> · <a href="/cgv">CGV</a> · <a href="/confidentialite">Confidentialité</a> · <a href="/compte">Gérer / résilier mon abonnement</a></p>
         </div>
       </footer>
     </>
