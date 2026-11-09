@@ -42,6 +42,7 @@ export default function CheckoutButton({
       <button className={className} onClick={buy} disabled={loading} style={{ justifyContent: "center", width: "100%" }}>
         {loading ? redirecting : label}
       </button>
+      <p className="buy-terms">En payant, tu acceptes les <a href="/cgv" target="_blank">CGV</a> · garantie 14 jours satisfait ou remboursé.</p>
       {err && <p className="msg err">{err}</p>}
     </>
   );

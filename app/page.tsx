@@ -180,6 +180,7 @@ export default async function Home() {
         <div className="wrap">
           <div className="brand"><span className="mk">IF</span> IdeaForge</div>
           <p style={{ marginTop: 12 }}>© 2026 IdeaForge — {t.foot_tag}</p>
+          <p className="legal-links"><a href="/mentions-legales">Mentions légales</a> · <a href="/cgv">CGV</a> · <a href="/confidentialite">Confidentialité</a></p>
         </div>
       </footer>
     </>
