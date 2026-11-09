@@ -80,6 +80,7 @@ export default async function Home() {
           <a className="btn" href="/validate">{t.val_nav}</a>
           <a className="btn" href="#catalogue">{t.nav_catalogue}</a>
           <a className="btn" href="/idees">Thèmes</a>
+          <a className="btn" href="/blog">Blog</a>
           <a className="btn" href="/radar">{t.radar_nav}</a>
           <a className="btn" href="#pricing">{t.nav_pricing}</a>
           <a className="btn" href="#devis">{t.nav_devis}</a>
@@ -223,7 +224,7 @@ export default async function Home() {
         <div className="wrap">
           <div className="brand"><span className="mk">IF</span> IdeaForge</div>
           <p style={{ marginTop: 12 }}>© 2026 IdeaForge — {t.foot_tag}</p>
-          <p className="legal-links"><a href="/mentions-legales">Mentions légales</a> · <a href="/cgv">CGV</a> · <a href="/confidentialite">Confidentialité</a> · <a href="/compte">Gérer / résilier mon abonnement</a></p>
+          <p className="legal-links"><a href="/blog">Blog</a> · <a href="/idees">Idées par thème</a> · <a href="/mentions-legales">Mentions légales</a> · <a href="/cgv">CGV</a> · <a href="/confidentialite">Confidentialité</a> · <a href="/compte">Gérer / résilier mon abonnement</a></p>
         </div>
       </footer>
     </>

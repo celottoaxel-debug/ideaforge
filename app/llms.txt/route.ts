@@ -1,12 +1,13 @@
 import { allIdeas, SITE, ideaFacts } from "@/lib/seo";
 import { COLLECTIONS } from "@/lib/collections";
 import { PRICE_LIFETIME, PRICE_MONTHLY } from "@/lib/admin";
+import { listPublished } from "@/lib/blog/posts";
 
 export const revalidate = 3600;
 
 // /llms.txt : résumé du site pour les moteurs de réponse IA (ChatGPT, Perplexity, Claude, Gemini).
 export async function GET() {
-  const ideas = await allIdeas();
+  const [ideas, posts] = await Promise.all([allIdeas(), listPublished(100)]);
   const lines = [
     "# IdeaForge",
     "",
@@ -28,6 +29,7 @@ export async function GET() {
       return `- [${it.title}](${SITE}/idea/${it.id}) : ${it.pitch ?? ""} Budget ${f.budget}, revenus ${it.revenue ?? "n/c"}, ~${f.mrr12Txt}/mois projetés à 12 mois.`;
     }),
     "",
+    ...(posts.length ? ["## Articles du blog", ...posts.map((p) => `- [${p.title}](${SITE}/blog/${p.slug}) : ${p.description ?? ""}`), ""] : []),
     "## Autres pages",
     `- [Pack de 50 prompts IA](${SITE}/prompts)`,
     `- [Radar des tendances](${SITE}/radar)`,

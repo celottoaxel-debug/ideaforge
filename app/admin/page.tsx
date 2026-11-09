@@ -91,6 +91,7 @@ export default async function AdminPage({ searchParams }: { searchParams: { p?: 
       <header className="nav"><div className="wrap nav-in">
         <a className="brand" href="/"><span className="mk">IF</span> IdeaForge</a>
         <span className="pill" style={{ background: "var(--green-wash)", color: "var(--green-ink)", fontWeight: 600 }}>Admin</span>
+        <a className="btn" href="/admin/blog">📝 Blog</a>
         <a className="btn" href="/">← Site</a>
         <a className="btn dark" href="/auth/signout">Déconnexion</a>
       </div></header>
