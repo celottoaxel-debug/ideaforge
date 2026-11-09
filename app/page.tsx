@@ -8,6 +8,7 @@ import CheckoutButton from "@/components/CheckoutButton";
 import QuoteForm from "@/components/QuoteForm";
 import Newsletter from "@/components/Newsletter";
 import LangSwitcher from "@/components/LangSwitcher";
+import MobileMenuCloser from "@/components/MobileMenuCloser";
 import { COLLECTIONS } from "@/lib/collections";
 import { SITE, ldJson, organizationLd, faqLd } from "@/lib/seo";
 import { PRICE_LIFETIME, PRICE_MONTHLY } from "@/lib/admin";
@@ -74,24 +75,57 @@ export default async function Home() {
         ],
       })} />
       <script type="application/ld+json" dangerouslySetInnerHTML={ldJson(faqLd(HOME_FAQ))} />
-      <header className="nav">
-        <div className="wrap nav-in">
-          <a className="brand" href="/"><span className="mk">IF</span> IdeaForge</a>
-          <a className="btn" href="/validate">{t.val_nav}</a>
-          <a className="btn" href="#catalogue">{t.nav_catalogue}</a>
-          <a className="btn" href="/idees">Thèmes</a>
-          <a className="btn" href="/blog">Blog</a>
-          <a className="btn" href="/radar">{t.radar_nav}</a>
-          <a className="btn" href="#pricing">{t.nav_pricing}</a>
-          <a className="btn" href="#devis">{t.nav_devis}</a>
-          <LangSwitcher current={locale} />
-          {isAdminEmail(user?.email) && <a className="btn" href="/admin">Admin</a>}
-          {member && <span className="pill" style={{ background: "var(--green-wash)", color: "var(--green-ink)", fontWeight: 600 }}>{t.nav_member}</span>}
-          <a className="btn" href="/prompts">🎁 50 prompts</a>
-          {user && <a className="btn" href="/compte">Mon compte</a>}
-          {user ? <a className="btn dark" href="/auth/signout">{t.nav_logout}</a> : <a className="btn dark" href="/login">{t.nav_login}</a>}
-        </div>
-      </header>
+      {(() => {
+        const primary = (
+          <>
+            <a className="btn" href="/validate">{t.val_nav}</a>
+            <a className="btn" href="#catalogue">{t.nav_catalogue}</a>
+            <a className="btn" href="/idees">Thèmes</a>
+            <a className="btn" href="/blog">Blog</a>
+            <a className="btn" href="#pricing">{t.nav_pricing}</a>
+          </>
+        );
+        const secondary = (
+          <>
+            <a className="btn" href="/radar">{t.radar_nav}</a>
+            <a className="btn" href="#devis">{t.nav_devis}</a>
+            <a className="btn" href="/prompts">🎁 50 prompts</a>
+            {isAdminEmail(user?.email) && <a className="btn" href="/admin">Admin</a>}
+            {user && <a className="btn" href="/compte">Mon compte</a>}
+          </>
+        );
+        const links = <>{primary}{secondary}</>;
+        const account = user ? <a className="btn dark" href="/auth/signout">{t.nav_logout}</a> : <a className="btn dark" href="/login">{t.nav_login}</a>;
+        return (
+          <header className="nav">
+            <div className="wrap nav-in">
+              <a className="brand" href="/"><span className="mk">IF</span> IdeaForge</a>
+              {/* Ordinateur : liens en ligne */}
+              <div className="nav-desk">
+                {primary}
+                <details className="nav-more">
+                  <summary className="btn">Plus ▾</summary>
+                  <div className="nav-mob-panel">{secondary}</div>
+                </details>
+                <LangSwitcher current={locale} />
+                {member && <span className="pill" style={{ background: "var(--green-wash)", color: "var(--green-ink)", fontWeight: 600 }}>{t.nav_member}</span>}
+                {account}
+              </div>
+              {/* Mobile : menu repliable */}
+              <MobileMenuCloser />
+              <details className="nav-mob">
+                <summary aria-label="Menu">{member && <span className="nav-mob-star">★</span>}<span className="burger" aria-hidden>☰</span></summary>
+                <div className="nav-mob-panel">
+                  {member && <span className="pill" style={{ background: "var(--green-wash)", color: "var(--green-ink)", fontWeight: 600, alignSelf: "flex-start" }}>{t.nav_member}</span>}
+                  {links}
+                  <LangSwitcher current={locale} />
+                  {account}
+                </div>
+              </details>
+            </div>
+          </header>
+        );
+      })()}
 
       <section className="hero">
         <div className="wrap">
