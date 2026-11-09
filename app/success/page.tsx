@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { grantFromCheckoutSession } from "@/lib/grant";
 
 export const dynamic = "force-dynamic";
+export const metadata = { title: "Paiement", robots: { index: false, follow: false } };
 
 const PENDING = {
   fr: { title: "Paiement en cours de vérification", sub: "Nous n'avons pas encore la confirmation de Stripe. Recharge cette page dans quelques secondes. Si ça persiste, écris-nous : ton paiement n'est pas perdu.", cta: "Recharger" },

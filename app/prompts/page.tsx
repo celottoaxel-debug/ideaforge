@@ -7,8 +7,9 @@ import { getLocale, dict } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
-  title: "Pack de 50 prompts pour lancer ton business — IdeaForge",
-  description: "50 prompts prêts à coller, de l'idée au lancement : validation, MVP avec l'IA, landing page, acquisition, vente et pilotage.",
+  title: "50 prompts IA pour lancer ton business (ChatGPT, Claude)",
+  description: "50 prompts prêts à coller dans ChatGPT ou Claude, de l'idée au lancement : validation, MVP avec l'IA, landing page, acquisition, vente et pilotage.",
+  alternates: { canonical: "/prompts" },
 };
 
 export default async function PromptsPage() {

@@ -2,7 +2,7 @@ import { LegalPage, V } from "@/components/LegalPage";
 import { legal } from "@/lib/legal";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Politique de confidentialité et cookies — IdeaForge", description: "Comment IdeaForge traite vos données personnelles." };
+export const metadata = { title: "Politique de confidentialité et cookies", description: "Comment IdeaForge traite vos données personnelles : données collectées, prestataires, durées de conservation, cookies et droits.", alternates: { canonical: "/confidentialite" } };
 
 export default function Confidentialite() {
   const b = legal.brand;

@@ -4,8 +4,9 @@ import Validator from "@/components/Validator";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
-  title: "Valide ton idée",
+  title: "Valider une idée de business gratuitement (score, demande, plan)",
   description: "Colle ton idée de business ou de SaaS : score, preuves de demande en direct, stack, prompt de création et plan 30 jours — instantané.",
+  alternates: { canonical: "/validate" },
 };
 
 export default function ValidatePage() {

@@ -6,6 +6,9 @@ import type { Idea } from "@/lib/types";
 import { buildPrompt } from "@/lib/prompt";
 import { scoreIdea, buildStack } from "@/lib/score";
 import { getDossier, renderDossier } from "@/lib/dossier";
+import { findIdea, ideaFaq, ideaFacts, allIdeas, ldJson, breadcrumbLd, faqLd, SITE } from "@/lib/seo";
+import { collectionsOf } from "@/lib/collections";
+import IdeaRow from "@/components/IdeaRow";
 import CheckoutButton from "@/components/CheckoutButton";
 import ProofPanel from "@/components/ProofPanel";
 import PromptBox from "@/components/PromptBox";
@@ -17,13 +20,18 @@ import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 
-export function generateMetadata({ params }: { params: { id: string } }): Metadata {
-  const it = IDEAS.find((x) => x.id === params.id);
-  if (!it) return { title: "IdeaForge" };
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const it = await findIdea(params.id);
+  if (!it) return { title: "Idée introuvable", robots: { index: false } };
+  const f = ideaFacts(it);
+  const title = `${it.title} : budget, revenus et plan de lancement`;
+  const description = `${it.pitch ? it.pitch.replace(/\.$/, "") + ". " : ""}Budget de départ ${f.budget}, revenus ${it.revenue || "à estimer"}, ~${f.mrr12Txt}/mois projetés à 12 mois. Concurrents, risques et plan détaillé.`.slice(0, 300);
   return {
-    title: `${it.title} — IdeaForge`,
-    description: it.pitch ?? undefined,
-    openGraph: { title: `${it.title} — IdeaForge`, description: it.pitch ?? undefined },
+    title,
+    description,
+    alternates: { canonical: `/idea/${it.id}` },
+    openGraph: { title, description, url: `/idea/${it.id}`, type: "article" },
+    twitter: { card: "summary_large_image", title, description },
   };
 }
 
@@ -44,6 +52,9 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
   const diff: Record<number, string> = { 1: t.diff1, 2: t.diff2, 3: t.diff3 };
   const plan = await getPlan();
   const member = isMember(plan);
+  const faq = ideaFaq(it);
+  const cols = collectionsOf(it);
+  const similar = (await allIdeas()).filter((x) => x.id !== it!.id && x.sector === it!.sector).slice(0, 5);
 
   return (
     <>
@@ -55,7 +66,31 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
         </div>
       </header>
 
+      <script type="application/ld+json" dangerouslySetInnerHTML={ldJson({
+        "@context": "https://schema.org",
+        "@type": "Article",
+        headline: it.title,
+        description: it.pitch ?? undefined,
+        url: `${SITE}/idea/${it.id}`,
+        inLanguage: "fr",
+        about: it.sector,
+        keywords: (it.tags || []).join(", ") || undefined,
+        author: { "@type": "Organization", name: "IdeaForge", url: SITE },
+        publisher: { "@type": "Organization", name: "IdeaForge", url: SITE, logo: { "@type": "ImageObject", url: `${SITE}/icon.svg` } },
+        isAccessibleForFree: false,
+        hasPart: { "@type": "WebPageElement", isAccessibleForFree: false, cssSelector: ".dz-locked" },
+      })} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={ldJson(breadcrumbLd([
+        { name: "Accueil", url: SITE },
+        ...(cols[0] ? [{ name: cols[0].h1, url: `${SITE}/idees/${cols[0].slug}` }] : [{ name: "Catalogue", url: `${SITE}/#catalogue` }]),
+        { name: it.title, url: `${SITE}/idea/${it.id}` },
+      ]))} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={ldJson(faqLd(faq))} />
+
       <main className="wrap" style={{ maxWidth: 760, paddingBlock: 40 }}>
+        <nav className="crumbs" aria-label="Fil d'Ariane" style={{ marginBottom: 12 }}>
+          <a href="/">Accueil</a> › {cols[0] ? <a href={`/idees/${cols[0].slug}`}>{cols[0].h1}</a> : <a href="/#catalogue">Catalogue</a>} › <span>{it.title}</span>
+        </nav>
         <span className="sector">{it.sector}{it.markets ? ` · ${it.markets}` : ""}</span>
         <h1 style={{ fontSize: 34, margin: "8px 0 10px" }}>{it.title}</h1>
         {it.pitch && <p style={{ fontSize: 18, color: "var(--ink-2)" }}>{it.pitch}</p>}
@@ -129,6 +164,23 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
               <CheckoutButton plan="lifetime" label={t.p_l_cta} redirecting={t.redirecting} unavailable={t.pay_unavailable} />
             </div>
           </div>
+        )}
+        <section className="coll-faq">
+          <h2>Questions fréquentes sur cette idée</h2>
+          {faq.map((f) => <details key={f.q}><summary>{f.q}</summary><p>{f.a}</p></details>)}
+        </section>
+
+        {similar.length > 0 && (
+          <section style={{ marginTop: 30 }}>
+            <h2 style={{ fontSize: 21, marginBottom: 6 }}>Idées similaires</h2>
+            <div className="irows" style={{ marginTop: 10 }}>{similar.map((x) => <IdeaRow key={x.id} it={x} />)}</div>
+          </section>
+        )}
+        {cols.length > 0 && (
+          <section className="coll-more">
+            <h2>Voir aussi</h2>
+            <div className="coll-chips">{cols.map((c) => <a key={c.slug} href={`/idees/${c.slug}`}>{c.h1}</a>)}</div>
+          </section>
         )}
       </main>
     </>

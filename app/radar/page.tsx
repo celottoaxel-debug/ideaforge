@@ -2,7 +2,7 @@ import { getLocale, dict, type Locale } from "@/lib/i18n";
 import LangSwitcher from "@/components/LangSwitcher";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Radar" };
+export const metadata = { title: "Radar des tendances : niches et marchés en croissance", description: "Les niches de business et de SaaS qui montent : signaux de demande, nouvelles idées repérées par IA et tendances à surveiller.", alternates: { canonical: "/radar" } };
 
 type L = Locale;
 const SOURCES: { name: string; url: string; ic: string; desc: Record<L, string> }[] = [

@@ -11,21 +11,29 @@ const site = process.env.NEXT_PUBLIC_SITE_URL || "https://ideaforges.io";
 export const metadata: Metadata = {
   metadataBase: new URL(site),
   title: {
-    default: "IdeaForge — Des idées business qui gagnent déjà de l'argent",
+    default: "IdeaForge — Idées de business chiffrées : budget, revenus, plan de lancement",
     template: "%s · IdeaForge",
   },
   description:
-    "Plus de 80 idées de business validées par la demande réelle (FR · US · ES) : catalogue filtrable, benchmarks publics, et devis SaaS. From proven idea to shipped product.",
-  keywords: ["idées business", "business ideas", "micro-SaaS", "vibe coding", "SaaS", "ideas de negocio"],
+    "Plus de 90 idées de business et de SaaS analysées et chiffrées : budget de départ, revenus projetés sur 24 mois, concurrents, risques et plan de lancement. Valide ton idée et lance-la avec l'IA.",
+  keywords: ["idées de business", "idée d'entreprise", "idée business rentable", "micro-SaaS", "business IA", "idées SaaS", "business ideas", "ideas de negocio"],
+  applicationName: "IdeaForge",
+  authors: [{ name: "Axel Celotto" }],
+  creator: "IdeaForge",
   openGraph: {
     type: "website",
     siteName: "IdeaForge",
-    title: "IdeaForge — Des idées business qui gagnent déjà de l'argent",
-    description: "80+ idées validées (FR · US · ES), benchmarks à l'appui.",
+    locale: "fr_FR",
+    title: "IdeaForge — Idées de business chiffrées",
+    description: "Plus de 90 idées de business analysées : budget, revenus sur 24 mois, concurrents, plan de lancement.",
     url: site,
   },
-  twitter: { card: "summary_large_image", title: "IdeaForge", description: "80+ idées business validées." },
-  alternates: { canonical: site },
+  twitter: { card: "summary_large_image", title: "IdeaForge — Idées de business chiffrées", description: "Plus de 90 idées de business analysées et chiffrées." },
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 } },
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
+    other: process.env.BING_SITE_VERIFICATION ? { "msvalidate.01": process.env.BING_SITE_VERIFICATION } : undefined,
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

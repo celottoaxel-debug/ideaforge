@@ -2,7 +2,7 @@ import { LegalPage, V } from "@/components/LegalPage";
 import { legal } from "@/lib/legal";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Mentions légales — IdeaForge", description: "Mentions légales du site IdeaForge (ideaforges.io)." };
+export const metadata = { title: "Mentions légales", description: "Mentions légales du site IdeaForge (ideaforges.io) : éditeur, hébergeurs, propriété intellectuelle.", alternates: { canonical: "/mentions-legales" } };
 
 export default function MentionsLegales() {
   return (

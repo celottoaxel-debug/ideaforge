@@ -3,7 +3,7 @@ import { getPlan } from "@/lib/plan";
 import { LegalFooter } from "@/components/LegalPage";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Mon compte — IdeaForge", robots: { index: false } };
+export const metadata = { title: "Mon compte", robots: { index: false, follow: false } };
 
 const PLAN_LABEL: Record<string, string> = { lifetime: "Accès à vie", monthly: "Abonnement mensuel (39 €/mois)", free: "Compte gratuit" };
 

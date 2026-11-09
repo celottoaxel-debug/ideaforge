@@ -8,8 +8,21 @@ import CheckoutButton from "@/components/CheckoutButton";
 import QuoteForm from "@/components/QuoteForm";
 import Newsletter from "@/components/Newsletter";
 import LangSwitcher from "@/components/LangSwitcher";
+import { COLLECTIONS } from "@/lib/collections";
+import { SITE, ldJson, organizationLd, faqLd } from "@/lib/seo";
+import { PRICE_LIFETIME, PRICE_MONTHLY } from "@/lib/admin";
+
+const HOME_FAQ = [
+  { q: "Qu'est-ce qu'IdeaForge ?", a: "IdeaForge est un catalogue de plus de 90 idées de business et de logiciels analysées et chiffrées : marché, budget de départ, revenus projetés sur 24 mois, concurrents, risques, plan de lancement et prompts pour construire le produit avec l'IA." },
+  { q: "D'où viennent les chiffres des dossiers ?", a: "Les projections sont calculées à partir d'hypothèses expliquées dans chaque fiche (prix, coût d'acquisition, fidélité des clients, marge). Les références de marché citent des déclarations publiques. Ce sont des estimations pour comparer les idées, pas des promesses de résultat." },
+  { q: "Quelle différence entre l'abonnement et l'accès à vie ?", a: `L'abonnement à ${PRICE_MONTHLY} € par mois donne accès aux fiches complètes et aux nouvelles idées tant qu'il est actif, résiliable à tout moment. L'accès à vie à ${PRICE_LIFETIME} € est un paiement unique qui débloque tout, nouveautés comprises, plus le pack de 50 prompts.` },
+  { q: "Puis-je utiliser les idées pour créer mon entreprise ?", a: "Oui, c'est l'objectif : tu peux librement t'inspirer des idées et utiliser les prompts pour lancer ta propre activité. Seule la revente ou la republication des fiches est interdite." },
+  { q: "Y a-t-il une garantie ?", a: "Oui : satisfait ou remboursé pendant 14 jours, sur simple e-mail, même si tu as déjà utilisé le service." },
+  { q: "Comment savoir si mon idée est bonne ?", a: "Le validateur gratuit donne un score, des liens vers des preuves de demande réelles, une stack technique et un plan de 30 jours. Les membres obtiennent aussi une analyse approfondie par IA." },
+];
 
 export const dynamic = "force-dynamic";
+export const metadata = { alternates: { canonical: "/" } };
 
 export default async function Home() {
   const locale = getLocale();
@@ -46,11 +59,27 @@ export default async function Home() {
 
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={ldJson(organizationLd)} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={ldJson({ "@context": "https://schema.org", "@type": "WebSite", name: "IdeaForge", url: SITE, inLanguage: ["fr", "en", "es"] })} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={ldJson({
+        "@context": "https://schema.org",
+        "@type": "Product",
+        name: "IdeaForge — catalogue d'idées de business chiffrées",
+        description: "Plus de 90 idées de business analysées : budget, revenus sur 24 mois, concurrents, risques, plan de lancement et 50 prompts IA.",
+        brand: { "@type": "Brand", name: "IdeaForge" },
+        url: SITE,
+        offers: [
+          { "@type": "Offer", name: "Accès à vie", price: String(PRICE_LIFETIME), priceCurrency: "EUR", availability: "https://schema.org/InStock", url: `${SITE}/#pricing` },
+          { "@type": "Offer", name: "Abonnement mensuel", price: String(PRICE_MONTHLY), priceCurrency: "EUR", availability: "https://schema.org/InStock", url: `${SITE}/#pricing` },
+        ],
+      })} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={ldJson(faqLd(HOME_FAQ))} />
       <header className="nav">
         <div className="wrap nav-in">
           <a className="brand" href="/"><span className="mk">IF</span> IdeaForge</a>
           <a className="btn" href="/validate">{t.val_nav}</a>
           <a className="btn" href="#catalogue">{t.nav_catalogue}</a>
+          <a className="btn" href="/idees">Thèmes</a>
           <a className="btn" href="/radar">{t.radar_nav}</a>
           <a className="btn" href="#pricing">{t.nav_pricing}</a>
           <a className="btn" href="#devis">{t.nav_devis}</a>
@@ -169,6 +198,20 @@ export default async function Home() {
         <div className="wrap">
           <div className="sec-head"><h2>{t.devis_h2}</h2><p>{t.devis_sub}</p></div>
           <QuoteForm t={t} />
+        </div>
+      </section>
+
+      <section>
+        <div className="wrap coll" style={{ padding: 0, maxWidth: 1140 }}>
+          <h2 style={{ fontSize: 26, marginBottom: 12 }}>Explorer les idées par thème</h2>
+          <div className="coll-chips">{COLLECTIONS.map((c) => <a key={c.slug} href={`/idees/${c.slug}`}>{c.h1}</a>)}</div>
+        </div>
+      </section>
+
+      <section>
+        <div className="wrap coll-faq" style={{ maxWidth: 860, marginTop: 0 }}>
+          <h2 style={{ fontSize: 26 }}>Questions fréquentes</h2>
+          {HOME_FAQ.map((f) => <details key={f.q}><summary>{f.q}</summary><p>{f.a}</p></details>)}
         </div>
       </section>
 

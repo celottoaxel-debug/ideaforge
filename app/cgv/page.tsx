@@ -3,7 +3,7 @@ import { legal } from "@/lib/legal";
 import { PRICE_MONTHLY, PRICE_LIFETIME } from "@/lib/admin";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Conditions générales d’utilisation et de vente — IdeaForge", description: "CGU et CGV d’IdeaForge : abonnement mensuel, accès à vie, garantie 14 jours." };
+export const metadata = { title: "Conditions générales d’utilisation et de vente", description: "CGU et CGV d’IdeaForge : abonnement mensuel, accès à vie, garantie 14 jours satisfait ou remboursé, résiliation.", alternates: { canonical: "/cgv" } };
 
 export default function CGV() {
   const b = legal.brand;

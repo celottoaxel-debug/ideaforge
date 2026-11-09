@@ -1,18 +1,22 @@
 import type { MetadataRoute } from "next";
-import { IDEAS } from "@/lib/ideas";
+import { allIdeas, SITE } from "@/lib/seo";
+import { COLLECTIONS } from "@/lib/collections";
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const site = process.env.NEXT_PUBLIC_SITE_URL || "https://ideaforges.io";
+export const revalidate = 3600;
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
+  const ideas = await allIdeas();
+  const page = (path: string, priority: number, changeFrequency: "daily" | "weekly" | "monthly" | "yearly") =>
+    ({ url: `${SITE}${path}`, lastModified: now, changeFrequency, priority });
   return [
-    { url: site, lastModified: now, changeFrequency: "weekly", priority: 1 },
-    { url: `${site}/prompts`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.6 },
-    ...["/cgv", "/mentions-legales", "/confidentialite"].map((p) => ({ url: `${site}${p}`, lastModified: now, changeFrequency: "yearly" as const, priority: 0.2 })),
-    ...IDEAS.map((it) => ({
-      url: `${site}/idea/${it.id}`,
-      lastModified: now,
-      changeFrequency: "monthly" as const,
-      priority: 0.7,
-    })),
+    page("", 1, "daily"),
+    page("/idees", 0.9, "weekly"),
+    ...COLLECTIONS.map((c) => page(`/idees/${c.slug}`, 0.85, "weekly")),
+    page("/validate", 0.7, "monthly"),
+    page("/radar", 0.6, "weekly"),
+    page("/prompts", 0.6, "monthly"),
+    ...ideas.map((it) => page(`/idea/${it.id}`, it.is_ai ? 0.6 : 0.7, "monthly")),
+    ...["/cgv", "/mentions-legales", "/confidentialite"].map((p) => page(p, 0.2, "yearly")),
   ];
 }

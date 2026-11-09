@@ -503,3 +503,36 @@ footer .brand .mk { background: rgba(255,255,255,.14); }
 .vis-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vis-num { color: var(--green-ink); font-weight: 600; }
 .vis-empty { color: var(--ink-3); font-size: 13.5px; margin: 8px 0 0; }
+
+/* ---------- Pages thématiques & maillage ---------- */
+.coll { max-width: 920px; padding-block: 28px 40px; }
+.coll h1 { font-size: clamp(30px, 5vw, 44px); letter-spacing: -0.025em; margin: 10px 0 6px; }
+.coll-count { font-family: var(--mono); font-size: 12px; color: var(--green-ink); margin: 0 0 14px; }
+.coll-intro { color: var(--ink-2); font-size: 16px; line-height: 1.7; max-width: 70ch; margin: 0 0 12px; }
+.coll-note { color: var(--ink-3); font-size: 12.5px; margin-top: 10px; }
+.crumbs { font-size: 13px; color: var(--ink-3); }
+.crumbs a { color: var(--ink-2); }
+.irows { display: flex; flex-direction: column; gap: 10px; margin-top: 22px; }
+.irow { display: flex; gap: 18px; justify-content: space-between; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 16px 18px; color: inherit; box-shadow: var(--shadow-sm); transition: border-color .15s, transform .15s; }
+.irow:hover { border-color: color-mix(in srgb, var(--green) 45%, var(--line)); transform: translateY(-2px); }
+.irow .sector { font-family: var(--mono); font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--green-ink); font-weight: 600; }
+.irow h3 { font-size: 17px; margin: 3px 0 4px; }
+.irow p { font-size: 13.5px; color: var(--ink-2); margin: 0; line-height: 1.5; }
+.irow-stats { display: flex; gap: 16px; flex-shrink: 0; }
+.irow-stats span { display: flex; flex-direction: column; align-items: flex-end; }
+.irow-stats b { font-size: 14px; }
+.irow-stats i { font-style: normal; font-size: 10.5px; color: var(--ink-3); }
+@media (max-width: 720px) { .irow { flex-direction: column; align-items: flex-start; } .irow-stats span { align-items: flex-start; } }
+.coll-faq { margin-top: 34px; }
+.coll-faq h2, .coll-more h2 { font-size: 21px; margin-bottom: 10px; }
+.coll-faq details { border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); padding: 12px 16px; margin-bottom: 8px; }
+.coll-faq summary { font-weight: 600; cursor: pointer; }
+.coll-faq details p { color: var(--ink-2); margin: 8px 0 0; line-height: 1.6; }
+.coll-more { margin-top: 30px; }
+.coll-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.coll-chips a { border: 1px solid var(--line); border-radius: 99px; padding: 7px 13px; font-size: 13.5px; background: var(--surface); color: var(--ink); }
+.coll-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-top: 20px; }
+.coll-card { display: flex; flex-direction: column; gap: 8px; color: inherit; }
+.coll-card h2 { font-size: 18px; margin: 0; }
+.coll-card p { font-size: 13.5px; color: var(--ink-2); margin: 0; line-height: 1.5; }
+.coll-card .mono { color: var(--green-ink); font-size: 12.5px; margin-top: auto; }
