@@ -13,7 +13,7 @@ function slug(s: string) {
 }
 
 
-export type DiscoverResult = { ok: boolean; added?: number; ids?: string[]; error?: string };
+export type DiscoverResult = { ok: boolean; added?: number; ids?: string[]; ideas?: { id: string; title: string; sector: string }[]; error?: string };
 
 // Génère 3 nouvelles idées par IA et les ajoute au catalogue (Supabase, is_ai=true).
 export async function runDiscover(): Promise<DiscoverResult> {
@@ -64,5 +64,5 @@ Français, chiffres réalistes. Aucun texte hors du JSON.`;
     return { ok: false, error: `Enregistrement échoué : ${e instanceof Error ? e.message : String(e)}` };
   }
 
-  return { ok: true, added: rows.length, ids: rows.map((r) => r.id) };
+  return { ok: true, added: rows.length, ids: rows.map((r) => r.id), ideas: rows.map((r) => ({ id: r.id, title: r.title, sector: r.sector })) };
 }

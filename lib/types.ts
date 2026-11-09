@@ -19,4 +19,5 @@ export type Idea = {
   featured: boolean;
   is_ai: boolean;
   prompt?: string | null;
+  created_at?: string | null;
 };

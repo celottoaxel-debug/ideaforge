@@ -65,6 +65,12 @@ export default async function AdminPage({ searchParams }: { searchParams: { p?: 
     dataError = e instanceof Error ? e.message : "Erreur de lecture des données.";
   }
 
+  let recentAi: { id: string; title: string; sector: string; created_at: string }[] = [], aiTotal = 0;
+  try {
+    const { data, count } = await createAdminClient().from("ideas").select("id,title,sector,created_at", { count: "exact" }).eq("is_ai", true).order("created_at", { ascending: false }).limit(10);
+    recentAi = (data as typeof recentAi) ?? []; aiTotal = count ?? recentAi.length;
+  } catch {}
+
   const total = profiles.length;
   const lifetime = profiles.filter((p) => p.plan === "lifetime").length;
   const monthly = profiles.filter((p) => p.plan === "monthly").length;
@@ -138,6 +144,22 @@ export default async function AdminPage({ searchParams }: { searchParams: { p?: 
           </div>
           <AdminRunJobs />
         </div>
+
+        {recentAi.length > 0 && (
+          <div className="card" style={{ margin: "18px 0" }}>
+            <b>Dernières idées générées par l’IA ({aiTotal} au total)</b>
+            <div className="tablewrap" style={{ marginTop: 10 }}><table className="atable"><thead><tr><th>Idée</th><th>Secteur</th><th>Publiée le</th><th>Statut</th></tr></thead><tbody>
+              {recentAi.map((i) => (
+                <tr key={i.id}>
+                  <td><a href={`/idea/${i.id}`} target="_blank" style={{ fontWeight: 600, textDecoration: "underline" }}>{i.title}</a></td>
+                  <td>{i.sector}</td>
+                  <td>{new Date(i.created_at).toLocaleString("fr-FR", { timeZone: "Europe/Paris", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</td>
+                  <td>{Date.now() - new Date(i.created_at).getTime() < 7 * 86_400_000 ? "🔥 Nouveauté (en tête du catalogue)" : "Dans le catalogue"}</td>
+                </tr>
+              ))}
+            </tbody></table></div>
+          </div>
+        )}
 
         <AdminEmailTest />
 

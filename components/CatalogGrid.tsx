@@ -7,6 +7,13 @@ import FavoriteButton from "@/components/FavoriteButton";
 
 type D = Record<string, string>;
 const PREVIEW = 9;
+const NEW_DAYS = 7;
+
+// Idée découverte par l'IA il y a moins de 7 jours : mise en avant + badge « Nouveauté ».
+export function isNewIdea(i: Idea) {
+  if (!i.is_ai || !i.created_at) return false;
+  return Date.now() - new Date(i.created_at).getTime() < NEW_DAYS * 86_400_000;
+}
 
 export default function CatalogGrid({ ideas, favIds, t }: { ideas: Idea[]; favIds: string[]; t: D }) {
   const [q, setQ] = useState("");
@@ -35,6 +42,8 @@ export default function CatalogGrid({ ideas, favIds, t }: { ideas: Idea[]; favId
     list = [...list].sort((a, b) => {
       if (sort === "score") return scores[b.id] - scores[a.id];
       if (sort === "ticket") return (a.budget_min || 0) - (b.budget_min || 0);
+      const na = isNewIdea(a), nb = isNewIdea(b);
+      if (na || nb) return na && nb ? new Date(b.created_at!).getTime() - new Date(a.created_at!).getTime() : na ? -1 : 1;
       return (b.featured ? 1 : 0) - (a.featured ? 1 : 0) || scores[b.id] - scores[a.id];
     });
     return list;
@@ -96,11 +105,12 @@ export default function CatalogGrid({ ideas, favIds, t }: { ideas: Idea[]; favId
             {shown.map((it) => {
               const sc = scores[it.id];
               return (
-                <div className="card" key={it.id}>
+                <div className={"card" + (isNewIdea(it) ? " is-new" : "")} key={it.id}>
+                  {isNewIdea(it) && <span className="new-flag">🔥 {t.badge_novelty}</span>}
                   <div className="card-badges">
                     {it.featured && <span className="bdg feat">★ {t.badge_feat}</span>}
-                    {it.is_ai && <span className="bdg new">✦ {t.badge_new}</span>}
-                    {sc >= 82 && <span className="bdg hot">🔥 {t.badge_hot}</span>}
+                    {it.is_ai && !isNewIdea(it) && <span className="bdg new">✦ {t.badge_new}</span>}
+                    {sc >= 82 && <span className="bdg hot">⚡ {t.badge_hot}</span>}
                   </div>
                   <a href={`/idea/${it.id}`} className="card-link">
                     <span className="sector">{it.sector}</span>
