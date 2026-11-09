@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail, PRICE_MONTHLY, PRICE_LIFETIME, euro } from "@/lib/admin";
 import AdminEmailTest from "@/components/AdminEmailTest";
 import AdminRunJobs from "@/components/AdminRunJobs";
+import AdminVisitors from "@/components/AdminVisitors";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Admin", robots: { index: false } };
@@ -14,7 +15,8 @@ function fmtDate(s: string) {
   try { return new Date(s).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" }); } catch { return s; }
 }
 
-export default async function AdminPage() {
+export default async function AdminPage({ searchParams }: { searchParams: { p?: string } }) {
+  const period = [1, 7, 30, 90].includes(Number(searchParams?.p)) ? Number(searchParams.p) : 30;
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -113,6 +115,8 @@ export default async function AdminPage() {
             </div>
           ))}
         </div>
+
+        <AdminVisitors period={period} />
 
         <div className="card" style={{ margin: "18px 0" }}>
           <b>Configuration (variables Vercel)</b>

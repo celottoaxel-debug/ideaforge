@@ -31,7 +31,7 @@ export default function Confidentialite() {
         <li><b>Drop hebdomadaire (newsletter)</b> : envoyé uniquement si vous vous y êtes inscrit·e. Base légale : votre consentement, retirable à tout moment par le lien présent dans chaque e-mail.</li>
       </ul>
       <h3>Données techniques et mesure d’audience</h3>
-      <p>Journaux techniques (adresse IP, date, page demandée, erreurs) conservés quelques jours par nos hébergeurs pour la sécurité. Une mesure d’audience anonyme (Vercel Web Analytics) compte les visites sans cookie ni identifiant persistant. Base légale : intérêt légitime.</p>
+      <p>Journaux techniques (adresse IP, date, page demandée, erreurs) conservés quelques jours par nos hébergeurs pour la sécurité. Pour compter les visites, nous enregistrons pour chaque page vue : la page, la source de la visite (site d’origine ou campagne), le pays et la ville déduits de l’adresse IP, le type d’appareil et le navigateur. Votre adresse IP n’est jamais enregistrée : elle sert seulement, avec votre navigateur, à calculer un identifiant anonyme qui change chaque jour, sans cookie. Ces statistiques, réservées à l’éditeur, sont conservées 13 mois. Une mesure d’audience anonyme complémentaire (Vercel Web Analytics) fonctionne aussi sans cookie. Base légale : intérêt légitime (mesure d’audience exemptée de consentement, article 82 de la loi Informatique et Libertés).</p>
 
       <h2>3. Destinataires et prestataires</h2>
       <p>Vos données ne sont jamais vendues. Elles ne sont accessibles qu’à nous et aux prestataires qui nous aident à faire fonctionner le service, dans la limite de leur mission :</p>
@@ -52,6 +52,7 @@ export default function Confidentialite() {
         <li>Demandes de devis : 3 ans après le dernier contact ;</li>
         <li>Inscription à la newsletter : jusqu’à votre désinscription ;</li>
         <li>Factures et pièces comptables : 10 ans (obligation légale, article L123-22 du Code de commerce) ;</li>
+        <li>Statistiques de visite : 13 mois ;</li>
         <li>Journaux techniques : quelques jours.</li>
       </ul>
 

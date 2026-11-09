@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { runNurture, runWeeklyDrop } from "@/lib/email/flows";
 import { emailEnabled } from "@/lib/email/resend";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -14,6 +15,9 @@ export async function GET(request: Request) {
   if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
+  // Statistiques de visite : on ne garde que 13 mois (voir la politique de confidentialité).
+  try { await createAdminClient().from("page_views").delete().lt("created_at", new Date(Date.now() - 395 * 86_400_000).toISOString()); } catch {}
+
   if (!emailEnabled()) return NextResponse.json({ skipped: true, reason: "missing RESEND_API_KEY" });
 
   const url = new URL(request.url);
