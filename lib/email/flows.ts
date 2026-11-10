@@ -5,7 +5,7 @@ import { ADMIN_EMAILS } from "@/lib/admin";
 import { sendEmail, sendBatch, emailEnabled, type Email } from "@/lib/email/resend";
 import { siteUrl, unsubUrl } from "@/lib/email/unsubscribe";
 import {
-  lang, welcomeEmail, adminSignupEmail, adminPaymentEmail, abandonedEmail, nurtureEmail, dropEmail, memberWelcomeEmail, winbackEmail, referralRewardEmail, adminReferralEmail, type MailIdea,
+  lang, welcomeEmail, saasIdeaEmail, adminSignupEmail, adminPaymentEmail, abandonedEmail, nurtureEmail, dropEmail, memberWelcomeEmail, winbackEmail, referralRewardEmail, adminReferralEmail, type MailIdea, type SaasIdea,
 } from "@/lib/email/templates";
 
 const DAY = 86_400_000;
@@ -23,6 +23,22 @@ export function topIdeas(n = 3): MailIdea[] {
     .map(toMail);
 }
 
+// Idées de SaaS « rentables » : secteur SaaS, revenu prouvé par un benchmark public, lançables avec un petit budget.
+export function saasIdeas(): SaasIdea[] {
+  return IDEAS
+    .filter((i) => /saas/i.test(i.sector) && !!i.benchmark && (i.budget_min ?? 0) <= 5000)
+    .map((i) => ({ ...toMail(i), benchmark: i.benchmark, model: i.model, delai: i.delai, steps: i.steps }));
+}
+
+// Une idée différente selon l'inscrit (choix stable : le même compte retombe toujours sur la même idée).
+export function saasIdeaFor(seed: string): SaasIdea | null {
+  const list = saasIdeas();
+  if (!list.length) return null;
+  let h = 2166136261;
+  for (let k = 0; k < seed.length; k++) h = Math.imul(h ^ seed.charCodeAt(k), 16777619);
+  return list[(h >>> 0) % list.length];
+}
+
 // ---------- Inscription : bienvenue + alerte admin (une seule fois par compte) ----------
 export async function onSignIn(userId: string, provider?: string) {
   if (!emailEnabled()) return;
@@ -34,7 +50,7 @@ export async function onSignIn(userId: string, provider?: string) {
       .update({ welcome_sent_at: new Date().toISOString() })
       .eq("id", userId)
       .is("welcome_sent_at", null)
-      .select("email, locale")
+      .select("email, locale, email_opt_out")
       .maybeSingle();
     if (!data?.email) return;
 
@@ -45,6 +61,13 @@ export async function onSignIn(userId: string, provider?: string) {
       sendEmail({ to: data.email, ...w, tag: "welcome" }),
       ...ADMIN_EMAILS.map((to) => sendEmail({ to, ...a, tag: "admin_signup" })),
     ]);
+
+    // Juste après la bienvenue : une idée de SaaS rentable, différente pour chaque inscrit.
+    const idea = saasIdeaFor(userId);
+    if (idea && !data.email_opt_out) {
+      const u = unsubUrl(data.email);
+      await sendEmail({ to: data.email, ...saasIdeaEmail(idea, lang(data.locale), site, u), unsubscribeUrl: u, tag: "saas_idea" });
+    }
   } catch (e) {
     console.error("[email] onSignIn", e);
   }

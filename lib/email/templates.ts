@@ -113,6 +113,36 @@ export function welcomeEmail(l: Lang, site: string): Rendered {
   return done(t.s, layout({ body, preheader: t.pre, lang: l, site }));
 }
 
+// ---------- 1 bis. Idée de SaaS rentable offerte à l'inscription ----------
+export type SaasIdea = MailIdea & { benchmark?: string | null; model?: string | null; delai?: string | null; steps?: string[] };
+const SAAS = {
+  fr: { s: (t: string) => `💡 Ton idée de SaaS rentable : ${t}`, pre: "Une idée choisie pour toi, avec la preuve qu'elle rapporte déjà.", eb: "Ton idée offerte", h: "Une idée de SaaS qui rapporte déjà", intro: "Pour fêter ton inscription, voici une idée de SaaS tirée de notre catalogue. Elle a été choisie parce que des entreprises gagnent déjà de l'argent avec ce modèle.", proof: "La preuve", money: "Comment elle gagne de l'argent", start: "Pour te lancer", budget: "Budget", rev: "Revenu visé", time: "Délai", cta: "Voir la fiche complète", ps: "Cette idée ne te parle pas ? Le catalogue en contient d'autres, triées par budget et par difficulté." },
+  en: { s: (t: string) => `💡 Your profitable SaaS idea: ${t}`, pre: "An idea picked for you, with proof it already makes money.", eb: "Your free idea", h: "A SaaS idea that already makes money", intro: "To celebrate your signup, here's a SaaS idea from our catalog. We picked it because companies already make money with this model.", proof: "The proof", money: "How it makes money", start: "To get started", budget: "Budget", rev: "Target revenue", time: "Timeline", cta: "See the full sheet", ps: "Not your thing? The catalog has more, sorted by budget and difficulty." },
+  es: { s: (t: string) => `💡 Tu idea de SaaS rentable: ${t}`, pre: "Una idea elegida para ti, con la prueba de que ya genera dinero.", eb: "Tu idea de regalo", h: "Una idea de SaaS que ya genera dinero", intro: "Para celebrar tu registro, aquí tienes una idea de SaaS de nuestro catálogo. La elegimos porque ya hay empresas ganando dinero con este modelo.", proof: "La prueba", money: "Cómo gana dinero", start: "Para empezar", budget: "Presupuesto", rev: "Ingresos objetivo", time: "Plazo", cta: "Ver la ficha completa", ps: "¿No te convence? El catálogo tiene más, ordenadas por presupuesto y dificultad." },
+};
+
+const sub = (s: string) => `<div style="margin:22px 0 8px;font-family:${FONT};font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:${C.ink}">${s}</div>`;
+
+export function saasIdeaEmail(i: SaasIdea, l: Lang, site: string, unsub: string): Rendered {
+  const t = SAAS[l];
+  const stat = (k: string, v?: string | null) => (v ? `<td valign="top" style="padding:12px 14px;border-right:1px solid ${C.line}"><div style="font-family:${FONT};font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:${C.ink3}">${k}</div><div style="margin-top:4px;font-family:${FONT};font-size:14px;font-weight:700;color:${C.ink}">${esc(v)}</div></td>` : "");
+  const card = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:18px 0 4px;border:1px solid ${C.line};border-radius:16px;overflow:hidden">
+<tr><td style="padding:20px 22px;background:${C.greenWash}">
+${i.sector ? `<div style="font-family:${FONT};font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:${C.greenDeep};margin-bottom:6px">${esc(i.sector)}</div>` : ""}
+<div style="font-family:${FONT};font-size:21px;line-height:1.25;font-weight:700;letter-spacing:-0.01em;color:${C.ink}">${esc(i.title)}</div>
+${i.pitch ? `<div style="margin-top:8px;font-family:${FONT};font-size:15px;line-height:1.55;color:${C.ink2}">${esc(i.pitch)}</div>` : ""}
+</td></tr>
+<tr><td style="padding:0;border-top:1px solid ${C.line}"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>${stat(t.budget, i.budget)}${stat(t.rev, i.revenue)}${stat(t.time, i.delai)}</tr></table></td></tr>
+</table>`;
+  const proof = i.benchmark ? sub(t.proof) + p(`📈 ${esc(i.benchmark)}`) : "";
+  const money = i.model ? sub(t.money) + p(esc(i.model)) : "";
+  const steps = i.steps?.length ? sub(t.start) + list(i.steps.slice(0, 3).map(esc)) : "";
+  const body = eyebrow(t.eb) + h1(t.h) + p(t.intro) + card + proof + money + steps
+    + button(t.cta, `${site}/idea/${encodeURIComponent(i.id)}`)
+    + p(`<span style="font-size:14px;color:${C.ink3}">${t.ps} <a href="${site}/#catalogue" style="color:${C.greenDeep}">ideaforges.io</a></span>`);
+  return done(t.s(i.title), layout({ body, preheader: t.pre, lang: l, site, unsub, marketing: true }));
+}
+
 // ---------- 2. Relances inscrits non payants (J+1, J+3, J+7) ----------
 const NURTURE = {
   fr: [
