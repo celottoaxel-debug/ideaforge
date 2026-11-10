@@ -12,6 +12,10 @@ import MobileMenuCloser from "@/components/MobileMenuCloser";
 import { COLLECTIONS } from "@/lib/collections";
 import { SITE, ldJson, organizationLd, faqLd } from "@/lib/seo";
 import { PRICE_LIFETIME, PRICE_MONTHLY } from "@/lib/admin";
+import ForgeHero from "@/components/ForgeHero";
+import ForgeHold from "@/components/ForgeHold";
+import { homeCopy } from "@/lib/home-copy";
+import { HERO } from "@/lib/hero-assets";
 
 const HOME_FAQ = [
   { q: "Qu'est-ce qu'IdeaForge ?", a: "IdeaForge est un catalogue de plus de 90 idées de business et de logiciels analysées et chiffrées : marché, budget de départ, revenus projetés sur 24 mois, concurrents, risques, plan de lancement et prompts pour construire le produit avec l'IA." },
@@ -51,6 +55,7 @@ export default async function Home() {
   const ideas = [...extra, ...IDEAS];
   const plan = await getPlan();
   const member = isMember(plan);
+  const c = homeCopy(locale, ideas.length);
 
   let favSet = new Set<string>();
   if (user) {
@@ -65,7 +70,7 @@ export default async function Home() {
       <script type="application/ld+json" dangerouslySetInnerHTML={ldJson({
         "@context": "https://schema.org",
         "@type": "Product",
-        name: "IdeaForge — catalogue d'idées de business chiffrées",
+        name: "IdeaForge : catalogue d'idées de business chiffrées",
         description: "Plus de 90 idées de business analysées : budget, revenus sur 24 mois, concurrents, risques, plan de lancement et 50 prompts IA.",
         brand: { "@type": "Brand", name: "IdeaForge" },
         url: SITE,
@@ -127,50 +132,72 @@ export default async function Home() {
         );
       })()}
 
-      <section className="hero">
-        <div className="wrap">
-          <div className="stat">● {t.hero_stat}</div>
-          <h1>{t.hero_h1a}<span className="hl">{t.hero_h1b}</span></h1>
-          <p>{t.hero_lede} {ideas.length} {t.ideas_online}.</p>
-          <div style={{ marginTop: 22, display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-            <a className="btn primary" href="/validate">⚡ {t.val_nav}</a>
-            {!member && <a className="btn" href="#pricing">{t.hero_cta}</a>}
-          </div>
+      <ForgeHero
+        video={HERO.video} poster={HERO.poster} ending={HERO.ending} bytes={HERO.bytes}
+        bands={c.bands}
+        primary={member ? { href: "#catalogue", label: c.ctaIdeas } : { href: "#pricing", label: `${c.ctaLife} · ${PRICE_LIFETIME} €` }}
+        secondary={member ? undefined : { href: "#catalogue", label: c.ctaIdeas }}
+        staticKicker={c.staticKicker} staticH={c.staticH} staticP={c.staticP}
+      />
 
-          <div className="mock" aria-hidden="true">
-            <div className="mock-bar"><i /><i /><i /><span className="addr mono">ideaforges.io</span></div>
-            <div className="mock-body">
-              <div className="m-panel">
-                <div className="m-h">{t.mock_pain}<span className="m-tag">{t.mock_ai}</span></div>
-                <div className="m-row"><span className="m-ic" style={{ background: "#FF4500" }}>R</span><div className="m-meta"><b>Gestion de notes</b><span>Forum · 4 200</span></div><span className="m-rate">★ 2,9</span></div>
-                <div className="m-row"><span className="m-ic" style={{ background: "#2563EB" }}>T</span><div className="m-meta"><b>Suivi d&apos;habitudes</b><span>App Store · 1 100</span></div><span className="m-rate">★ 3,4</span></div>
-                <div className="m-row"><span className="m-ic" style={{ background: "#7C3AED" }}>C</span><div className="m-meta"><b>Facturation freelance</b><span>Forum · 2 800</span></div><span className="m-rate">★ 3,1</span></div>
-              </div>
-              <div className="m-panel">
-                <div className="m-h">{t.mock_rev}<span className="m-tag green">€ MRR</span></div>
-                <div className="m-row"><span className="m-ic" style={{ background: "#22a86a" }}>M</span><div className="m-meta"><b>Meal-prep sportif</b><span>abonnement</span></div><span className="m-big">8,4 k€</span></div>
-                <div className="m-row"><span className="m-ic" style={{ background: "#0D96F6" }}>C</span><div className="m-meta"><b>Conciergerie</b><span>commission</span></div><span className="m-big">11 k€</span></div>
-                <div className="m-row"><span className="m-ic" style={{ background: "#e09b13" }}>T</span><div className="m-meta"><b>Micro-torréfaction</b><span>B2C</span></div><span className="m-big">6,2 k€</span></div>
-              </div>
-            </div>
+      {/* dégradé partagé par les lignes de circuit */}
+      <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
+        <defs><linearGradient id="trace-g" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stopColor="#2fc07d" stopOpacity="0" /><stop offset=".25" stopColor="#2fc07d" /><stop offset=".75" stopColor="#e7ac3c" /><stop offset="1" stopColor="#e7ac3c" stopOpacity="0" /></linearGradient></defs>
+      </svg>
+
+      <section id="suite" style={{ paddingTop: "clamp(40px, 6vw, 72px)" }}>
+        <div className="wrap">
+          <div className="proofband" data-reveal="stagger">
+            {c.proof.map((p) => (
+              <div key={p.l}><span className="v">{p.v}{p.s && <small>{p.s}</small>}</span><span className="l">{p.l}</span></div>
+            ))}
           </div>
         </div>
       </section>
 
-      <section id="how">
+      <Trace d="M0 45 H300 L340 20 H560 L600 45 H780 L820 70 H1140" nodes={[[340, 20], [600, 45], [820, 70]]} />
+
+      <section id="peurs">
         <div className="wrap">
-          <div className="sec-head"><span className="eyebrow">{t.how_eye}</span><h2>{t.how_h2}</h2><p>{t.how_sub}</p></div>
-          <div className="how3">
-            <div className="step"><span className="n">01</span><h3>{t.how1_h}</h3><p>{t.how1_p}</p></div>
-            <div className="step"><span className="n">02</span><h3>{t.how2_h}</h3><p>{t.how2_p}</p></div>
-            <div className="step"><span className="n">03</span><h3>{t.how3_h}</h3><p>{t.how3_p}</p></div>
+          <div className="sec-head" data-reveal><span className="eyebrow">{c.fearsEye}</span><h2>{c.fearsH}</h2><p>{c.fearsP}</p></div>
+          <div className="fears" data-reveal="stagger">
+            {c.fears.map((f, i) => (
+              <article className="fear" key={i}><q>{f.q}</q><div className="ans">{f.a}</div></article>
+            ))}
           </div>
         </div>
       </section>
+
+      <section id="how" className="tint">
+        <div className="wrap">
+          <div className="sec-head" data-reveal><span className="eyebrow">{c.howEye}</span><h2>{c.howH}</h2><p>{c.howP}</p></div>
+          <Trace d="M190 45 H570 M570 45 H950" nodes={[[190, 45], [570, 45], [950, 45]]} />
+          <div className="how3" data-reveal="stagger">
+            {c.how.map((h, i) => (
+              <div className="step" key={i}><div className="step-img"><img src={HERO.steps[i]} alt="" loading="lazy" decoding="async" width={800} height={600} /></div><span className="n mono">0{i + 1}</span><h3>{h.h}</h3><p>{h.p}</p></div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="forger" className="forge-sec">
+        <div className="wrap">
+          <div className="sec-head" data-reveal><span className="eyebrow">{c.forgeEye}</span><h2>{c.forgeH}</h2><p>{c.forgeP}</p></div>
+          <div data-reveal>
+            <ForgeHold
+              ideas={ideas.filter((x) => x.budget && x.revenue).slice(0, 60).map((x) => ({ id: x.id, title: x.title, sector: x.sector, pitch: x.pitch, budget: x.budget, revenue: x.revenue, delai: x.delai }))}
+              labels={c.forgeL}
+            />
+          </div>
+        </div>
+      </section>
+
+      <Trace d="M0 20 H420 L460 45 H680 L720 70 H1140" nodes={[[460, 45], [720, 70]]} />
 
       <section id="catalogue">
         <div className="wrap">
-          <div className="sec-head">
+          <div className="sec-head" data-reveal>
+            <span className="eyebrow">IdeaForge</span>
             <h2>{t.cat_h2}</h2>
             <p>{member ? t.cat_sub_member : t.cat_sub_free}</p>
           </div>
@@ -178,10 +205,10 @@ export default async function Home() {
         </div>
       </section>
 
-      <section id="niches" style={{ background: "var(--surface-2)", borderBlock: "1px solid var(--line)" }}>
+      <section id="niches" className="tint">
         <div className="wrap">
-          <div className="sec-head"><span className="eyebrow">{t.niche_eye}</span><h2>{t.niche_h2}</h2><p>{t.niche_sub}</p></div>
-          <div className="niche-grid">
+          <div className="sec-head" data-reveal><span className="eyebrow">{t.niche_eye}</span><h2>{t.niche_h2}</h2><p>{t.niche_sub}</p></div>
+          <div className="niche-grid" data-reveal="stagger">
             {NICHES.map((n, i) => (
               <article className="niche" key={i}>
                 <div className="niche-top"><span className="niche-ic" style={{ background: n.c }}>{n.ic}</span></div>
@@ -195,10 +222,10 @@ export default async function Home() {
       </section>
 
       {(
-        <section id="pricing" style={{ background: "var(--surface-2)", borderBlock: "1px solid var(--line)" }}>
+        <section id="pricing">
           <div className="wrap">
-            <div className="sec-head"><h2>{t.price_h2}</h2><p>{t.price_sub}</p></div>
-            <div className="plans">
+            <div className="sec-head" data-reveal><span className="eyebrow">{c.ctaLife}</span><h2>{t.price_h2}</h2><p>{t.price_sub}</p></div>
+            <div className="plans" data-reveal="stagger">
               <div className="plan">
                 <span className="pname">{t.p_monthly}</span>
                 <div className="price"><span className="amt">39€</span><span className="per">{t.per_month}</span></div>
@@ -229,26 +256,43 @@ export default async function Home() {
         </section>
       )}
 
-      <section id="devis" style={{ background: "var(--surface-2)", borderBlock: "1px solid var(--line)" }}>
+      <section id="devis" className="tint">
         <div className="wrap">
-          <div className="sec-head"><h2>{t.devis_h2}</h2><p>{t.devis_sub}</p></div>
+          <div className="sec-head" data-reveal><h2>{t.devis_h2}</h2><p>{t.devis_sub}</p></div>
           <QuoteForm t={t} />
         </div>
       </section>
 
       <section>
         <div className="wrap coll" style={{ padding: 0, maxWidth: 1140 }}>
-          <h2 style={{ fontSize: 26, marginBottom: 12 }}>Explorer les idées par thème</h2>
+          <h2 style={{ fontSize: 26, marginBottom: 12 }}>{c.themesH}</h2>
           <div className="coll-chips">{COLLECTIONS.map((c) => <a key={c.slug} href={`/idees/${c.slug}`}>{c.h1}</a>)}</div>
         </div>
       </section>
 
       <section>
         <div className="wrap coll-faq" style={{ maxWidth: 860, marginTop: 0 }}>
-          <h2 style={{ fontSize: 26 }}>Questions fréquentes</h2>
+          <h2 style={{ fontSize: 26 }}>{c.faqH}</h2>
           {HOME_FAQ.map((f) => <details key={f.q}><summary>{f.q}</summary><p>{f.a}</p></details>)}
         </div>
       </section>
+
+      {!member && (
+        <section style={{ paddingBottom: 30 }}>
+          <div className="wrap">
+            <div className="final" data-reveal>
+              <span className="orbit" aria-hidden="true" />
+              <span className="eyebrow">IdeaForge</span>
+              <h2>{c.finalH}</h2>
+              <p>{c.finalP}</p>
+              <div className="fh-cta">
+                <a className="btn amber lg" href="#pricing">{c.ctaLife} · {PRICE_LIFETIME} €</a>
+                <a className="btn ghost lg" href="#catalogue">{c.ctaIdeas}</a>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       <section>
         <div className="wrap"><Newsletter t={t} /></div>
@@ -257,10 +301,20 @@ export default async function Home() {
       <footer>
         <div className="wrap">
           <div className="brand"><span className="mk">IF</span> IdeaForge</div>
-          <p style={{ marginTop: 12 }}>© 2026 IdeaForge — {t.foot_tag}</p>
+          <p style={{ marginTop: 12 }}>© 2026 IdeaForge · {t.foot_tag}</p>
           <p className="legal-links"><a href="/blog">Blog</a> · <a href="/idees">Idées par thème</a> · <a href="/mentions-legales">Mentions légales</a> · <a href="/cgv">CGV</a> · <a href="/confidentialite">Confidentialité</a> · <a href="/compte">Gérer / résilier mon abonnement</a></p>
         </div>
       </footer>
     </>
+  );
+}
+
+/** Ligne de circuit décorative qui se dessine pendant le scroll. */
+function Trace({ d, nodes }: { d: string; nodes: [number, number][] }) {
+  return (
+    <svg className="trace" viewBox="0 0 1140 90" aria-hidden="true">
+      <path d={d} />
+      {nodes.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="3.2" />)}
+    </svg>
   );
 }
