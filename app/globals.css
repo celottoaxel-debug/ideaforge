@@ -684,7 +684,8 @@ input:focus, textarea:focus, select:focus { border-color: var(--green); box-shad
 .catprev.faded::after { background: linear-gradient(to bottom, transparent, var(--bg)); }
 
 /* --- sections --- */
-section { padding: clamp(64px, 9vw, 120px) 0; position: relative; }
+section { position: relative; }
+#suite, #peurs, #how, #forger, #catalogue, #niches, #pricing, #devis { padding: clamp(64px, 9vw, 120px) 0; }
 section.tint { background: linear-gradient(180deg, transparent, rgba(16,40,30,.35) 18%, rgba(16,40,30,.35) 82%, transparent); }
 
 /* --- entrées chorégraphiées --- */
