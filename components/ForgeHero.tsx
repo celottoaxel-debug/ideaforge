@@ -14,13 +14,8 @@ type Band = {
   kicker: string; h: string; p: string; cta?: boolean;
 };
 
-const GATES = [
-  "(max-width: 720px)",
-  "(orientation: portrait) and (max-width: 1024px)",
-  "(orientation: portrait) and (pointer: coarse)",
-  "(orientation: landscape) and (pointer: coarse) and (max-height: 560px)",
-  "(prefers-reduced-motion: reduce)",
-];
+// Seul le mode « mouvements réduits » affiche l'image fixe ; téléphones et tablettes ont aussi la vidéo
+const GATES = ["(prefers-reduced-motion: reduce)"];
 
 function rng(seed: number) {
   let s = seed >>> 0;

@@ -769,7 +769,7 @@ section.tint { background: linear-gradient(180deg, transparent, rgba(16,40,30,.3
 .fh-static-h { font-size: clamp(40px, 11vw, 64px); font-weight: 650; letter-spacing: -.045em; line-height: 1; margin: 0; color: #f4f8f5; }
 .fh-static .fh-p { margin-inline: auto; }
 .fh-static .btn { text-shadow: none; }
-@media (max-width: 720px), (orientation: portrait) and (max-width: 1024px), (orientation: portrait) and (pointer: coarse), (orientation: landscape) and (pointer: coarse) and (max-height: 560px), (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce) {
   .fh-track { display: none; }
   .fh-static { display: flex; }
 }
@@ -897,3 +897,28 @@ footer { margin-top: 0; }
 /* corrections après test */
 .nav-in { padding-inline: clamp(18px, 4vw, 28px); }
 .fh-band.side-l:not(.fx-settle) { width: min(36vw, 540px); }
+
+/* téléphones et écrans en hauteur : la tête en haut, le texte en dessous */
+@media (max-aspect-ratio: 4/5) {
+  .fh-stage { background: radial-gradient(120% 60% at 70% 28%, #0b2a1b, #05100c 70%); }
+  .fh-poster, .fh-end, .fh-video { inset: auto; top: 56px; right: 0; left: auto; width: 185vw; height: calc(185vw * 9 / 16); background-position: right center;
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 62%, transparent 100%); mask-image: linear-gradient(180deg, #000 0%, #000 62%, transparent 100%); }
+  .fh-video { object-position: right center; }
+  .fh-scrim { background: linear-gradient(180deg, rgba(5,13,10,.35) 0%, rgba(5,13,10,0) 18%, rgba(5,13,10,0) 40%, rgba(5,16,12,.85) 62%, #07130f 100%); }
+  .fh-band, .fh-band.side-l, .fh-band.side-l:not(.fx-settle), .fh-band.fx-settle { left: 20px; right: 20px; width: auto; top: auto; bottom: max(84px, 11svh); transform: none; text-align: left; }
+  .fh-band::before { inset: -20% -10%; }
+  .fh-h, .fh-band.fx-settle .fh-h { font-size: clamp(30px, 8.6vw, 44px); }
+  .fh-p { font-size: 15.5px; max-width: none; }
+  .fh-kicker { margin-bottom: 10px; }
+  .fh-cta { margin-top: 18px; }
+  .fh-cta .btn.lg { padding: 13px 18px; font-size: 15px; }
+  .fh-ring { right: 16px; bottom: 16px; }
+  .fh-cue { bottom: 14px; }
+}
+/* téléphone tenu à l'horizontale : texte plus compact */
+@media (orientation: landscape) and (max-height: 560px) {
+  .fh-band, .fh-band.side-l:not(.fx-settle), .fh-band.fx-settle { width: min(48vw, 480px); }
+  .fh-h, .fh-band.fx-settle .fh-h { font-size: clamp(24px, 4.2vw, 36px); }
+  .fh-p { font-size: 14px; margin-top: 10px; }
+  .fh-cta { margin-top: 14px; }
+}
