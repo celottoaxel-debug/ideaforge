@@ -1,5 +1,5 @@
 import Motion from "@/components/Motion";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { Analytics } from "@vercel/analytics/react";
@@ -7,7 +7,7 @@ import { getLocale } from "@/lib/i18n";
 import Tracker from "@/components/Tracker";
 import "./globals.css";
 
-export const viewport = { themeColor: "#07130f", colorScheme: "dark" };
+export const viewport: Viewport = { themeColor: "#07130f", colorScheme: "dark" };
 
 const site = process.env.NEXT_PUBLIC_SITE_URL || "https://ideaforges.io";
 

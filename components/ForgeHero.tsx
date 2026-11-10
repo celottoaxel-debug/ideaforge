@@ -172,7 +172,7 @@ export default function ForgeHero(props: {
         if (done) break;
         clearTimeout(watchdog);
         watchdog = window.setTimeout(() => ctrl.abort(), 20000);
-        chunks.push(value);
+        chunks.push(value as unknown as BlobPart);
         got += value.length;
         const frac = Math.min(1, got / total);
         const now = performance.now();

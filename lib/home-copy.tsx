@@ -21,8 +21,8 @@ export function homeCopy(locale: Locale, n: number) {
     fearsEye: "Ce qui bloque", fearsH: "Les trois peurs avant de se lancer.", fearsP: "On les entend partout. Voici comment IdeaForge y répond.",
     fears: [
       { q: "Je ne sais pas quoi lancer.", a: <>Tu parcours <b>{n} idées</b> triées par budget, secteur et difficulté. Tu choisis celle qui te ressemble.</> },
-      { q: "J'ai peur de construire un truc que personne n'achète.", a: <>Chaque fiche montre <b>la demande réelle</b> : marché, concurrents qui gagnent déjà de l'argent, risques à surveiller.</> },
-      { q: "Je ne sais pas par où commencer.", a: <>Un <b>plan de lancement étape par étape</b>, et les prompts pour coder ton produit avec l'IA.</> },
+      { q: "J'ai peur de construire un truc que personne n'achète.", a: <>Chaque fiche montre <b>la demande réelle</b>{" : marché, concurrents qui gagnent déjà de l'argent, risques à surveiller."}</> },
+      { q: "Je ne sais pas par où commencer.", a: <>Un <b>plan de lancement étape par étape</b>{", et les prompts pour coder ton produit avec l'IA."}</> },
     ],
     howEye: "Comment ça marche", howH: "De l'idée brute au plan solide.", howP: "Trois étapes, comme une coulée qui remplit un circuit.",
     how: [
