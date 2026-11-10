@@ -990,3 +990,5 @@ footer { margin-top: 0; }
 .rtiers { display: flex; gap: 5px; margin-top: 6px; flex-wrap: wrap; }
 .rtiers span { font-size: 11px; border-radius: 99px; padding: 2px 8px; background: rgba(255,255,255,.05); color: var(--ink-3); }
 .rtiers span.on { background: rgba(231,172,60,.14); color: var(--amber-ink); }
+.nav .btn { white-space: nowrap; }
+@media (max-width: 480px) { .nav-in > a.btn:not(.dark):not(:last-child) { display: none; } }
