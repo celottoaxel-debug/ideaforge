@@ -892,3 +892,7 @@ footer { margin-top: 0; }
   body::before { transform: none; }
 }
 @media print { body::before, body::after { display: none; } }
+
+/* corrections après test */
+.nav-in { padding-inline: clamp(18px, 4vw, 28px); }
+.fh-band.side-l:not(.fx-settle) { width: min(36vw, 540px); }
