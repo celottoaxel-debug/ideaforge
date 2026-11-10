@@ -70,7 +70,7 @@ export default async function Home() {
       <script type="application/ld+json" dangerouslySetInnerHTML={ldJson({
         "@context": "https://schema.org",
         "@type": "Product",
-        name: "IdeaForge — catalogue d'idées de business chiffrées",
+        name: "IdeaForge : catalogue d'idées de business chiffrées",
         description: "Plus de 90 idées de business analysées : budget, revenus sur 24 mois, concurrents, risques, plan de lancement et 50 prompts IA.",
         brand: { "@type": "Brand", name: "IdeaForge" },
         url: SITE,
@@ -174,7 +174,7 @@ export default async function Home() {
           <Trace d="M190 45 H570 M570 45 H950" nodes={[[190, 45], [570, 45], [950, 45]]} />
           <div className="how3" data-reveal="stagger">
             {c.how.map((h, i) => (
-              <div className="step" key={i}><span className="n mono">0{i + 1}</span><h3>{h.h}</h3><p>{h.p}</p></div>
+              <div className="step" key={i}><div className="step-img"><img src={HERO.steps[i]} alt="" loading="lazy" decoding="async" width={800} height={600} /></div><span className="n mono">0{i + 1}</span><h3>{h.h}</h3><p>{h.p}</p></div>
             ))}
           </div>
         </div>
@@ -301,7 +301,7 @@ export default async function Home() {
       <footer>
         <div className="wrap">
           <div className="brand"><span className="mk">IF</span> IdeaForge</div>
-          <p style={{ marginTop: 12 }}>© 2026 IdeaForge — {t.foot_tag}</p>
+          <p style={{ marginTop: 12 }}>© 2026 IdeaForge · {t.foot_tag}</p>
           <p className="legal-links"><a href="/blog">Blog</a> · <a href="/idees">Idées par thème</a> · <a href="/mentions-legales">Mentions légales</a> · <a href="/cgv">CGV</a> · <a href="/confidentialite">Confidentialité</a> · <a href="/compte">Gérer / résilier mon abonnement</a></p>
         </div>
       </footer>

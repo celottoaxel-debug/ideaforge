@@ -722,7 +722,10 @@ section.tint { background: linear-gradient(180deg, transparent, rgba(16,40,30,.3
 :root { --tshadow: 0 1px 2px rgba(3,10,7,.95), 0 3px 12px rgba(3,10,7,.78), 0 10px 44px rgba(3,10,7,.8); }
 
 .fh-band { position: absolute; top: 50%; transform: translateY(-50%); width: min(30vw, 470px); text-shadow: var(--tshadow); z-index: 2; visibility: visible; }
-.fh-band.side-l { left: clamp(20px, 5vw, 80px); }
+.fh-band.side-l { left: clamp(20px, 6vw, 110px); }
+.fh-band.side-l .fh-cta { justify-content: flex-start; }
+.fh-band.fx-settle { width: min(44vw, 640px); }
+.fh-band.fx-settle .fh-h { font-size: clamp(42px, 5.4vw, 84px); }
 .fh-band.side-r { right: clamp(20px, 5vw, 80px); text-align: right; }
 .fh-band.side-r .fh-p { margin-left: auto; }
 .fh-band.side-c { left: 50%; top: auto; bottom: clamp(56px, 11vh, 120px); transform: translateX(-50%); width: min(92vw, 820px); text-align: center; }
@@ -741,7 +744,7 @@ section.tint { background: linear-gradient(180deg, transparent, rgba(16,40,30,.3
 .fh-band .w { display: inline-block; }
 .fx-rise .w, .fx-settle .w { --kc: clamp(0, (var(--k, 0) - var(--th, 0)) * 2.4, 1); opacity: var(--kc); transform: translateY(calc((1 - var(--kc)) * 0.55em)); }
 .fx-drift .w { --kc: clamp(0, (var(--k, 0) - var(--th, 0)) * 2.6, 1); opacity: var(--kc); transform: translateY(calc((1 - var(--kc)) * -0.9em)); }
-.fx-grid .c { display: inline-block; --kc: clamp(0, (var(--k, 0) - var(--th, 0)) * 2.6, 1); opacity: var(--kc); transform: translateX(calc((1 - var(--kc)) * var(--jx, 0px))); }
+.fx-grid .c { display: inline-block; --kc: clamp(0, (var(--k, 0) - var(--th, 0)) * 2.6, 1); opacity: var(--kc); transform: translate(calc((1 - var(--kc)) * var(--jx, 0px)), calc((1 - var(--kc)) * var(--jy, 0px))) scale(calc(.6 + .4 * var(--kc))); }
 .fh-band .fh-kicker, .fh-band .fh-p { --ks: clamp(0, (var(--k, 0) - .45) * 2.6, 1); opacity: var(--ks); transform: translateY(calc((1 - var(--ks)) * 10px)); }
 .fx-settle .fh-p { --ks: clamp(0, (var(--k, 0) - .62) * 4, 1); }
 .fx-settle .fh-cta { --kb: clamp(0, (var(--k, 0) - .76) * 5, 1); opacity: var(--kb); transform: translateY(calc((1 - var(--kb)) * 12px)); }
@@ -760,7 +763,7 @@ section.tint { background: linear-gradient(180deg, transparent, rgba(16,40,30,.3
 
 /* image fixe (téléphones, tablettes portrait, mouvements réduits) */
 .fh-static { display: none; position: relative; min-height: 92svh; align-items: flex-end; padding: 120px 0 56px;
-  background: linear-gradient(180deg, rgba(5,13,10,.35) 0%, rgba(5,13,10,.15) 35%, rgba(7,19,15,.92) 72%, var(--bg) 100%), var(--end) center 35% / cover no-repeat; }
+  background: linear-gradient(180deg, rgba(5,13,10,.35) 0%, rgba(5,13,10,.15) 35%, rgba(7,19,15,.92) 72%, var(--bg) 100%), var(--end) 74% 30% / cover no-repeat; }
 .fh-static-in { text-align: center; text-shadow: var(--tshadow); }
 .fh-static-h { font-size: clamp(40px, 11vw, 64px); font-weight: 650; letter-spacing: -.045em; line-height: 1; margin: 0; color: #f4f8f5; }
 .fh-static .fh-p { margin-inline: auto; }
@@ -797,6 +800,9 @@ section.tint { background: linear-gradient(180deg, transparent, rgba(16,40,30,.3
 .step { position: relative; border: 1px solid var(--line); border-radius: 20px; padding: 26px 24px; background: linear-gradient(180deg, rgba(20,38,31,.55), rgba(9,22,17,.55)); }
 .step .n { display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(47,192,125,.5); color: var(--green-ink); background: rgba(47,192,125,.08); box-shadow: 0 0 22px -4px rgba(47,192,125,.6); font-size: 12px; }
 .step h3 { font-size: 21px; margin: 18px 0 8px; }
+.step-img { margin: -26px -24px 22px; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 20px 20px 0 0; border-bottom: 1px solid var(--line); background: #06130d; }
+.step-img img { width: 100%; height: 100%; object-fit: cover; display: block; transform: scale(1.04); transition: transform 1.2s var(--ease-out); }
+.step:hover .step-img img { transform: scale(1.09); }
 .step p { color: var(--ink-2); font-size: 15px; line-height: 1.6; }
 
 /* =================== FORGER UNE IDÉE (moment interactif) =================== */

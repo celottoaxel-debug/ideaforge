@@ -133,7 +133,7 @@ export default function Validator({ t, locale }: { t: D; locale: string }) {
               <div className="ai-report">
                 <h4 className="val-sec">{t.ai_h}</h4>
                 <div className="ai-verdict"><span className="ai-score mono">{ai.score}/100</span><p>{ai.verdict}</p></div>
-                {ai.competitors?.length > 0 && <><h4 className="val-sec">{t.ai_competitors}</h4><ul className="ai-list">{ai.competitors.map((c, i) => <li key={i}><b>{c.name}</b> — {c.note}</li>)}</ul></>}
+                {ai.competitors?.length > 0 && <><h4 className="val-sec">{t.ai_competitors}</h4><ul className="ai-list">{ai.competitors.map((c, i) => <li key={i}><b>{c.name}</b> : {c.note}</li>)}</ul></>}
                 {ai.market && <><h4 className="val-sec">{t.ai_market}</h4><p>{ai.market}</p></>}
                 {ai.angles?.length > 0 && <><h4 className="val-sec">{t.ai_angles}</h4><ul className="ai-list">{ai.angles.map((a, i) => <li key={i}>{a}</li>)}</ul></>}
                 {ai.risks?.length > 0 && <><h4 className="val-sec">{t.ai_risks}</h4><ul className="ai-list">{ai.risks.map((r, i) => <li key={i}>{r}</li>)}</ul></>}

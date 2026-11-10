@@ -50,7 +50,7 @@ function Split({ text, fx, seed }: { text: string; fx: Band["fx"]; seed: number 
                 ? [...w].map((c, k) => {
                     const t = (ci++ / total) * 0.55 + r() * 0.06;
                     return (
-                      <span key={k} className="c" style={{ ["--th" as string]: t.toFixed(3), ["--jx" as string]: `${Math.round((r() - 0.5) * 90)}px` }}>{c}</span>
+                      <span key={k} className="c" style={{ ["--th" as string]: t.toFixed(3), ["--jx" as string]: `${Math.round((r() - 0.5) * 120)}px`, ["--jy" as string]: `${Math.round((r() - 0.5) * 70)}px` }}>{c}</span>
                     );
                   })
                 : w}
@@ -91,6 +91,9 @@ export default function ForgeHero(props: {
       const range = track.offsetHeight - window.innerHeight;
       return range > 0 ? clamp(-r.top / range, 0, 1) : 0;
     };
+
+    // la tête se forme dans la première moitié du clip : on étire ce passage sur plus de scroll
+    const timeAt = (p: number) => Math.pow(p, 1.5) * Math.max(0, video.duration - 0.04);
 
     function requestSeek(t: number) {
       if (!video.duration || failed || !video.src) return;
@@ -142,7 +145,7 @@ export default function ForgeHero(props: {
       if (loadK < 1) loadK = smooth(now - loadStart, 150, 1300);
       const settled = Math.abs(target - shown) < 0.0005;
       if (settled) shown = target;
-      if (video.duration) requestSeek(shown * (video.duration - 0.04));
+      if (video.duration) requestSeek(timeAt(shown));
       updateBands(shown);
       if (settled && loadK >= 1) { rafId = null; lastTick = 0; }
       else rafId = requestAnimationFrame(tick);
@@ -185,7 +188,7 @@ export default function ForgeHero(props: {
       video.addEventListener("canplay", () => {
         ring.classList.add("done");
         stage.classList.add("video-ready");
-        requestSeek(heroProgress() * (video.duration - 0.04));
+        requestSeek(timeAt(heroProgress()));
       }, { once: true });
     }
 

@@ -90,7 +90,7 @@ export default function CatalogGrid({ ideas, favIds, t }: { ideas: Idea[]; favId
                 <tr><td>{t.ticket}</td>{cmpIdeas.map((i) => <td key={i.id}>{i.budget}</td>)}</tr>
                 <tr><td>{t.potential}</td>{cmpIdeas.map((i) => <td key={i.id}>{i.revenue}</td>)}</tr>
                 <tr><td>{t.delai}</td>{cmpIdeas.map((i) => <td key={i.id}>{i.delai}</td>)}</tr>
-                <tr><td>{t.m_diff}</td>{cmpIdeas.map((i) => <td key={i.id}>{i.difficulty ? diffLabel[i.difficulty] : "—"}</td>)}</tr>
+                <tr><td>{t.m_diff}</td>{cmpIdeas.map((i) => <td key={i.id}>{i.difficulty ? diffLabel[i.difficulty] : "·"}</td>)}</tr>
               </tbody>
             </table>
           </div>
