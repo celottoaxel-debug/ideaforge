@@ -159,6 +159,41 @@ export default async function Home() {
 
       <Trace d="M0 45 H300 L340 20 H560 L600 45 H780 L820 70 H1140" nodes={[[340, 20], [600, 45], [820, 70]]} />
 
+      {(
+        <section id="pricing" className="tint">
+          <div className="wrap">
+            <div className="sec-head" data-reveal><span className="eyebrow">{c.ctaLife}</span><h2>{t.price_h2}</h2><p>{t.price_sub}</p></div>
+            <div className="plans" data-reveal="stagger">
+              <div className="plan">
+                <span className="pname">{t.p_monthly}</span>
+                <div className="price"><span className="amt">39€</span><span className="per">{t.per_month}</span></div>
+                <ul><li>{t.p_m_f1}</li><li>{t.p_m_f2}</li><li>{t.p_m_f3}</li></ul>
+                {paid
+                  ? <span className="btn" style={{ justifyContent: "center", width: "100%" }}>{t.nav_member}</span>
+                  : <CheckoutButton plan="monthly" label={t.p_m_cta} redirecting={t.redirecting} unavailable={t.pay_unavailable} className="btn" />}
+              </div>
+              <div className="plan feat">
+                <span className="badge">{t.most_chosen}</span>
+                <span className="pname">{t.p_life}</span>
+                <div className="price"><span className="amt">129€</span><span className="was">199€</span></div>
+                <ul>
+                  <li>{t.p_l_f1}</li><li>{t.p_l_f2}</li><li>{t.p_l_f3}</li><li>{t.p_l_f4}</li>
+                  <li className="bonus">{t.p_l_b1}</li><li className="bonus">{t.p_l_b2}</li>
+                </ul>
+                <div className="compare">{t.compare}</div>
+                {paid
+                  ? <span className="btn primary" style={{ justifyContent: "center", width: "100%" }}>{t.nav_member}</span>
+                  : <CheckoutButton plan="lifetime" label={t.p_l_cta} redirecting={t.redirecting} unavailable={t.pay_unavailable} />}
+                <div className="guarantee">{t.guarantee}</div>
+              </div>
+            </div>
+            <div className="places">
+              <div className="places-note" style={{ marginTop: 0, textAlign: "center" }}>{t.places_note}</div>
+            </div>
+          </div>
+        </section>
+      )}
+
       <section id="peurs">
         <div className="wrap">
           <div className="sec-head" data-reveal><span className="eyebrow">{c.fearsEye}</span><h2>{c.fearsH}</h2><p>{c.fearsP}</p></div>
@@ -222,41 +257,6 @@ export default async function Home() {
           </div>
         </div>
       </section>
-
-      {(
-        <section id="pricing">
-          <div className="wrap">
-            <div className="sec-head" data-reveal><span className="eyebrow">{c.ctaLife}</span><h2>{t.price_h2}</h2><p>{t.price_sub}</p></div>
-            <div className="plans" data-reveal="stagger">
-              <div className="plan">
-                <span className="pname">{t.p_monthly}</span>
-                <div className="price"><span className="amt">39€</span><span className="per">{t.per_month}</span></div>
-                <ul><li>{t.p_m_f1}</li><li>{t.p_m_f2}</li><li>{t.p_m_f3}</li></ul>
-                {paid
-                  ? <span className="btn" style={{ justifyContent: "center", width: "100%" }}>{t.nav_member}</span>
-                  : <CheckoutButton plan="monthly" label={t.p_m_cta} redirecting={t.redirecting} unavailable={t.pay_unavailable} className="btn" />}
-              </div>
-              <div className="plan feat">
-                <span className="badge">{t.most_chosen}</span>
-                <span className="pname">{t.p_life}</span>
-                <div className="price"><span className="amt">129€</span><span className="was">199€</span></div>
-                <ul>
-                  <li>{t.p_l_f1}</li><li>{t.p_l_f2}</li><li>{t.p_l_f3}</li><li>{t.p_l_f4}</li>
-                  <li className="bonus">{t.p_l_b1}</li><li className="bonus">{t.p_l_b2}</li>
-                </ul>
-                <div className="compare">{t.compare}</div>
-                {paid
-                  ? <span className="btn primary" style={{ justifyContent: "center", width: "100%" }}>{t.nav_member}</span>
-                  : <CheckoutButton plan="lifetime" label={t.p_l_cta} redirecting={t.redirecting} unavailable={t.pay_unavailable} />}
-                <div className="guarantee">{t.guarantee}</div>
-              </div>
-            </div>
-            <div className="places">
-              <div className="places-note" style={{ marginTop: 0, textAlign: "center" }}>{t.places_note}</div>
-            </div>
-          </div>
-        </section>
-      )}
 
       <section id="devis" className="tint">
         <div className="wrap">
