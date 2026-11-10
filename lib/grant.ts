@@ -1,7 +1,8 @@
 import type Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { onPayment } from "@/lib/email/flows";
+import { onPayment, onReferralReward } from "@/lib/email/flows";
+import { onReferralPaid } from "@/lib/referral";
 
 export type PaidPlan = "lifetime" | "monthly";
 
@@ -45,6 +46,13 @@ export async function grantFromCheckoutSession(
   // Alerte « nouveau paiement » une seule fois (la page succès et le webhook passent tous deux ici).
   if (previous.plan !== plan) {
     try { await onPayment(email, plan, session.amount_total, session.currency, previous.locale); } catch (e) { console.error("[email] onPayment", e); }
+  }
+  // Parrainage : premier paiement d'un filleul -> paliers du parrain (ne s'exécute qu'une fois par filleul)
+  if (previous.plan !== "lifetime" && previous.plan !== "monthly") {
+    try {
+      const r = await onReferralPaid(userId, plan, session.amount_total);
+      if (r) await onReferralReward(email, r);
+    } catch (e) { console.error("[referral] paid", e); }
   }
   return plan;
 }

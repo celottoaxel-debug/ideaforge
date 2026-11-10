@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
+import { cookies } from "next/headers";
+import { attachReferral, hasReferralDiscount, ensureReferralCoupon, REF_COOKIE } from "@/lib/referral";
 
 // Crée une session de paiement Stripe.
 // body: { plan: "lifetime" | "monthly" }. L'utilisateur doit être connecté.
@@ -24,6 +26,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "price_not_configured" }, { status: 500 });
   }
 
+  // Parrainage : rattache le compte si besoin, puis -20 % automatique sur la 1re commande.
+  const ref = cookies().get(REF_COOKIE)?.value;
+  if (ref) await attachReferral(user.id, ref);
+  const coupon = (await hasReferralDiscount(user.id)) ? await ensureReferralCoupon() : null;
+
   try {
     const session = await stripe.checkout.sessions.create({
       mode: plan === "monthly" ? "subscription" : "payment",
@@ -33,7 +40,8 @@ export async function POST(request: Request) {
       metadata: { user_id: user.id, plan },
       success_url: `${site}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${site}/#pricing`,
-      allow_promotion_codes: true,
+      // Stripe n'accepte pas un coupon imposé ET la saisie d'un code promo en même temps.
+      ...(coupon ? { discounts: [{ coupon }] } : { allow_promotion_codes: true }),
       // Expire au bout de 2 h sans paiement => Stripe envoie checkout.session.expired => e-mail de relance.
       expires_at: Math.floor(Date.now() / 1000) + 2 * 60 * 60,
       // Pour retrouver l'utilisateur quand l'abonnement mensuel est résilié.

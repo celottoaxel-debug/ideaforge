@@ -20,7 +20,12 @@ export default function LoginPage() {
   const [sent, setSent] = useState(false);
   const [msg, setMsg] = useState("");
   const [t, setT] = useState(L.fr);
-  useEffect(() => { setT(L[readLocale()] ?? L.fr); }, []);
+  useEffect(() => {
+    setT(L[readLocale()] ?? L.fr);
+    // ?next=/page : on revient sur cette page après la connexion (mémorisé 10 min)
+    const n = new URLSearchParams(window.location.search).get("next");
+    if (n && n.startsWith("/") && !n.startsWith("//")) document.cookie = `if_next=${encodeURIComponent(n)}; path=/; max-age=600; samesite=lax`;
+  }, []);
 
   const supabase = createClient();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== "undefined" ? window.location.origin : "");

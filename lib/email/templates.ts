@@ -228,3 +228,27 @@ export function winbackEmail(l: Lang, site: string, unsub: string): Rendered {
   const body = eyebrow(t.eb) + h1(t.h) + p(t.intro) + button(t.cta, `${site}/#pricing`) + p(`<span style="font-size:14px;color:${C.ink3}">${t.ps}</span>`);
   return done(t.s, layout({ body, preheader: t.pre, lang: l, site, unsub, marketing: true }));
 }
+
+// ---------- 9. Parrainage : un filleul vient de payer ----------
+const REFT = {
+  fr: { s: (n: number) => `🎉 Un ami parrainé vient de rejoindre IdeaForge (${n} au total)`, pre: "Ton lien de parrainage fonctionne.", eb: "Parrainage", h: "Ton ami vient de rejoindre IdeaForge", intro: (n: number) => `Merci ! Une personne inscrite avec ton lien vient de prendre son accès. Tu as maintenant <b>${n} ami${n > 1 ? "s" : ""} parrainé${n > 1 ? "s" : ""}</b>.`, t1: "✨ <b>1 mois membre offert</b> : toutes les fiches complètes sont débloquées pour 30 jours.", t1i: "✨ Palier 1 atteint. Tu es déjà membre à vie, il est inclus dans ton accès.", t2: "🔥 <b>Accès à vie offert</b> : tout IdeaForge est à toi, pour toujours, sans rien payer.", t2i: "🔥 Palier 2 atteint. Tu es déjà membre à vie, il est inclus dans ton accès.", t3: "🚀 <b>Palier 3 atteint</b> : ton SaaS codé en priorité avec -30 % sur le devis. On te recontacte très vite par e-mail.", next: (k: number, name: string) => `Plus que <b>${k}</b> ami${k > 1 ? "s" : ""} pour débloquer : ${name}.`, cta: "Voir mon parrainage" },
+  en: { s: (n: number) => `🎉 A friend you referred just joined IdeaForge (${n} total)`, pre: "Your referral link works.", eb: "Referral", h: "Your friend just joined IdeaForge", intro: (n: number) => `Thank you! Someone who signed up with your link just got their access. You now have <b>${n} referred friend${n > 1 ? "s" : ""}</b>.`, t1: "✨ <b>1 free month of membership</b>: every full sheet is unlocked for 30 days.", t1i: "✨ Tier 1 reached. You already have lifetime access, it's included.", t2: "🔥 <b>Free lifetime access</b>: all of IdeaForge is yours, forever.", t2i: "🔥 Tier 2 reached. You already have lifetime access, it's included.", t3: "🚀 <b>Tier 3 reached</b>: your SaaS built in priority with 30% off the quote. We'll email you very soon.", next: (k: number, name: string) => `Only <b>${k}</b> more friend${k > 1 ? "s" : ""} to unlock: ${name}.`, cta: "See my referrals" },
+  es: { s: (n: number) => `🎉 Un amigo que invitaste se unió a IdeaForge (${n} en total)`, pre: "Tu enlace de referido funciona.", eb: "Referidos", h: "Tu amigo se unió a IdeaForge", intro: (n: number) => `¡Gracias! Alguien que se registró con tu enlace acaba de obtener su acceso. Ya tienes <b>${n} amigo${n > 1 ? "s" : ""} referido${n > 1 ? "s" : ""}</b>.`, t1: "✨ <b>1 mes de membresía gratis</b>: todas las fichas completas desbloqueadas durante 30 días.", t1i: "✨ Nivel 1 alcanzado. Ya tienes acceso de por vida, está incluido.", t2: "🔥 <b>Acceso de por vida gratis</b>: todo IdeaForge es tuyo, para siempre.", t2i: "🔥 Nivel 2 alcanzado. Ya tienes acceso de por vida, está incluido.", t3: "🚀 <b>Nivel 3 alcanzado</b>: tu SaaS programado en prioridad con -30 % en el presupuesto. Te escribimos muy pronto.", next: (k: number, name: string) => `Solo <b>${k}</b> amigo${k > 1 ? "s" : ""} más para desbloquear: ${name}.`, cta: "Ver mis referidos" },
+};
+const TIER_NAMES = { fr: ["1 mois membre offert", "l'accès à vie offert", "ton SaaS en priorité à -30 %"], en: ["a free month", "free lifetime access", "your SaaS in priority at -30%"], es: ["un mes gratis", "acceso de por vida gratis", "tu SaaS en prioridad con -30 %"] };
+
+export function referralRewardEmail(l: Lang, site: string, paidCount: number, newTiers: { tier: number; status: string }[]): Rendered {
+  const t = REFT[l];
+  const lines = newTiers.map((n) => n.tier === 1 ? (n.status === "included" ? t.t1i : t.t1) : n.tier === 2 ? (n.status === "included" ? t.t2i : t.t2) : t.t3);
+  const needs = [1, 3, 10];
+  const nextIdx = needs.findIndex((x) => x > paidCount);
+  const nextLine = nextIdx >= 0 ? p(t.next(needs[nextIdx] - paidCount, TIER_NAMES[l][nextIdx])) : "";
+  const body = eyebrow(t.eb) + h1(t.h) + p(t.intro(paidCount)) + lines.map((x) => p(x)).join("") + nextLine + button(t.cta, `${site}/parrainage`);
+  return done(t.s(paidCount), layout({ body, preheader: t.pre, lang: l, site }));
+}
+
+export function adminReferralEmail(referrer: string, referred: string, paidCount: number, newTiers: { tier: number; status: string }[], site: string): Rendered {
+  const tiers = newTiers.length ? p(`Palier${newTiers.length > 1 ? "s" : ""} débloqué${newTiers.length > 1 ? "s" : ""} : <b>${newTiers.map((n) => `${n.tier}${n.status === "included" ? " (déjà inclus)" : n.status === "pending" ? " (à livrer par toi)" : ""}`).join(", ")}</b>.`) : "";
+  const body = eyebrow("Parrainage") + h1("🤝 Un filleul vient de payer") + p(`<b>${esc(referred)}</b>, parrainé par <b>${esc(referrer)}</b>, vient de payer. ${esc(referrer)} a maintenant <b>${paidCount}</b> filleul${paidCount > 1 ? "s" : ""} payant${paidCount > 1 ? "s" : ""}.`) + tiers + button("Voir le parrainage", `${site}/admin/parrainage`);
+  return done(`Parrainage : ${referred} (parrain ${referrer}, ${paidCount} au total)`, layout({ body, lang: "fr", site }));
+}

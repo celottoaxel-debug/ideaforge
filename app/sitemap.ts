@@ -19,6 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     page("/validate", 0.7, "monthly"),
     page("/radar", 0.6, "weekly"),
     page("/prompts", 0.6, "monthly"),
+    page("/parrainage", 0.5, "monthly"),
     ...ideas.map((it) => page(`/idea/${it.id}`, it.is_ai ? 0.6 : 0.7, "monthly")),
     ...["/cgv", "/mentions-legales", "/confidentialite"].map((p) => page(p, 0.2, "yearly")),
   ];

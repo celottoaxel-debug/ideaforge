@@ -55,6 +55,7 @@ export default async function Home() {
   const ideas = [...extra, ...IDEAS];
   const plan = await getPlan();
   const member = isMember(plan);
+  const paid = plan === "lifetime" || plan === "monthly"; // le mois offert (parrainage) peut encore acheter
   const c = homeCopy(locale, ideas.length);
 
   let favSet = new Set<string>();
@@ -95,6 +96,7 @@ export default async function Home() {
             <a className="btn" href="/radar">{t.radar_nav}</a>
             <a className="btn" href="#devis">{t.nav_devis}</a>
             <a className="btn" href="/prompts">🎁 50 prompts</a>
+            <a className="btn" href="/parrainage">🤝 Parrainage</a>
             {isAdminEmail(user?.email) && <a className="btn" href="/admin">Admin</a>}
             {user && <a className="btn" href="/compte">Mon compte</a>}
           </>
@@ -230,7 +232,7 @@ export default async function Home() {
                 <span className="pname">{t.p_monthly}</span>
                 <div className="price"><span className="amt">39€</span><span className="per">{t.per_month}</span></div>
                 <ul><li>{t.p_m_f1}</li><li>{t.p_m_f2}</li><li>{t.p_m_f3}</li></ul>
-                {member
+                {paid
                   ? <span className="btn" style={{ justifyContent: "center", width: "100%" }}>{t.nav_member}</span>
                   : <CheckoutButton plan="monthly" label={t.p_m_cta} redirecting={t.redirecting} unavailable={t.pay_unavailable} className="btn" />}
               </div>
@@ -243,7 +245,7 @@ export default async function Home() {
                   <li className="bonus">{t.p_l_b1}</li><li className="bonus">{t.p_l_b2}</li>
                 </ul>
                 <div className="compare">{t.compare}</div>
-                {member
+                {paid
                   ? <span className="btn primary" style={{ justifyContent: "center", width: "100%" }}>{t.nav_member}</span>
                   : <CheckoutButton plan="lifetime" label={t.p_l_cta} redirecting={t.redirecting} unavailable={t.pay_unavailable} />}
                 <div className="guarantee">{t.guarantee}</div>

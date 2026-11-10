@@ -5,7 +5,7 @@ import { ADMIN_EMAILS } from "@/lib/admin";
 import { sendEmail, sendBatch, emailEnabled, type Email } from "@/lib/email/resend";
 import { siteUrl, unsubUrl } from "@/lib/email/unsubscribe";
 import {
-  lang, welcomeEmail, adminSignupEmail, adminPaymentEmail, abandonedEmail, nurtureEmail, dropEmail, memberWelcomeEmail, winbackEmail, type MailIdea,
+  lang, welcomeEmail, adminSignupEmail, adminPaymentEmail, abandonedEmail, nurtureEmail, dropEmail, memberWelcomeEmail, winbackEmail, referralRewardEmail, adminReferralEmail, type MailIdea,
 } from "@/lib/email/templates";
 
 const DAY = 86_400_000;
@@ -177,4 +177,15 @@ export async function onSubscriptionEnded(userId: string) {
   if (!data?.email || data.email_opt_out || !emailEnabled()) return;
   const u = unsubUrl(data.email);
   await sendEmail({ to: data.email, ...winbackEmail(lang(data.locale), siteUrl(), u), unsubscribeUrl: u, tag: "winback" });
+}
+
+// ---------- Parrainage : le filleul a payé ----------
+export async function onReferralReward(referredEmail: string | null | undefined, r: { referrerEmail: string | null; referrerLocale: string | null; paidCount: number; newTiers: { tier: number; status: string }[] }) {
+  if (!emailEnabled()) return;
+  const site = siteUrl();
+  const jobs: Promise<boolean>[] = [];
+  if (r.referrerEmail) jobs.push(sendEmail({ to: r.referrerEmail, ...referralRewardEmail(lang(r.referrerLocale), site, r.paidCount, r.newTiers), tag: "referral_reward" }));
+  const a = adminReferralEmail(r.referrerEmail ?? "?", referredEmail ?? "?", r.paidCount, r.newTiers, site);
+  ADMIN_EMAILS.forEach((to) => jobs.push(sendEmail({ to, ...a, tag: "admin_referral" })));
+  await Promise.all(jobs);
 }
