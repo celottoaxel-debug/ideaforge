@@ -183,13 +183,22 @@ export default function ForgeHero(props: {
       }
       clearTimeout(watchdog);
       ring.style.setProperty("--ld", "0");
-      video.src = URL.createObjectURL(new Blob(chunks, { type: "video/mp4" }));
-      video.load();
-      video.addEventListener("canplay", () => {
+      // Safari respecte strictement preload="none" : on autorise le chargement avant de brancher le Blob
+      video.preload = "auto";
+      video.muted = true; video.defaultMuted = true; video.setAttribute("muted", ""); video.setAttribute("playsinline", "");
+      let ready = false;
+      const onReady = () => {
+        if (ready) return; ready = true;
         ring.classList.add("done");
         stage.classList.add("video-ready");
-        requestSeek(timeAt(heroProgress()));
-      }, { once: true });
+        requestSeek(timeAt(heroProgress()) || 0.001);
+      };
+      video.addEventListener("loadeddata", onReady, { once: true });
+      video.addEventListener("canplay", onReady, { once: true });
+      video.src = URL.createObjectURL(new Blob(chunks, { type: "video/mp4" }));
+      video.load();
+      // iOS ne décode la première image qu'après une lecture : on lance puis on met en pause aussitôt
+      const pp = video.play(); if (pp && pp.then) pp.then(() => { video.pause(); onReady(); }).catch(() => {});
     }
 
     function initHeroOnce() {
