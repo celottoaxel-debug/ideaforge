@@ -3,9 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/admin";
 import { sendEmailDetailed, fromAddress } from "@/lib/email/resend";
 import { siteUrl, unsubUrl } from "@/lib/email/unsubscribe";
-import { topIdeas } from "@/lib/email/flows";
+import { topIdeas, saasIdeaFor } from "@/lib/email/flows";
 import {
-  welcomeEmail, nurtureEmail, abandonedEmail, dropEmail, memberWelcomeEmail, winbackEmail, adminSignupEmail, adminPaymentEmail,
+  welcomeEmail, saasIdeaEmail, nurtureEmail, abandonedEmail, dropEmail, memberWelcomeEmail, winbackEmail, adminSignupEmail, adminPaymentEmail,
 } from "@/lib/email/templates";
 
 export const dynamic = "force-dynamic";
@@ -25,8 +25,10 @@ export async function POST(request: Request) {
   const site = siteUrl();
   const u = unsubUrl(to);
   const ideas = topIdeas(3);
+  const saas = saasIdeaFor(`${Date.now()}`);
   const list = [
     ["Bienvenue", welcomeEmail("fr", site)],
+    ...(saas ? ([["Idée de SaaS rentable", saasIdeaEmail(saas, "fr", site, u)]] as const) : []),
     ...(all ? ([
       ["Relance J+1", nurtureEmail(1, "fr", site, u, ideas)],
       ["Relance J+3", nurtureEmail(2, "fr", site, u)],
