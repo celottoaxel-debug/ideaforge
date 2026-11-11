@@ -34,7 +34,7 @@ export default async function IdeesIndex() {
               <a key={c.slug} href={`/idees/${c.slug}`} className="card coll-card">
                 <h3>{c.label}</h3>
                 <p>{c.description}</p>
-                <span className="mono">{n} fiches →</span>
+                <span className="mono">{n} pistes →</span>
               </a>
             );
           })}

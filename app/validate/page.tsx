@@ -49,7 +49,7 @@ export default function ValidatePage() {
       <footer>
         <div className="wrap">
           <div className="brand"><span className="mk">IF</span> IdeaForge</div>
-          <p style={{ marginTop: 12 }}>© 2026 IdeaForge — {t.foot_tag}</p>
+          <p style={{ marginTop: 12 }}>© 2026 IdeaForge · {t.foot_tag}</p>
         </div>
       </footer>
     </>

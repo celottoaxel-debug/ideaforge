@@ -42,6 +42,7 @@ export default function RadarPage() {
           <p style={{ color: "var(--ink-2)", marginTop: 12 }}>{t.radar_sub}</p>
         </div>
 
+        <h2 className="coll-q" style={{ marginTop: 0 }}>{locale === "en" ? "Where to spot the niches that are taking off?" : locale === "es" ? "¿Dónde detectar los nichos que despegan?" : "Où repérer les niches qui décollent ?"}</h2>
         <div className="niche-grid">
           {SOURCES.map((s) => (
             <a className="niche" key={s.name} href={s.url} target="_blank" rel="noopener noreferrer">

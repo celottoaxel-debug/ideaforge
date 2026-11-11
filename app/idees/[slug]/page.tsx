@@ -60,7 +60,7 @@ export default async function CollectionPage({ params }: { params: { slug: strin
 
         <h2 className="coll-q">{c.question}</h2>
         <p className="coll-intro">Les {ideas.length} pistes ci-dessous sont classées du revenu projeté le plus élevé au plus faible. Ouvre une fiche pour voir le budget détaillé, les concurrents et le plan de lancement.</p>
-        <div className="irows">{ideas.map((it) => <IdeaRow key={it.id} it={it} />)}</div>
+        <div className="irows">{ideas.map((it) => <IdeaRow key={it.id} it={it} showSector={false} />)}</div>
         <p className="coll-note">* Revenu mensuel projeté à la fin de la première année, dans le scénario réaliste du dossier de chaque idée : une estimation, pas une promesse.</p>
 
         {c.faq.length > 0 && (
