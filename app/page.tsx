@@ -10,7 +10,7 @@ import Newsletter from "@/components/Newsletter";
 import LangSwitcher from "@/components/LangSwitcher";
 import MobileMenuCloser from "@/components/MobileMenuCloser";
 import { COLLECTIONS } from "@/lib/collections";
-import { SITE, ldJson, organizationLd, faqLd } from "@/lib/seo";
+import { SITE, ldJson, organizationLd, faqLd, dedupeIdeas } from "@/lib/seo";
 import { PRICE_LIFETIME, PRICE_MONTHLY } from "@/lib/admin";
 import ForgeHero from "@/components/ForgeHero";
 import ForgeHold from "@/components/ForgeHold";
@@ -50,7 +50,7 @@ export default async function Home() {
   let extra: typeof IDEAS = [];
   try {
     const { data } = await supabase.from("ideas").select("*").eq("is_ai", true).order("created_at", { ascending: false }).limit(60);
-    if (data) extra = (data as typeof IDEAS).filter((d) => !IDEAS.some((s) => s.id === d.id));
+    if (data) extra = dedupeIdeas((data as typeof IDEAS).filter((d) => !IDEAS.some((s) => s.id === d.id)));
   } catch {}
   const ideas = [...extra, ...IDEAS];
   const plan = await getPlan();
@@ -268,7 +268,7 @@ export default async function Home() {
       <section>
         <div className="wrap coll" style={{ padding: 0, maxWidth: 1140 }}>
           <h2 style={{ fontSize: 26, marginBottom: 12 }}>{c.themesH}</h2>
-          <div className="coll-chips">{COLLECTIONS.map((c) => <a key={c.slug} href={`/idees/${c.slug}`}>{c.h1}</a>)}</div>
+          <div className="coll-chips">{COLLECTIONS.map((c) => <a key={c.slug} href={`/idees/${c.slug}`}>{c.label}</a>)}</div>
         </div>
       </section>
 

@@ -12,9 +12,31 @@ export async function allIdeas(): Promise<Idea[]> {
   let extra: Idea[] = [];
   try {
     const { data } = await createAdminClient().from("ideas").select("*").eq("is_ai", true).order("created_at", { ascending: false }).limit(500);
-    extra = ((data as Idea[]) ?? []).filter((d) => !IDEAS.some((s) => s.id === d.id));
+    extra = dedupeIdeas(((data as Idea[]) ?? []).filter((d) => !IDEAS.some((s) => s.id === d.id)));
   } catch {}
   return [...extra, ...IDEAS];
+}
+
+/** Retire les idées générées en double (même titre) : on garde la plus ancienne, qui fait foi. */
+export function dedupeIdeas<T extends { title: string; created_at?: string | null }>(list: T[]): T[] {
+  const oldest = new Map<string, T>();
+  for (const it of list) {
+    const k = titleKey(it.title);
+    const cur = oldest.get(k);
+    if (!cur || (it.created_at ?? "") < (cur.created_at ?? "")) oldest.set(k, it);
+  }
+  const keep = new Set(oldest.values());
+  return list.filter((it) => keep.has(it));
+}
+
+/** Si cette idée est un doublon d'une idée plus ancienne, renvoie l'identifiant de l'originale. */
+export async function originalIdeaId(it: Idea): Promise<string | null> {
+  if (!it.is_ai) return null;
+  try {
+    const { data } = await createAdminClient().from("ideas").select("id, title, created_at").eq("is_ai", true).eq("title", it.title).order("created_at", { ascending: true }).limit(1);
+    const first = data?.[0];
+    return first && first.id !== it.id ? (first.id as string) : null;
+  } catch { return null; }
 }
 
 export async function findIdea(id: string): Promise<Idea | undefined> {
@@ -94,4 +116,54 @@ export function faqLd(faq: { q: string; a: string }[]) {
     "@type": "FAQPage",
     mainEntity: faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
   };
+}
+
+// ---------- Longueurs recommandées (audit SEO) ----------
+export const TITLE_MAX = 60;
+export const DESC_MAX = 155;
+const SUFFIX = ` · ${BRAND}`;
+
+/** Coupe un texte à `max` caractères sur un mot entier, sans laisser de ponctuation pendante. */
+export function clip(text: string, max = DESC_MAX): string {
+  const t = text.replace(/\s+/g, " ").trim();
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max - 1);
+  const at = cut.lastIndexOf(" ");
+  return (at > max * 0.6 ? cut.slice(0, at) : cut).replace(/[\s,;:·–-]+$/, "") + "…";
+}
+
+/** Nom court d'une idée : la partie avant « – » ou « : » (ex. « ReponsESG »). */
+export function shortName(title: string): string {
+  const m = title.split(/\s[–—-]\s|\s?:\s/)[0].trim();
+  return m.length >= 3 ? m : title;
+}
+
+/**
+ * Titre complet (déjà suffixé « · IdeaForge ») qui tient en 60 caractères :
+ * essaie chaque variante dans l'ordre, puis coupe proprement la dernière.
+ */
+export function fitTitle(...variants: string[]): string {
+  for (const v of variants) if ((v + SUFFIX).length <= TITLE_MAX) return v + SUFFIX;
+  const last = variants[variants.length - 1];
+  return clip(last, TITLE_MAX - SUFFIX.length) + SUFFIX;
+}
+
+/** Page web simple pour les pages sans autre donnée structurée. */
+export function webPageLd(o: { name: string; description: string; path: string; type?: string; extra?: Record<string, unknown> }) {
+  return {
+    "@context": "https://schema.org",
+    "@type": o.type ?? "WebPage",
+    name: o.name,
+    description: o.description,
+    url: `${SITE}${o.path}`,
+    inLanguage: "fr-FR",
+    isPartOf: { "@type": "WebSite", name: BRAND, url: SITE },
+    publisher: { "@type": "Organization", name: BRAND, url: SITE },
+    ...(o.extra ?? {}),
+  };
+}
+
+/** Normalise un titre pour repérer les doublons (minuscules, sans accents ni ponctuation). */
+export function titleKey(title: string): string {
+  return title.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
 }

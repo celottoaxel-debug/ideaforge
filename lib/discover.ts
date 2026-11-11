@@ -1,5 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { askClaude, extractJsonArray } from "@/lib/anthropic";
+import { IDEAS } from "@/lib/ideas";
+import { titleKey, shortName } from "@/lib/seo";
 
 
 // Moteur de découverte "24/7" : appelé par Vercel Cron (voir vercel.json).
@@ -13,6 +15,19 @@ function slug(s: string) {
 }
 
 
+// Mots qui ne disent rien du concept (pour comparer deux idées entre elles)
+const STOP = new Set("le la les un une des de du d l et ou pour par avec sans en au aux a qui que sur dans ia ai agent agents outil outils saas logiciel plateforme app application pme tpe".split(" "));
+const words = (t: string) => new Set(titleKey(t).split(" ").filter((w) => w.length > 2 && !STOP.has(w)));
+/** Vrai si deux titres décrivent visiblement la même idée (même nom, ou plus de la moitié des mots-clés en commun). */
+function sameIdea(a: string, b: string) {
+  if (titleKey(shortName(a)) === titleKey(shortName(b)) || titleKey(a) === titleKey(b)) return true;
+  const A = words(a), B = words(b);
+  if (!A.size || !B.size) return false;
+  let common = 0;
+  A.forEach((w) => { if (B.has(w)) common++; });
+  return common / Math.min(A.size, B.size) >= 0.5;
+}
+
 export type DiscoverResult = { ok: boolean; added?: number; ids?: string[]; ideas?: { id: string; title: string; sector: string }[]; error?: string };
 
 // Génère 3 nouvelles idées par IA et les ajoute au catalogue (Supabase, is_ai=true).
@@ -22,10 +37,19 @@ export async function runDiscover(): Promise<DiscoverResult> {
     return { ok: false, error: "ANTHROPIC_API_KEY ou SUPABASE_SERVICE_ROLE_KEY absente dans Vercel" };
   }
 
+  // Idées déjà au catalogue : l'IA ne doit pas les reproposer (sinon pages en double pour Google)
+  let existing: string[] = IDEAS.map((i) => i.title);
+  try {
+    const { data } = await createAdminClient().from("ideas").select("title").eq("is_ai", true);
+    existing = [...existing, ...((data ?? []).map((d) => d.title as string))];
+  } catch {}
+
   const prompt = `Propose 3 idées de SaaS/outils en ligne à FORT POTENTIEL à lancer en ${new Date().getFullYear()}, inédites et actionnables (idéalement des agents IA, verticaux, ou micro-SaaS en plein essor).
 Réponds UNIQUEMENT avec un tableau JSON de 3 objets, chacun :
 {"sector":string (parmi: ${SECTORS.join(", ")}),"title":string,"pitch":string,"budget":string (ex "0,5–2,5 k€"),"budget_min":number (euros),"revenue":string (ex "3–30 k€/mois"),"delai":string,"difficulty":1|2|3,"market":string,"model":string,"competition":string,"steps":[string,string,string,string],"risks":[string,string],"tags":[string,string,string],"benchmark":string (acteur réel + ordre de grandeur public),"markets":string (ex "US · FR · ESP")}
-Français, chiffres réalistes. Aucun texte hors du JSON.`;
+Français, chiffres réalistes. Aucun texte hors du JSON.
+IMPORTANT : chaque idée doit être un concept NOUVEAU, différent de toutes ces idées déjà publiées (ni le même problème, ni la même cible avec un autre nom) :
+${existing.slice(-120).map((t) => `- ${t}`).join("\n")}`;
 
   let ideas: Record<string, unknown>[] = [];
   try {
@@ -35,7 +59,16 @@ Français, chiffres réalistes. Aucun texte hors du JSON.`;
   }
 
   const today = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-  const rows = ideas.filter((o) => o && typeof o === "object" && o.title).map((o) => ({
+  const accepted: string[] = [];
+  const fresh = ideas.filter((o) => {
+    if (!o || typeof o !== "object" || !o.title) return false;
+    const t = String(o.title);
+    if ([...existing, ...accepted].some((e) => sameIdea(e, t))) return false; // doublon : on l'écarte
+    accepted.push(t);
+    return true;
+  });
+  if (!fresh.length) return { ok: true, added: 0, ids: [], ideas: [] };
+  const rows = fresh.map((o) => ({
     id: `auto-${slug(String(o.title))}-${today}`,
     sector: SECTORS.includes(String(o.sector)) ? String(o.sector) : "Micro-SaaS / IA",
     title: String(o.title).slice(0, 120),

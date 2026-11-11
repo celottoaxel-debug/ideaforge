@@ -6,7 +6,9 @@ import { ideaFacts } from "@/lib/seo";
 export type Collection = {
   slug: string;
   h1: string;
-  title: string;          // balise <title>
+  label: string;          // nom court (cartes, liens)
+  question: string;       // intertitre-question au-dessus de la liste (IA et Google)
+  title: string;          // balise <title> (≤ 48 caractères, « · IdeaForge » est ajouté)
   description: string;    // meta description
   intro: string[];        // paragraphes uniques
   filter: (it: Idea) => boolean;
@@ -23,8 +25,10 @@ export const COLLECTIONS: Collection[] = [
   {
     slug: "idees-business-ia",
     h1: "Idées de business avec l'IA",
-    title: "Idées de business avec l'IA à lancer en 2026 (chiffrées)",
-    description: "Les meilleures idées de business basées sur l'intelligence artificielle : agents IA, micro-SaaS, outils verticaux. Budget, revenus sur 12 mois et concurrents pour chaque idée.",
+    label: "Business avec l'IA",
+    question: "Quelles idées de business lancer avec l'IA ?",
+    title: "Idées de business IA à lancer en 2026",
+    description: "Agents IA, micro-SaaS et outils verticaux à lancer en 2026 : budget, revenus projetés et concurrents pour chaque idée.",
     intro: [
       "L'intelligence artificielle a fait chuter le coût de construction d'un logiciel : un fondateur seul peut aujourd'hui lancer un agent qui rédige, trie, répond au téléphone ou prépare des documents, là où il fallait une équipe il y a trois ans.",
       "Les idées ci-dessous ont un point commun : elles vendent un résultat concret (des appels qui ne sont plus manqués, des tickets résolus, des rendez-vous décrochés) à des clients qui paient déjà pour le problème. Chaque fiche détaille le budget de départ, le revenu projeté sur 24 mois, les concurrents et les risques, comme les coûts d'IA ou la fiabilité des réponses.",
@@ -39,8 +43,10 @@ export const COLLECTIONS: Collection[] = [
   {
     slug: "idees-micro-saas",
     h1: "Idées de micro-SaaS rentables",
+    label: "Micro-SaaS",
+    question: "Quel micro-SaaS lancer seul en 2026 ?",
     title: "Idées de micro-SaaS rentables à lancer seul",
-    description: "Des idées de micro-SaaS à lancer seul ou à deux : petit budget, abonnement mensuel, revenus récurrents. Prix conseillés, projections et premiers clients pour chaque idée.",
+    description: "Des micro-SaaS à lancer seul ou à deux : petit budget, abonnement, revenus récurrents. Prix conseillés et premiers clients pour chaque idée.",
     intro: [
       "Un micro-SaaS est un petit logiciel en ligne, vendu par abonnement, qui règle un problème précis pour une niche précise. Il se construit en quelques semaines, se gère seul et peut générer de quelques centaines à plusieurs dizaines de milliers d'euros par mois.",
       "La sélection ci-dessous privilégie les idées accessibles techniquement, avec une demande prouvée par des acteurs qui publient leurs revenus. Pour chacune, tu trouveras une grille de prix en trois offres, le nombre de clients à atteindre pour vivre de ton produit et les canaux pour trouver les premiers utilisateurs.",
@@ -55,8 +61,10 @@ export const COLLECTIONS: Collection[] = [
   {
     slug: "idees-saas-b2b",
     h1: "Idées de SaaS B2B à fort potentiel",
-    title: "Idées de SaaS B2B à fort potentiel (marché, prix, concurrents)",
-    description: "Idées de logiciels B2B pour PME et professionnels : conformité, RH, finance, santé, voyage. Taille de marché, grille tarifaire, cycle de vente et projection sur 24 mois.",
+    label: "SaaS B2B",
+    question: "Quel SaaS B2B lancer pour les PME ?",
+    title: "Idées de SaaS B2B à fort potentiel",
+    description: "Logiciels B2B pour PME : conformité, RH, finance, santé. Taille de marché, grille tarifaire, cycle de vente et projection sur 2 ans.",
     intro: [
       "Les logiciels vendus aux entreprises ont deux atouts : des clients qui restent longtemps (souvent plusieurs années) et des paniers élevés. En contrepartie, ils demandent plus de budget et un cycle de vente plus long.",
       "Les idées de cette page visent des marchés où des leaders ont déjà prouvé la demande, comme Pennylane, Factorial ou Doctolib, mais où des segments restent mal servis : petites entreprises, métiers spécifiques, pays moins couverts. Chaque dossier montre le temps nécessaire pour rembourser la mise de départ, souvent plus long qu'un micro-SaaS mais pour une activité plus solide.",
@@ -70,8 +78,10 @@ export const COLLECTIONS: Collection[] = [
   {
     slug: "idees-business-petit-budget",
     h1: "Idées de business à lancer avec moins de 1 000 €",
-    title: "Idées de business avec petit budget (moins de 1 000 €)",
-    description: "Lancer un business sans gros investissement : idées accessibles avec moins de 1 000 €, revenus estimés, temps de lancement et premiers clients.",
+    label: "Petit budget",
+    question: "Quel business lancer avec moins de 1 000 € ?",
+    title: "Idées de business avec petit budget",
+    description: "Lancer un business sans gros investissement : idées accessibles avec moins de 1 000 €, revenus estimés, délai de lancement et premiers clients.",
     intro: [
       "Pas besoin de lever des fonds ni d'emprunter pour démarrer : beaucoup d'activités en ligne se lancent avec un ordinateur, quelques abonnements à des outils et du temps.",
       "Toutes les idées de cette page ont un budget de départ minimum inférieur ou égal à 1 000 €. Pour chacune, le dossier détaille comment répartir ce budget, en combien de mois l'activité devient rentable et combien de clients il faut pour atteindre un premier revenu significatif.",
@@ -85,7 +95,9 @@ export const COLLECTIONS: Collection[] = [
   {
     slug: "idees-business-rentables-rapidement",
     h1: "Idées de business rapides à lancer",
-    title: "Idées de business rapides à lancer (moins de 2 mois)",
+    label: "Lancement rapide",
+    question: "Quel business lancer en moins de 2 mois ?",
+    title: "Idées de business rapides à lancer",
     description: "Des idées de business qui se lancent en moins de 8 semaines : délai, budget, revenus projetés et premières étapes détaillées.",
     intro: [
       "Le meilleur moyen de valider une idée est de la mettre vite face à de vrais clients. Les activités de cette page peuvent être lancées en 8 semaines ou moins, avec une première version simple mais vendable.",
@@ -99,8 +111,10 @@ export const COLLECTIONS: Collection[] = [
   {
     slug: "idees-business-a-lancer-seul",
     h1: "Idées de business à lancer seul",
-    title: "Idées de business à lancer seul (solopreneur)",
-    description: "Idées d'entreprise adaptées aux solopreneurs : difficulté accessible, budget limité, gestion possible seul. Revenus estimés et plan de lancement.",
+    label: "Solopreneur",
+    question: "Quel business lancer quand on est seul ?",
+    title: "Idées de business pour solopreneur",
+    description: "Idées d'entreprise pour solopreneurs : difficulté accessible, budget limité, gestion possible seul. Revenus estimés et plan de lancement.",
     intro: [
       "Lancer seul, c'est garder 100 % des décisions et des revenus, mais aussi tout porter : produit, vente, support. Les idées de cette page sont choisies pour rester gérables par une seule personne, avec une difficulté accessible et un budget de départ de 3 000 € maximum.",
       "Chaque dossier précise le temps de mise en route, les tâches à automatiser en priorité et le nombre de clients nécessaires pour en vivre.",
@@ -113,8 +127,10 @@ export const COLLECTIONS: Collection[] = [
   {
     slug: "idees-business-local",
     h1: "Idées de business local et de services",
-    title: "Idées de business local et de services rentables",
-    description: "Idées d'activités locales : services, commerce, artisanat, restauration, écologie. Investissement, panier moyen, clients à atteindre et risques.",
+    label: "Business local",
+    question: "Quel business local ouvrir près de chez soi ?",
+    title: "Idées de business local et de services",
+    description: "Idées d'activités locales : services, commerce, artisanat, restauration, écologie. Investissement, panier moyen, clients et risques.",
     intro: [
       "Toutes les bonnes idées ne sont pas des logiciels. Les activités de proximité (services à domicile, ateliers, commerces ambulants, agences locales) profitent d'une concurrence souvent faible hors des grandes villes et d'une clientèle fidèle.",
       "Les dossiers de ces idées raisonnent en panier moyen, en fréquence d'achat et en coûts fixes (local, matériel, déplacements), pour montrer honnêtement le temps nécessaire avant de rembourser l'investissement de départ.",
@@ -127,8 +143,10 @@ export const COLLECTIONS: Collection[] = [
   {
     slug: "idees-revenus-recurrents",
     h1: "Idées de business à revenus récurrents",
-    title: "Idées de business à revenus récurrents (abonnement)",
-    description: "Construire un revenu mensuel prévisible : idées de business par abonnement, prix conseillés, taux de départ et valeur d'un client sur sa durée de vie.",
+    label: "Revenus récurrents",
+    question: "Comment créer un revenu récurrent par abonnement ?",
+    title: "Idées de business par abonnement",
+    description: "Construire un revenu prévisible : idées de business par abonnement, prix conseillés, taux de départ et valeur d'un client sur sa durée de vie.",
     intro: [
       "Un revenu récurrent, c'est un client qui paie chaque mois sans qu'il faille le reconvaincre. C'est le modèle le plus valorisé par les investisseurs et le plus confortable pour un fondateur.",
       "Les idées de cette page reposent sur un abonnement. Leurs dossiers calculent la valeur d'un client sur toute sa durée de vie (LTV), le coût pour l'acquérir (CAC) et le ratio entre les deux, l'indicateur clé d'une activité récurrente saine.",
@@ -141,8 +159,10 @@ export const COLLECTIONS: Collection[] = [
   {
     slug: "idees-business-espagne",
     h1: "Idées de business en Espagne",
+    label: "Espagne",
+    question: "Quel business lancer en Espagne ?",
     title: "Idées de business qui marchent en Espagne",
-    description: "Opportunités sur le marché espagnol : indépendants, concours publics, padel, copropriétés, restauration. Idées chiffrées et acteurs locaux de référence.",
+    description: "Opportunités sur le marché espagnol : indépendants, marchés publics, padel, copropriétés, restauration. Idées chiffrées et acteurs locaux.",
     intro: [
       "L'Espagne compte plus de 3 millions de travailleurs indépendants et plusieurs scale-ups qui ont prouvé des marchés entiers (Factorial, TravelPerk, Playtomic). Beaucoup de niches restent pourtant mal équipées.",
       "Les idées de cette page sont pensées pour le marché espagnol et souvent transposables en Amérique latine. Chaque dossier cite les acteurs locaux de référence et les spécificités du pays.",
@@ -155,8 +175,10 @@ export const COLLECTIONS: Collection[] = [
   {
     slug: "idees-business-usa",
     h1: "Idées de business inspirées du marché américain",
-    title: "Idées de business qui marchent aux États-Unis, à adapter en Europe",
-    description: "Des modèles qui génèrent déjà des revenus aux États-Unis, à adapter au marché français et européen : API, outils pour créateurs, productivité.",
+    label: "Inspiré des États-Unis",
+    question: "Quels modèles américains adapter en Europe ?",
+    title: "Idées de business venues des États-Unis",
+    description: "Des modèles qui rapportent déjà aux États-Unis, à adapter en France et en Europe : API, outils pour créateurs, productivité.",
     intro: [
       "Beaucoup de logiciels rentables naissent aux États-Unis avant d'arriver, parfois des années plus tard, en Europe. Adapter un modèle qui a déjà prouvé sa demande réduit fortement le risque.",
       "Les idées de cette page s'inspirent d'outils américains qui publient leurs revenus. Leurs dossiers indiquent ce qu'il faut adapter : langue, conformité RGPD, moyens de paiement et prix.",

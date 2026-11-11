@@ -6,7 +6,7 @@ import type { Idea } from "@/lib/types";
 import { buildPrompt } from "@/lib/prompt";
 import { scoreIdea, buildStack } from "@/lib/score";
 import { getDossier, renderDossier } from "@/lib/dossier";
-import { findIdea, ideaFaq, ideaFacts, allIdeas, ldJson, breadcrumbLd, faqLd, SITE } from "@/lib/seo";
+import { findIdea, ideaFaq, ideaFacts, allIdeas, ldJson, breadcrumbLd, faqLd, SITE, fitTitle, shortName, clip, originalIdeaId } from "@/lib/seo";
 import { collectionsOf } from "@/lib/collections";
 import IdeaRow from "@/components/IdeaRow";
 import CheckoutButton from "@/components/CheckoutButton";
@@ -15,7 +15,7 @@ import PromptBox from "@/components/PromptBox";
 import Checklist from "@/components/Checklist";
 import RevenueCalc from "@/components/RevenueCalc";
 import LangSwitcher from "@/components/LangSwitcher";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -24,10 +24,12 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   const it = await findIdea(params.id);
   if (!it) return { title: "Idée introuvable", robots: { index: false } };
   const f = ideaFacts(it);
-  const title = `${it.title} : budget, revenus et plan de lancement`;
-  const description = `${it.pitch ? it.pitch.replace(/\.$/, "") + ". " : ""}Budget de départ ${f.budget}, revenus ${it.revenue || "à estimer"}, ~${f.mrr12Txt}/mois projetés à 12 mois. Concurrents, risques et plan détaillé.`.slice(0, 300);
+  const name = shortName(it.title);
+  // ≤ 60 caractères avec « · IdeaForge », du plus complet au plus court
+  const title = fitTitle(`${it.title} : budget et revenus`, it.title, `${name} : budget, revenus et plan`, `${name} : budget et revenus`, name);
+  const description = clip(`${it.pitch ? it.pitch.replace(/\.$/, "") + ". " : ""}Budget ${f.budget}, ~${f.mrr12Txt} de revenu mensuel projeté à 12 mois, concurrents et plan.`);
   return {
-    title,
+    title: { absolute: title },
     description,
     alternates: { canonical: `/idea/${it.id}` },
     openGraph: { title, description, url: `/idea/${it.id}`, type: "article" },
@@ -46,6 +48,9 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
     } catch {}
   }
   if (!it) notFound();
+  // Idée générée en double : on renvoie (301) vers l'originale pour ne pas créer de contenu dupliqué.
+  const original = await originalIdeaId(it);
+  if (original) permanentRedirect(`/idea/${original}`);
 
   const locale = getLocale();
   const t = dict(locale);
@@ -119,7 +124,7 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
           ];
           return (
             <section className="dsec">
-              <h3>{t.score_label}</h3>
+              <h2>{t.score_label}</h2>
               <div className="scorebox">
                 <div className="score-big"><span className="mono">{sc.score}</span><small>/100</small></div>
                 <div className="score-bars">
@@ -142,23 +147,23 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
           return <div dangerouslySetInnerHTML={{ __html: renderDossier(it!, dossier, { member, generic }) }} />;
         })()}
 
-        <section className="dsec"><h3>{t.proof_h}</h3><p style={{ color: "var(--ink-2)", fontSize: 14, marginBottom: 10 }}>{t.proof_sub}</p><ProofPanel it={it!} t={t} /></section>
+        <section className="dsec"><h2>{t.proof_h}</h2><p style={{ color: "var(--ink-2)", fontSize: 14, marginBottom: 10 }}>{t.proof_sub}</p><ProofPanel it={it!} t={t} /></section>
 
-        <section className="dsec"><h3>{t.calc_h}</h3><RevenueCalc t={t} defaultPrice={29} /></section>
+        <section className="dsec"><h2>{t.calc_h}</h2><RevenueCalc t={t} defaultPrice={29} /></section>
 
-        <section className="dsec"><h3>{t.d_market}</h3><p>{member ? it.market : (it.market || "").slice(0, 150) + "…"}</p></section>
+        <section className="dsec"><h2>{t.d_market}</h2><p>{member ? it.market : (it.market || "").slice(0, 150) + "…"}</p></section>
 
         {member ? (
           <>
-            <section className="dsec"><h3>{t.d_model}</h3><p>{it.model}</p></section>
-            <section className="dsec"><h3>{t.d_comp}</h3><p>{it.competition}</p></section>
-            {it.steps?.length ? <section className="dsec"><h3>{t.checklist_h}</h3><Checklist id={it.id} steps={it.steps} t={t} /></section> : null}
-            <section className="dsec"><h3>{t.kit_h}</h3><p style={{ color: "var(--ink-2)", fontSize: 14, marginBottom: 10 }}>{t.kit_sub}</p><PromptBox prompt={buildPrompt(it)} t={t} /></section>
+            <section className="dsec"><h2>{t.d_model}</h2><p>{it.model}</p></section>
+            <section className="dsec"><h2>{t.d_comp}</h2><p>{it.competition}</p></section>
+            {it.steps?.length ? <section className="dsec"><h2>{t.checklist_h}</h2><Checklist id={it.id} steps={it.steps} t={t} /></section> : null}
+            <section className="dsec"><h2>{t.kit_h}</h2><p style={{ color: "var(--ink-2)", fontSize: 14, marginBottom: 10 }}>{t.kit_sub}</p><PromptBox prompt={buildPrompt(it)} t={t} /></section>
           </>
         ) : (
           <div className="gate-lock">
             <div style={{ fontSize: 26 }}>🔒</div>
-            <h3>{t.gate_title}</h3>
+            <h2>{t.gate_title}</h2>
             <p style={{ color: "var(--ink-2)", maxWidth: "42ch", margin: "0 auto" }}>{t.gate_sub}</p>
             <div style={{ maxWidth: 320, margin: "10px auto 0" }}>
               <CheckoutButton plan="lifetime" label={t.p_l_cta} redirecting={t.redirecting} unavailable={t.pay_unavailable} />
@@ -166,20 +171,20 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
           </div>
         )}
         <section className="coll-faq">
-          <h2>Questions fréquentes sur cette idée</h2>
+          <h2>Questions fréquentes sur {shortName(it.title)}</h2>
           {faq.map((f) => <details key={f.q}><summary>{f.q}</summary><p>{f.a}</p></details>)}
         </section>
 
         {similar.length > 0 && (
           <section style={{ marginTop: 30 }}>
-            <h2 style={{ fontSize: 21, marginBottom: 6 }}>Idées similaires</h2>
+            <h2 style={{ fontSize: 21, marginBottom: 6 }}>Quelles idées similaires lancer ?</h2>
             <div className="irows" style={{ marginTop: 10 }}>{similar.map((x) => <IdeaRow key={x.id} it={x} />)}</div>
           </section>
         )}
         {cols.length > 0 && (
           <section className="coll-more">
-            <h2>Voir aussi</h2>
-            <div className="coll-chips">{cols.map((c) => <a key={c.slug} href={`/idees/${c.slug}`}>{c.h1}</a>)}</div>
+            <h2>Dans quels thèmes trouver cette idée ?</h2>
+            <div className="coll-chips">{cols.map((c) => <a key={c.slug} href={`/idees/${c.slug}`}>{c.label}</a>)}</div>
           </section>
         )}
       </main>

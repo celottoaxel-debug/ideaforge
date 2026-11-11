@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/admin";
 import { getPostBySlug, listPublished, fmtDate } from "@/lib/blog/posts";
 import { renderMarkdown, readingTime } from "@/lib/blog/markdown";
-import { SITE, ldJson, breadcrumbLd } from "@/lib/seo";
+import { SITE, ldJson, breadcrumbLd , fitTitle, clip } from "@/lib/seo";
 import { LegalFooter } from "@/components/LegalPage";
 
 export const dynamic = "force-dynamic";
@@ -12,11 +12,13 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const p = await getPostBySlug(params.slug);
   if (!p) return { title: "Article", robots: { index: false } };
+  const title = fitTitle(p.title);
+  const description = p.description ? clip(p.description) : undefined;
   return {
-    title: p.title,
-    description: p.description ?? undefined,
+    title: { absolute: title },
+    description,
     alternates: { canonical: `/blog/${p.slug}` },
-    openGraph: { type: "article", title: p.title, description: p.description ?? undefined, url: `/blog/${p.slug}`, publishedTime: p.published_at ?? undefined, modifiedTime: p.updated_at },
+    openGraph: { type: "article", title, description, url: `/blog/${p.slug}`, publishedTime: p.published_at ?? undefined, modifiedTime: p.updated_at },
   };
 }
 

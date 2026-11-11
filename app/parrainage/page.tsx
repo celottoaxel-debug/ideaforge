@@ -1,13 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ensureRefCode, maskEmail, TIERS } from "@/lib/referral";
-import { SITE } from "@/lib/seo";
+import { SITE, ldJson, breadcrumbLd, webPageLd, faqLd } from "@/lib/seo";
 import ShareLink from "@/components/ShareLink";
 import { LegalFooter } from "@/components/LegalPage";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
-  title: "Parrainage : invite tes amis, gagne l'accès à vie",
+  title: "Parrainage : gagne l'accès à vie",
   description: "Partage ton lien IdeaForge : tes amis ont -20 % sur leur accès, et tu gagnes 1 mois offert, puis l'accès à vie, puis ton SaaS codé en priorité.",
   alternates: { canonical: "/parrainage" },
 };
@@ -42,8 +42,18 @@ export default async function Parrainage() {
   const pct = Math.min(100, paid <= 1 ? paid * 33.3 : paid <= 3 ? 33.3 + ((paid - 1) / 2) * 33.3 : 66.6 + ((paid - 3) / 7) * 33.4);
   const rewardOf = (t: number) => rewards.find((r) => r.tier === t);
 
+  const FAQ = [
+    { q: "Qui compte comme ami parrainé ?", a: "Une personne qui clique sur ton lien, crée son compte dans les 30 jours, puis prend un accès payant (abonnement ou accès à vie)." },
+    { q: "Et si je suis déjà membre à vie ?", a: "Les deux premiers paliers sont déjà inclus dans ton accès. Le palier 3, ton SaaS codé en priorité avec -30 % sur le devis, reste à gagner." },
+    { q: "Je suis abonné au mois et je débloque l'accès à vie : je paie encore ?", a: "Non. Dès que tu passes à vie, ton abonnement mensuel est arrêté automatiquement." },
+    { q: "Je peux me parrainer moi-même ?", a: "Non, ton propre lien ne compte pas pour ton compte. Chaque ami ne peut avoir qu'un seul parrain." },
+  ];
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={ldJson(webPageLd({ name: "Programme de parrainage IdeaForge", description: "Tes amis ont -20 % ; tu gagnes 1 mois offert, puis l'accès à vie, puis ton SaaS codé en priorité.", path: "/parrainage" }))} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={ldJson(breadcrumbLd([{ name: "Accueil", url: SITE }, { name: "Parrainage", url: `${SITE}/parrainage` }]))} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={ldJson(faqLd(FAQ))} />
       <header className="nav"><div className="wrap nav-in">
         <a className="brand" href="/"><span className="mk">IF</span> IdeaForge</a>
         <a className="btn" href="/#catalogue">Catalogue</a>

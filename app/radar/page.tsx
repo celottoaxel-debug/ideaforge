@@ -1,8 +1,9 @@
 import { getLocale, dict, type Locale } from "@/lib/i18n";
 import LangSwitcher from "@/components/LangSwitcher";
+import { SITE, ldJson, breadcrumbLd, webPageLd } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Radar des tendances : niches et marchés en croissance", description: "Les niches de business et de SaaS qui montent : signaux de demande, nouvelles idées repérées par IA et tendances à surveiller.", alternates: { canonical: "/radar" } };
+export const metadata = { title: "Radar des niches et marchés qui montent", description: "Les niches de business et de SaaS qui montent : signaux de demande, nouvelles idées repérées par IA et tendances à surveiller.", alternates: { canonical: "/radar" } };
 
 type L = Locale;
 const SOURCES: { name: string; url: string; ic: string; desc: Record<L, string> }[] = [
@@ -21,6 +22,12 @@ export default function RadarPage() {
   const t = dict(locale);
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={ldJson(webPageLd({
+        name: "Radar des niches et marchés qui montent", path: "/radar", type: "CollectionPage",
+        description: "Les sources à suivre pour repérer les niches de business et de SaaS en croissance : lancements, tendances de recherche, besoins de fondateurs.",
+        extra: { mainEntity: { "@type": "ItemList", numberOfItems: SOURCES.length, itemListElement: SOURCES.map((s, i) => ({ "@type": "ListItem", position: i + 1, name: s.name, url: s.url })) } },
+      }))} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={ldJson(breadcrumbLd([{ name: "Accueil", url: SITE }, { name: "Radar", url: `${SITE}/radar` }]))} />
       <header className="nav"><div className="wrap nav-in">
         <a className="brand" href="/"><span className="mk">IF</span> IdeaForge</a>
         <a className="btn" href="/#catalogue">{t.nav_catalogue}</a>

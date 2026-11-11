@@ -51,7 +51,7 @@ ${kpi("LTV / CAC", `${ue.ltvCac.toLocaleString("fr-FR", { maximumFractionDigits:
 </div>`);
 
   // ---------- 02. Projection (visible par tous) ----------
-  const proj = sec(++n, "Projection du revenu mensuel sur 24 mois", "Trois scénarios d'acquisition : prudent (moitié du réaliste), réaliste, ambitieux (double).",
+  const proj = sec(++n, "Combien peut rapporter cette idée sur 2 ans ?", "Trois scénarios d'acquisition : prudent (moitié du réaliste), réaliste, ambitieux (double).",
     `<div class="dz-chart">${lineChart({
       series: [
         { name: SC.prudent.name, color: SC.prudent.color, values: sc[0].mrr, dash: true },
@@ -90,7 +90,7 @@ ${table(["Scénario", "M3", "M6", "M12", "M18", "M24", "Clients M24"],
       { num: [1, 3], hi: 1 }));
 
   // ---------- 06. Trésorerie ----------
-  const cash = sec(++n, "Trésorerie cumulée & point mort", `On part de −${eurK(budget)} (budget de départ). Chaque mois : marge brute − coûts fixes (${eur(d.fixed)}) − acquisition des nouveaux clients.`,
+  const cash = sec(++n, "Quand l'activité devient-elle rentable ?", `On part de −${eurK(budget)} (budget de départ). Chaque mois : marge brute − coûts fixes (${eur(d.fixed)}) − acquisition des nouveaux clients.`,
     `<div class="dz-chart">${lineChart({
       series: [
         { name: SC.prudent.name, color: SC.prudent.color, values: sc[0].cash, dash: true },
@@ -125,28 +125,28 @@ ${table(["Mois", "Clients", "Nouveaux clients", "Revenu", "Résultat du mois", "
 
   // ---------- 09. Entonnoir ----------
   const f = funnel(d, 10_000);
-  const fun = sec(++n, "Entonnoir : atteindre 10 k€ de revenu mensuel", `Il faut ${int(f.customers)} clients actifs. Taux de conversion types du secteur, en remontant l'entonnoir.`,
+  const fun = sec(++n, "Combien de clients pour atteindre 10 k€ par mois ?", `Il faut ${int(f.customers)} clients actifs. Taux de conversion types du secteur, en remontant l'entonnoir.`,
     `<div class="dz-chart">${funnelChart(f.steps.map((s) => ({ label: s.label, note: s.rate ? `${(s.rate * 100).toLocaleString("fr-FR")} % passent à l'étape suivante` : "objectif", value: s.value, display: int(s.value) })))}</div>`);
 
   // ---------- 10. Canaux ----------
-  const ch = sec(++n, "Canaux d'acquisition", "Répartition visée des nouveaux clients et façon de les activer.",
+  const ch = sec(++n, "Comment trouver les premiers clients ?", "Répartition visée des nouveaux clients et façon de les activer.",
     barList(d.channels.map(([label, share, how]) => ({ label, value: share, display: `${share} %`, note: how }))));
 
   // ---------- 11. Budget ----------
   const split = budgetSplit(d, it);
-  const bud = sec(++n, "Budget de lancement détaillé", `Répartition type de ${eurK(budget)} de mise de départ.`,
+  const bud = sec(++n, "Quel budget prévoir pour se lancer ?", `Répartition type de ${eurK(budget)} de mise de départ.`,
     barList(split.map(([label, v]) => ({ label, value: v, display: eur(v) })), "var(--forest-2)"));
 
   // ---------- 12. Concurrence ----------
   const comp = d.comps.length
-    ? sec(++n, "Analyse concurrentielle", "Prix publics indicatifs relevés par IdeaForge : ils évoluent, vérifie-les avant de fixer les tiens.",
+    ? sec(++n, "Qui sont les concurrents, et à quel prix ?", "Prix publics indicatifs relevés par IdeaForge : ils évoluent, vérifie-les avant de fixer les tiens.",
       table(["Acteur", "Prix", "Point fort", "Faille à exploiter"], d.comps.map((c) => [`<b>${esc(c[0])}</b>`, esc(c[1]), esc(c[2]), esc(c[3])])))
     : "";
 
   // ---------- 13. Risques ----------
   const risks = (it.risks ?? []).map((r, i) => ({ label: r, prob: d.risks?.[i]?.[0] ?? 2, impact: d.risks?.[i]?.[1] ?? 2 }));
   const riskSec = risks.length
-    ? sec(++n, "Matrice des risques", "Probabilité et impact de chaque risque identifié.",
+    ? sec(++n, "Quels risques surveiller ?", "Probabilité et impact de chaque risque identifié.",
       `<div class="dz-chart narrow">${riskMatrix(risks)}</div>${table(["#", "Risque", "Probabilité", "Impact"], risks.map((r, i) => [`<b>${i + 1}</b>`, esc(r.label), lvl(r.prob), lvl(r.impact)]))}`)
     : "";
 

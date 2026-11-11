@@ -1,9 +1,19 @@
-import { type NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
 const REF_COOKIE = "if_ref";
 
 export async function middleware(request: NextRequest) {
+  // Une seule version du site : www.ideaforges.io et http -> https://ideaforges.io (redirection 301)
+  const host = request.headers.get("host") || "";
+  const proto = request.headers.get("x-forwarded-proto");
+  if (host.startsWith("www.") || (proto === "http" && !host.startsWith("localhost"))) {
+    const url = request.nextUrl.clone();
+    url.protocol = "https:";
+    url.host = host.replace(/^www\./, "");
+    url.port = "";
+    return NextResponse.redirect(url, 301);
+  }
   const response = await updateSession(request);
   // Lien de parrainage ?ref=CODE : mémorisé 30 jours, le compte sera rattaché à l'inscription.
   const ref = request.nextUrl.searchParams.get("ref");

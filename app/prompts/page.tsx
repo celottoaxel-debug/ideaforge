@@ -4,10 +4,11 @@ import CopyPrompt from "@/components/CopyPrompt";
 import CheckoutButton from "@/components/CheckoutButton";
 import { LegalFooter } from "@/components/LegalPage";
 import { getLocale, dict } from "@/lib/i18n";
+import { SITE, ldJson, breadcrumbLd, webPageLd } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
-  title: "50 prompts IA pour lancer ton business (ChatGPT, Claude)",
+  title: "50 prompts IA pour lancer ton business",
   description: "50 prompts prêts à coller dans ChatGPT ou Claude, de l'idée au lancement : validation, MVP avec l'IA, landing page, acquisition, vente et pilotage.",
   alternates: { canonical: "/prompts" },
 };
@@ -19,6 +20,12 @@ export default async function PromptsPage() {
 
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={ldJson(webPageLd({
+        name: `Le pack de ${PACK_COUNT} prompts IA pour lancer son business`, path: "/prompts", type: "WebPage",
+        description: "Prompts prêts à coller dans ChatGPT ou Claude, de l'idée au lancement : validation, MVP avec l'IA, landing page, acquisition, vente et pilotage.",
+        extra: { mainEntity: { "@type": "ItemList", name: "Sections du pack de prompts", numberOfItems: PROMPTS_PACK.length, itemListElement: PROMPTS_PACK.map((s, i) => ({ "@type": "ListItem", position: i + 1, name: `${s.title} (${s.prompts.length} prompts)` })) } },
+      }))} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={ldJson(breadcrumbLd([{ name: "Accueil", url: SITE }, { name: "Pack de prompts", url: `${SITE}/prompts` }]))} />
       <header className="nav"><div className="wrap nav-in">
         <a className="brand" href="/"><span className="mk">IF</span> IdeaForge</a>
         <a className="btn" href="/#catalogue">{t.nav_catalogue}</a>

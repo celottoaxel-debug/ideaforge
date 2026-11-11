@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { isPlaceholder } from "@/lib/legal";
+import { SITE, ldJson, breadcrumbLd, webPageLd } from "@/lib/seo";
 
 const DOCS = [
   { href: "/mentions-legales", label: "Mentions légales" },
@@ -11,6 +12,8 @@ const DOCS = [
 export function LegalPage({ title, updated, current, children }: { title: string; updated: string; current: string; children: ReactNode }) {
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={ldJson(webPageLd({ name: title, description: `${title} du site IdeaForge (ideaforges.io).`, path: current }))} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={ldJson(breadcrumbLd([{ name: "Accueil", url: SITE }, { name: title, url: `${SITE}${current}` }]))} />
       <header className="nav"><div className="wrap nav-in">
         <a className="brand" href="/"><span className="mk">IF</span> IdeaForge</a>
         <a className="btn dark" href="/">←</a>

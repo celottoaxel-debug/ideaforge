@@ -55,22 +55,24 @@ export default async function CollectionPage({ params }: { params: { slug: strin
       <main className="wrap coll">
         <nav className="crumbs" aria-label="Fil d'Ariane"><a href="/">Accueil</a> › <a href="/idees">Idées par thème</a> › <span>{c.h1}</span></nav>
         <h1>{c.h1}</h1>
-        <p className="coll-count">{ideas.length} idées analysées et chiffrées</p>
+        <p className="coll-count">{ideas.length} fiches analysées et chiffrées</p>
         {c.intro.map((p, i) => <p key={i} className="coll-intro">{p}</p>)}
 
+        <h2 className="coll-q">{c.question}</h2>
+        <p className="coll-intro">Les {ideas.length} pistes ci-dessous sont classées du revenu projeté le plus élevé au plus faible. Ouvre une fiche pour voir le budget détaillé, les concurrents et le plan de lancement.</p>
         <div className="irows">{ideas.map((it) => <IdeaRow key={it.id} it={it} />)}</div>
-        <p className="coll-note">* Revenu mensuel projeté au 12e mois dans le scénario réaliste du dossier de chaque idée : une estimation, pas une promesse.</p>
+        <p className="coll-note">* Revenu mensuel projeté à la fin de la première année, dans le scénario réaliste du dossier de chaque idée : une estimation, pas une promesse.</p>
 
         {c.faq.length > 0 && (
           <section className="coll-faq">
-            <h2>Questions fréquentes</h2>
+            <h2>Questions fréquentes : {c.label.toLowerCase()}</h2>
             {c.faq.map((f) => <details key={f.q}><summary>{f.q}</summary><p>{f.a}</p></details>)}
           </section>
         )}
 
         <section className="coll-more">
-          <h2>Autres thèmes</h2>
-          <div className="coll-chips">{others.map((o) => <a key={o.slug} href={`/idees/${o.slug}`}>{o.h1}</a>)}</div>
+          <h2>Quels autres thèmes explorer ?</h2>
+          <div className="coll-chips">{others.map((o) => <a key={o.slug} href={`/idees/${o.slug}`}>{o.label}</a>)}</div>
         </section>
       </main>
       <LegalFooter />

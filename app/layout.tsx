@@ -14,11 +14,11 @@ const site = process.env.NEXT_PUBLIC_SITE_URL || "https://ideaforges.io";
 export const metadata: Metadata = {
   metadataBase: new URL(site),
   title: {
-    default: "IdeaForge — Idées de business chiffrées : budget, revenus, plan de lancement",
+    default: "IdeaForge : 100+ idées de business chiffrées",
     template: "%s · IdeaForge",
   },
   description:
-    "Plus de 90 idées de business et de SaaS analysées et chiffrées : budget de départ, revenus projetés sur 24 mois, concurrents, risques et plan de lancement. Valide ton idée et lance-la avec l'IA.",
+    "Plus de 100 idées de business et de SaaS chiffrées : budget, revenus sur 2 ans, concurrents, risques et plan de lancement. Valide ton idée avec l'IA.",
   keywords: ["idées de business", "idée d'entreprise", "idée business rentable", "micro-SaaS", "business IA", "idées SaaS", "business ideas", "ideas de negocio"],
   applicationName: "IdeaForge",
   appleWebApp: { capable: true, title: "IdeaForge", statusBarStyle: "default" },
@@ -28,11 +28,11 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "IdeaForge",
     locale: "fr_FR",
-    title: "IdeaForge — Idées de business chiffrées",
-    description: "Plus de 90 idées de business analysées : budget, revenus sur 24 mois, concurrents, plan de lancement.",
+    title: "IdeaForge : idées de business chiffrées",
+    description: "Plus de 100 idées de business analysées : budget, revenus sur 2 ans, concurrents, plan de lancement.",
     url: site,
   },
-  twitter: { card: "summary_large_image", title: "IdeaForge — Idées de business chiffrées", description: "Plus de 90 idées de business analysées et chiffrées." },
+  twitter: { card: "summary_large_image", title: "IdeaForge : idées de business chiffrées", description: "Plus de 100 idées de business analysées et chiffrées." },
   robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 } },
   verification: {
     google: process.env.GOOGLE_SITE_VERIFICATION || undefined,

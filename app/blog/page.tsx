@@ -6,7 +6,7 @@ import { LegalFooter } from "@/components/LegalPage";
 
 export const revalidate = 600;
 export const metadata: Metadata = {
-  title: "Blog : trouver, valider et lancer une idée de business",
+  title: "Blog : trouver et lancer une idée de business",
   description: "Guides pratiques pour entrepreneurs : trouver une idée rentable, la valider, construire un MVP avec l'IA, fixer ses prix et trouver ses premiers clients.",
   alternates: { canonical: "/blog", types: { "application/rss+xml": "/blog/rss.xml" } },
 };

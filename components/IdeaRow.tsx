@@ -14,7 +14,7 @@ export default function IdeaRow({ it }: { it: Idea }) {
       </div>
       <div className="irow-stats">
         <span><b className="mono">{f.budget}</b><i>budget</i></span>
-        <span><b className="mono">{f.mrr12Txt}</b><i>revenu/mois à 12 mois*</i></span>
+        <span><b className="mono">{f.mrr12Txt}</b><i>revenu mensuel an 1*</i></span>
         <span><b className="mono">{scoreIdea(it).score}/100</b><i>score</i></span>
       </div>
     </a>
