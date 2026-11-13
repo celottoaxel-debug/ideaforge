@@ -1015,3 +1015,4 @@ footer { margin-top: 0; }
 .rank-flag.r2 { background: linear-gradient(180deg, #e3ebe7, #aab8b1); box-shadow: 0 6px 16px -6px rgba(174,189,181,.6); }
 .rank-flag.r3 { background: linear-gradient(180deg, #e4a877, #b8743f); box-shadow: 0 6px 16px -6px rgba(184,116,63,.6); }
 @media (max-width: 560px) { .qf { flex-wrap: nowrap; overflow-x: auto; margin-inline: -18px; padding: 2px 18px 6px; scrollbar-width: none; } .qf::-webkit-scrollbar { display: none; } .qf-chip { flex: none; } }
+@media (min-width: 561px) { .cat-controls .cat-search { flex: 1 1 100%; } .cat-controls select { flex: 1 1 0; min-width: 150px; } }
