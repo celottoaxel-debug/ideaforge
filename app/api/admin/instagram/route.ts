@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/admin";
-import { createPost, publishPost, prepareStory, publishStory } from "@/lib/instagram/publish";
+import { createPost, publishPost, prepareStory, publishStory, prepareReel, publishReel } from "@/lib/instagram/publish";
 import type { Kind } from "@/lib/instagram/content";
 
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 // Admin : créer un carrousel maintenant, ou publier un brouillon.
 export async function POST(request: Request) {
@@ -20,6 +20,8 @@ export async function POST(request: Request) {
     if (body.action === "publish" && Number.isInteger(body.id)) return NextResponse.json(await publishPost(body.id as number));
     if (body.action === "story-prepare") { await prepareStory(); return NextResponse.json({ ok: true }); }
     if (body.action === "story-publish") return NextResponse.json(await publishStory());
+    if (body.action === "reel-prepare" && Number.isInteger(body.id)) return NextResponse.json(await prepareReel(body.id as number));
+    if (body.action === "reel-publish" && Number.isInteger(body.id)) return NextResponse.json(await publishReel(body.id as number));
   } catch (e) {
     return NextResponse.json({ ok: false, error: e instanceof Error ? e.message : String(e) }, { status: 500 });
   }

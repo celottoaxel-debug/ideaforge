@@ -200,3 +200,16 @@ export function StoryView({ d, handle }: { d: StoryData; handle: string }) {
     </div>
   );
 }
+
+/** Image de réel 1080 × 1920 : la slide du carrousel au centre, le même décor autour. */
+export function ReelFrame({ s, handle }: { s: Slide; handle: string }) {
+  return (
+    <div style={{ width: 1080, height: 1920, position: "relative", display: "flex", fontFamily: "Geist", color: C.ink, backgroundColor: C.bg,
+      backgroundImage: "radial-gradient(circle at 85% 6%, rgba(47,192,125,0.22) 0%, rgba(47,192,125,0) 42%), radial-gradient(circle at 0% 100%, rgba(231,172,60,0.10) 0%, rgba(231,172,60,0) 45%)" }}>
+      <Backdrop h={1920} />
+      <div style={{ position: "absolute", left: 0, top: 230, width: 1080, height: 1350, display: "flex", overflow: "hidden", borderTop: "1px solid rgba(90,214,156,0.18)", borderBottom: "1px solid rgba(90,214,156,0.18)" }}>
+        <SlideView s={s} handle={handle} />
+      </div>
+    </div>
+  );
+}

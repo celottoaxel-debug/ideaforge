@@ -1,8 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin";
-import { igAccount, recentStories } from "@/lib/instagram/publish";
-import { GenerateCarousel, PublishButton, CopyCaption, StoryButtons } from "@/components/AdminInstagram";
+import { igAccount, recentStories, getReel } from "@/lib/instagram/publish";
+import { GenerateCarousel, PublishButton, CopyCaption, StoryButtons, ReelButtons } from "@/components/AdminInstagram";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Instagram · Admin", robots: { index: false, follow: false } };
@@ -24,6 +24,8 @@ export default async function AdminInstagram() {
   const acc = await igAccount();
   let stories: Awaited<ReturnType<typeof recentStories>> = [];
   try { stories = await recentStories(7); } catch {}
+  const reels = new Map<number, Awaited<ReturnType<typeof getReel>>>();
+  await Promise.all(posts.map(async (p) => { try { reels.set(p.id, await getReel(p.id)); } catch {} }));
   const today = new Date().toISOString().slice(0, 10);
   const todayStory = stories.find((x) => x.date === today);
 
@@ -35,7 +37,7 @@ export default async function AdminInstagram() {
 
       <div className="tiles" style={{ marginBottom: 22 }}>
         <div className={`tile ${acc.ok ? "hot" : ""}`}><div className="tile-k">Compte connecté</div><div className="tile-v" style={{ fontSize: 20 }}>{acc.ok ? `@${acc.username}` : "Non connecté"}</div><div className="tile-s">{acc.ok ? "Publication automatique active" : acc.error}</div></div>
-        <div className="tile"><div className="tile-k">Calendrier</div><div className="tile-v" style={{ fontSize: 20 }}>Lun · Mer · Ven</div><div className="tile-s">carrousels vers 9 h · 1 story chaque jour</div></div>
+        <div className="tile"><div className="tile-k">Calendrier</div><div className="tile-v" style={{ fontSize: 20 }}>Lun · Mer · Ven</div><div className="tile-s">carrousels vers 9 h · réels mar/jeu/sam · 1 story/jour</div></div>
         <div className="tile"><div className="tile-k">Publiés</div><div className="tile-v">{posts.filter((p) => p.status === "published").length}</div><div className="tile-s">sur les 20 derniers</div></div>
         <div className="tile"><div className="tile-k">Brouillons</div><div className="tile-v">{posts.filter((p) => p.status !== "published").length}</div><div className="tile-s">prêts ou en erreur</div></div>
       </div>
@@ -77,8 +79,16 @@ export default async function AdminInstagram() {
             </div>
             <details className="ig-cap"><summary>Légende</summary><pre>{p.caption}</pre></details>
             {p.error && <p className="msg err">{p.error}</p>}
+            {(() => { const r = reels.get(p.id); return r ? (
+              <div className="ig-reel">
+                <b>🎬 Réel</b> <span className={`ref-pill ${r.status === "published" ? "paid" : "signed_up"}`}>{r.status === "published" ? "Publié" : r.status === "error" ? "Erreur" : "Vidéo prête"}</span>
+                {r.url && <video src={r.url} controls muted playsInline preload="metadata" style={{ display: "block", width: 200, borderRadius: 10, marginTop: 8 }} />}
+                {r.error && <p className="msg err">{r.error}</p>}
+                {r.permalink && <a className="btn" href={r.permalink} target="_blank" rel="noopener noreferrer">Voir le réel ↗</a>}
+              </div>) : null; })()}
             <div className="ig-actions">
               {p.status !== "published" && <PublishButton id={p.id} disabled={!acc.ok} />}
+              {reels.get(p.id)?.status !== "published" && <ReelButtons id={p.id} canPublish={acc.ok} hasVideo={!!reels.get(p.id)?.url} />}
               {p.permalink && <a className="btn" href={p.permalink} target="_blank" rel="noopener noreferrer">Voir sur Instagram ↗</a>}
               <CopyCaption text={p.caption} />
             </div>

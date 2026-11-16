@@ -7,6 +7,7 @@ import { buildDraft, kindForToday, type Kind, type Slide } from "@/lib/instagram
 import type { StoryData } from "@/lib/instagram/render";
 import { allIdeas, ideaFacts, clip } from "@/lib/seo";
 import { scoreIdea } from "@/lib/score";
+import { renderReel, type ReelRow } from "@/lib/instagram/reel";
 
 // Deux sortes de jetons existent : « IGAA… » (connexion Instagram → graph.instagram.com)
 // et « EAA… » (connexion unifiée / Facebook → graph.facebook.com). On gère les deux.
@@ -67,8 +68,8 @@ export async function refreshIgToken(): Promise<boolean> {
 }
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
-async function waitReady(id: string, token: string) {
-  for (let i = 0; i < 20; i++) {
+async function waitReady(id: string, token: string, tries = 20) {
+  for (let i = 0; i < tries; i++) {
     const s = await ig(id, { fields: "status_code", access_token: token }, "GET");
     if (s.status_code === "FINISHED") return;
     if (s.status_code === "ERROR" || s.status_code === "EXPIRED") throw new Error(`Conteneur ${s.status_code}`);
@@ -121,9 +122,9 @@ export async function publishPost(id: number): Promise<{ ok: boolean; permalink?
   }
 }
 
-/** Tâche du jour : lundi, mercredi, vendredi → un carrousel créé et publié. Chaque jour → une story.
+/** Tâche du jour : lun/mer/ven → un carrousel ; mar/jeu/sam → un réel tiré du dernier carrousel ; chaque jour → une story.
  *  Le dimanche : renouvellement du jeton. */
-export async function runInstagram(): Promise<{ ran: boolean; id?: number; ok?: boolean; error?: string; story?: { ok: boolean; error?: string } }> {
+export async function runInstagram(): Promise<{ ran: boolean; id?: number; ok?: boolean; error?: string; reel?: { ok: boolean; id?: number; error?: string }; story?: { ok: boolean; error?: string } }> {
   const parisDay = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Paris" })).getDay();
   if (parisDay === 0) await refreshIgToken();
   const kind = kindForToday();
@@ -139,9 +140,13 @@ export async function runInstagram(): Promise<{ ran: boolean; id?: number; ok?: 
       else { const r = await publishPost(id); res = { ran: true, id, ok: r.ok, error: r.error }; }
     }
   }
+  let reel: { ok: boolean; id?: number; error?: string } | undefined;
+  if ([2, 4, 6].includes(parisDay)) {
+    try { reel = await runReel(); } catch (e) { reel = { ok: false, error: e instanceof Error ? e.message : String(e) }; }
+  }
   let story: { ok: boolean; error?: string } | undefined;
   try { story = await runStory(); } catch (e) { story = { ok: false, error: e instanceof Error ? e.message : String(e) }; }
-  return { ...res, story };
+  return { ...res, reel, story };
 }
 
 // ───────── Stories (une par jour) ─────────
@@ -235,4 +240,61 @@ export async function prepareStory(date = todayKey()) {
 export async function recentStories(n = 7): Promise<{ date: string; row: StoryRow }[]> {
   const { data } = await createAdminClient().from("app_settings").select("key, value").like("key", "ig_story:%").order("key", { ascending: false }).limit(n);
   return (data ?? []).flatMap((d) => { try { return [{ date: (d.key as string).slice(9), row: JSON.parse(d.value as string) as StoryRow }]; } catch { return []; } });
+}
+
+// ───────── Réels (mardi, jeudi, samedi) ─────────
+export async function getReel(postId: number): Promise<ReelRow | null> {
+  const v = await setting(`ig_reel:${postId}`);
+  try { return v ? (JSON.parse(v) as ReelRow) : null; } catch { return null; }
+}
+const putReel = (postId: number, row: ReelRow) => saveSetting(`ig_reel:${postId}`, JSON.stringify(row));
+
+/** Monte (si besoin) puis publie le réel du carrousel `postId`. */
+export async function publishReel(postId: number): Promise<{ ok: boolean; permalink?: string; error?: string }> {
+  const admin = createAdminClient();
+  const { data: post } = await admin.from("ig_posts").select("caption").eq("id", postId).maybeSingle();
+  if (!post) return { ok: false, error: "Carrousel introuvable" };
+  let row = (await getReel(postId)) ?? { status: "draft" as const };
+  if (row.status === "published") return { ok: true, permalink: row.permalink };
+  try {
+    if (!row.url) { row = { ...row, url: await renderReel(postId), error: undefined }; await putReel(postId, row); }
+    const token = (await igToken())?.trim();
+    if (!token) throw new Error("Instagram non connecté");
+    const acc = await igAccount();
+    if (!acc.ok || !acc.id) throw new Error(acc.error || "Compte Instagram introuvable");
+    const c = await ig(`${acc.id}/media`, { media_type: "REELS", video_url: row.url!, caption: post.caption as string, share_to_feed: "true", access_token: token });
+    await waitReady(c.id, token, 45);
+    const pub = await ig(`${acc.id}/media_publish`, { creation_id: c.id, access_token: token });
+    let permalink: string | undefined;
+    try { permalink = (await ig(pub.id, { fields: "permalink", access_token: token }, "GET")).permalink; } catch {}
+    await putReel(postId, { ...row, status: "published", media_id: pub.id, permalink, error: undefined, at: new Date().toISOString() });
+    return { ok: true, permalink };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    await putReel(postId, { ...row, status: "error", error: msg });
+    return { ok: false, error: msg };
+  }
+}
+
+/** Monte la vidéo seulement (aperçu dans le panel), sans publier. */
+export async function prepareReel(postId: number): Promise<{ ok: boolean; url?: string; error?: string }> {
+  try {
+    const row = (await getReel(postId)) ?? { status: "draft" as const };
+    if (row.status === "published") return { ok: true, url: row.url };
+    const url = await renderReel(postId);
+    await putReel(postId, { ...row, status: "draft", url, error: undefined });
+    return { ok: true, url };
+  } catch (e) { return { ok: false, error: e instanceof Error ? e.message : String(e) }; }
+}
+
+/** Réel du jour : le carrousel publié le plus récent qui n'a pas encore son réel. */
+export async function runReel(): Promise<{ ok: boolean; id?: number; error?: string }> {
+  const { data } = await createAdminClient().from("ig_posts").select("id").eq("status", "published").order("published_at", { ascending: false }).limit(6);
+  for (const p of data ?? []) {
+    const r = await getReel(p.id as number);
+    if (r?.status === "published") continue;
+    const out = await publishReel(p.id as number);
+    return { ...out, id: p.id as number };
+  }
+  return { ok: true };
 }

@@ -72,3 +72,25 @@ export function StoryButtons({ canPublish, published }: { canPublish: boolean; p
     </div>
   );
 }
+
+export function ReelButtons({ id, canPublish, hasVideo }: { id: number; canPublish: boolean; hasVideo: boolean }) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const [err, setErr] = useState("");
+  async function go(action: string) {
+    setBusy(action); setErr("");
+    try {
+      const r = await fetch("/api/admin/instagram", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, id }) });
+      const j = await r.json();
+      if (j.ok) { window.location.reload(); return; }
+      setErr(j.error || "Erreur");
+    } catch { setErr("Erreur réseau"); }
+    setBusy(null);
+  }
+  return (
+    <>
+      <button type="button" className="btn" disabled={!!busy} onClick={() => go("reel-prepare")}>{busy === "reel-prepare" ? "Montage… (1 min)" : hasVideo ? "🎬 Refaire la vidéo" : "🎬 Créer le réel"}</button>
+      {hasVideo && <button type="button" className="btn primary" disabled={!canPublish || !!busy} onClick={() => go("reel-publish")}>{busy === "reel-publish" ? "Publication… (1-2 min)" : "🎬 Publier le réel"}</button>}
+      {err && <p className="msg err">{err}</p>}
+    </>
+  );
+}
