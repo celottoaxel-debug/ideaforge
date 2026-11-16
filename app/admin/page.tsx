@@ -94,7 +94,7 @@ export default async function AdminPage({ searchParams }: { searchParams: { p?: 
 
   return (
     <>
-      <header className="nav"><div className="wrap nav-in">
+      <header className="nav"><div className="wrap nav-in nav-admin">
         <a className="brand" href="/"><span className="mk">IF</span> IdeaForge</a>
         <span className="pill" style={{ background: "var(--green-wash)", color: "var(--green-ink)", fontWeight: 600 }}>Admin</span>
         <a className="btn" href="/admin/blog">📝 Blog</a>
@@ -107,6 +107,12 @@ export default async function AdminPage({ searchParams }: { searchParams: { p?: 
       <main className="wrap" style={{ paddingBlock: 36 }}>
         <h1 style={{ fontSize: 30, marginBottom: 6 }}>Tableau de bord</h1>
         <p style={{ color: "var(--ink-2)", marginBottom: 22 }}>Vue d&apos;ensemble des revenus, des membres et de l&apos;activité.</p>
+        <nav className="admin-shortcuts" aria-label="Sections admin">
+          <a href="/admin/instagram"><b>📸 Instagram</b><span>Carrousels, réels, stories</span></a>
+          <a href="/admin/parrainage"><b>🤝 Parrainage</b><span>Qui a parrainé qui</span></a>
+          <a href="/admin/blog"><b>📝 Blog</b><span>Articles</span></a>
+          <a href="/"><b>← Site</b><span>Retour à l&apos;accueil</span></a>
+        </nav>
 
         {dataError && (
           <div className="admin-warn">
