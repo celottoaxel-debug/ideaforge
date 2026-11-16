@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
 # Fabrique un réel « face caméra » IdeaForge de bout en bout (dans le bac à sable Higgsfield).
+# Variables facultatives : END_URL (écran de téléphone pour la fin), END_START (seconde de départ dans cette vidéo), USED (idées déjà filmées)
 # Usage : bash run.sh <url_video_face_camera> </idea/chemin> "<accroche ligne1|ligne2>" <debut_plan_s> <seed> [mirror]
 set -euo pipefail
 FACE_URL="$1"; IDEA="$2"; HOOK="$3"; START="$4"; SEED="$5"; MIRROR="${6:-}"
+END_URL="${END_URL:-}"  # facultatif : vidéo d'écran de téléphone pour la fin
 D=$(cd "$(dirname "$0")" && pwd)
 W="$HOME/ugc-run-$SEED"; rm -rf "$W"; mkdir -p "$W"; cd "$W"
 cp "$D"/*.mjs "$D"/*.py .
 curl -sL -o Geist-SemiBold.ttf https://cdn.jsdelivr.net/npm/geist@1.3.1/dist/fonts/geist-sans/Geist-SemiBold.ttf
 curl -sL -o yunet.onnx https://github.com/opencv/opencv_zoo/raw/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx
 curl -sL -o face.mp4 "$FACE_URL"
+if [ -n "$END_URL" ]; then curl -sL -o end.mp4 "$END_URL"; export END_CLIP=end.mp4; fi
 IDEA_PATH="$IDEA" USED="${USED:-}" node rec.mjs > /dev/null
 python3 - "$HOOK" <<'PY'
 import json, sys

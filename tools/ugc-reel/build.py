@@ -5,6 +5,8 @@ import json, subprocess, sys, glob, os
 import cv2
 
 face = sys.argv[1]; FACE_MAIN = float(sys.argv[2]); flags = sys.argv[3:]
+END_CLIP = os.environ.get('END_CLIP', '')  # vidéo d'écran de téléphone pour la fin (facultatif)
+END_START = float(os.environ.get('END_START', '4.5'))
 mirror = 'mirror' in flags; music = 'music' in flags
 m = dict(json.load(open('marks.json')))
 S0 = m['s1']; HOOK = 3.0; main_len = m['end'] - S0; END_LEN = 6.5; TOTAL = HOOK + main_len + END_LEN
@@ -48,6 +50,11 @@ FL = ',hflip' if mirror else ''
 inp = ['-i', face, '-i', 'screen.webm', '-loop', '1', '-i', 'hook.png', '-loop', '1', '-i', 'cta1.png', '-loop', '1', '-i', 'cta2.png']
 for i in range(7): inp += ['-loop', '1', '-i', f'pill{i + 1}.png']
 if music: inp += ['-i', 'beat.wav']
+if END_CLIP:
+    from PIL import Image, ImageDraw
+    mk = Image.new('L', (700, 1516), 0); ImageDraw.Draw(mk).rounded_rectangle([0, 0, 699, 1515], radius=70, fill=255); mk.save('phone_mask.png')
+    inp += ['-i', END_CLIP, '-loop', '1', '-i', 'phone_mask.png']
+    ei = 13 if music else 12
 fc = [
     f"[0:v]trim=0:{HOOK},setpts=PTS-STARTPTS,fps=30{FL},crop=1080:1180:0:{hook_y},setsar=1[hv]",
     f"color=c=black:s=1080x1920:r=30:d={HOOK}[hbg]",
@@ -65,11 +72,25 @@ for i, (a, b) in enumerate(win):
     fc.append(f"[{last}][{5 + i}:v]overlay=(W-w)/2:990:enable='between(t,{a:.3f},{b:.3f})'[p{i}]"); last = f'p{i}'
 fc += [
     f"[{last}]trim=0:{main_len:.3f},setpts=PTS-STARTPTS,format=yuv420p[M]",
-    f"[0:v]trim={FACE_MAIN + main_len}:{FACE_MAIN + main_len + END_LEN},setpts=PTS-STARTPTS,fps=30{FL},crop=900:1600:{end_x}:{end_y},scale=1080:1920,setsar=1,eq=brightness=-0.04[ev]",
-    "[ev][3:v]overlay=(W-w)/2:760:shortest=1[e1]",
-    f"[e1][4:v]overlay=(W-w)/2:880,trim=0:{END_LEN},setpts=PTS-STARTPTS,format=yuv420p[E]",
-    "[H][M][E]concat=n=3:v=1:a=0[vout]",
 ]
+if END_CLIP:
+    # Fin : l'écran du téléphone dans un cadre arrondi, sur un fond flouté de la même vidéo
+    fc += [
+        f"[{ei}:v]trim={END_START}:{END_START + END_LEN},setpts=PTS-STARTPTS,fps=30,split[ea][eb]",
+        "[ea]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,gblur=sigma=40,eq=brightness=-0.25[eg]",
+        f"[eb]scale=700:1516,format=rgba[ep]",
+        f"[ep][{ei + 1}:v]alphamerge[epm]",
+        "[eg][epm]overlay=(W-w)/2:330[e0]",
+        "[e0][3:v]overlay=(W-w)/2:110[e1]",
+        f"[e1][4:v]overlay=(W-w)/2:220,trim=0:{END_LEN},setpts=PTS-STARTPTS,format=yuv420p[E]",
+    ]
+else:
+    fc += [
+        f"[0:v]trim={FACE_MAIN + main_len}:{FACE_MAIN + main_len + END_LEN},setpts=PTS-STARTPTS,fps=30{FL},crop=900:1600:{end_x}:{end_y},scale=1080:1920,setsar=1,eq=brightness=-0.04[ev]",
+        "[ev][3:v]overlay=(W-w)/2:760:shortest=1[e1]",
+        f"[e1][4:v]overlay=(W-w)/2:880,trim=0:{END_LEN},setpts=PTS-STARTPTS,format=yuv420p[E]",
+    ]
+fc.append("[H][M][E]concat=n=3:v=1:a=0[vout]")
 if music: fc.append(f"[12:a]atrim=0:{TOTAL:.3f},afade=t=out:st={TOTAL - 1:.3f}:d=1,volume=0.8[aout]")
 out = 'out-musique.mp4' if music else 'out.mp4'
 args = ['ffmpeg', '-y', '-v', 'error'] + inp + ['-filter_complex', ';'.join(fc), '-map', '[vout]']
