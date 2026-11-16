@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
 import { cookies } from "next/headers";
 import { attachReferral, hasReferralDiscount, ensureReferralCoupon, REF_COOKIE } from "@/lib/referral";
+import { launchStatus, ensureLaunchCoupon } from "@/lib/launch";
 
 // Crée une session de paiement Stripe.
 // body: { plan: "lifetime" | "monthly" }. L'utilisateur doit être connecté.
@@ -29,7 +30,11 @@ export async function POST(request: Request) {
   // Parrainage : rattache le compte si besoin, puis -20 % automatique sur la 1re commande.
   const ref = cookies().get(REF_COOKIE)?.value;
   if (ref) await attachReferral(user.id, ref);
-  const coupon = (await hasReferralDiscount(user.id)) ? await ensureReferralCoupon() : null;
+  // Offre de lancement (99 € au lieu de 129 €, 50 premiers) : prioritaire car plus avantageuse que -20 % ;
+  // sinon, -20 % pour un filleul. Stripe n'accepte qu'un seul coupon par paiement.
+  let coupon: string | null = null;
+  if (plan === "lifetime" && (await launchStatus()).active) coupon = await ensureLaunchCoupon();
+  if (!coupon && (await hasReferralDiscount(user.id))) coupon = await ensureReferralCoupon();
 
   try {
     const session = await stripe.checkout.sessions.create({

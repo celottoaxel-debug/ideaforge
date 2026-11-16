@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 const L: Record<string, Record<string, string>> = {
-  fr: { title: "Crée ton compte", sub: "Sauvegarde tes idées favorites et retrouve-les partout.", google: "Continuer avec Google", github: "Continuer avec GitHub", or: "ou", ph: "ton@email.com", btn: "Recevoir un lien de connexion", sent: "✓ Lien de connexion envoyé à", check: "Vérifie ta boîte mail.", back: "← Retour au catalogue" },
-  en: { title: "Create your account", sub: "Save your favorite ideas and find them anywhere.", google: "Continue with Google", github: "Continue with GitHub", or: "or", ph: "you@email.com", btn: "Send me a login link", sent: "✓ Login link sent to", check: "Check your inbox.", back: "← Back to catalog" },
-  es: { title: "Crea tu cuenta", sub: "Guarda tus ideas favoritas y encuéntralas en cualquier lugar.", google: "Continuar con Google", github: "Continuar con GitHub", or: "o", ph: "tu@email.com", btn: "Enviarme un enlace de acceso", sent: "✓ Enlace de acceso enviado a", check: "Revisa tu correo.", back: "← Volver al catálogo" },
+  fr: { title: "Crée ton compte", sub: "🎁 Gratuit : 1 fiche complète offerte, plus tes idées favorites sauvegardées partout.", google: "Continuer avec Google", github: "Continuer avec GitHub", or: "ou", ph: "ton@email.com", btn: "Recevoir un lien de connexion", sent: "✓ Lien de connexion envoyé à", check: "Vérifie ta boîte mail.", back: "← Retour au catalogue" },
+  en: { title: "Create your account", sub: "🎁 Free: 1 full sheet included, plus your favorite ideas saved everywhere.", google: "Continue with Google", github: "Continue with GitHub", or: "or", ph: "you@email.com", btn: "Send me a login link", sent: "✓ Login link sent to", check: "Check your inbox.", back: "← Back to catalog" },
+  es: { title: "Crea tu cuenta", sub: "🎁 Gratis: 1 ficha completa de regalo, y tus ideas favoritas guardadas.", google: "Continuar con Google", github: "Continuar con GitHub", or: "o", ph: "tu@email.com", btn: "Enviarme un enlace de acceso", sent: "✓ Enlace de acceso enviado a", check: "Revisa tu correo.", back: "← Volver al catálogo" },
 };
 
 function readLocale(): string {

@@ -5,7 +5,7 @@ import { ADMIN_EMAILS } from "@/lib/admin";
 import { sendEmail, sendBatch, emailEnabled, type Email } from "@/lib/email/resend";
 import { siteUrl, unsubUrl } from "@/lib/email/unsubscribe";
 import {
-  lang, welcomeEmail, saasIdeaEmail, adminSignupEmail, adminPaymentEmail, abandonedEmail, nurtureEmail, dropEmail, memberWelcomeEmail, winbackEmail, referralRewardEmail, adminReferralEmail, type MailIdea, type SaasIdea,
+  lang, welcomeEmail, saasIdeaEmail, adminSignupEmail, adminPaymentEmail, abandonedEmail, nurtureEmail, dropEmail, memberWelcomeEmail, winbackEmail, referralRewardEmail, adminReferralEmail, top10Email, type MailIdea, type SaasIdea,
 } from "@/lib/email/templates";
 
 const DAY = 86_400_000;
@@ -211,4 +211,13 @@ export async function onReferralReward(referredEmail: string | null | undefined,
   const a = adminReferralEmail(r.referrerEmail ?? "?", referredEmail ?? "?", r.paidCount, r.newTiers, site);
   ADMIN_EMAILS.forEach((to) => jobs.push(sendEmail({ to, ...a, tag: "admin_referral" })));
   await Promise.all(jobs);
+}
+
+// ---------- Aimant à e-mails : envoi immédiat du Top 10 ----------
+export function bestIdeas(n = 10): MailIdea[] {
+  return [...IDEAS].sort((a, b) => scoreIdea(b).score - scoreIdea(a).score).slice(0, n).map(toMail);
+}
+export async function sendTop10(email: string, locale?: string | null) {
+  if (!emailEnabled()) return false;
+  return sendEmail({ to: email, ...top10Email(lang(locale), siteUrl(), unsubUrl(email), bestIdeas(10)), tag: "top10" });
 }

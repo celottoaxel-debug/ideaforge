@@ -6,7 +6,6 @@ import { IDEAS } from "@/lib/ideas";
 import CatalogGrid from "@/components/CatalogGrid";
 import CheckoutButton from "@/components/CheckoutButton";
 import QuoteForm from "@/components/QuoteForm";
-import Newsletter from "@/components/Newsletter";
 import LangSwitcher from "@/components/LangSwitcher";
 import MobileMenuCloser from "@/components/MobileMenuCloser";
 import { COLLECTIONS } from "@/lib/collections";
@@ -16,6 +15,8 @@ import ForgeHero from "@/components/ForgeHero";
 import ForgeHold from "@/components/ForgeHold";
 import { homeCopy } from "@/lib/home-copy";
 import { HERO } from "@/lib/hero-assets";
+import { LeadMagnet, ExitOffer } from "@/components/LeadMagnet";
+import { launchStatus, withLaunch } from "@/lib/launch";
 
 const HOME_FAQ = [
   { q: "Qu'est-ce qu'IdeaForge ?", a: "IdeaForge est un catalogue de plus de 90 idées de business et de logiciels analysées et chiffrées : marché, budget de départ, revenus projetés sur 24 mois, concurrents, risques, plan de lancement et prompts pour construire le produit avec l'IA." },
@@ -31,7 +32,8 @@ export const metadata = { alternates: { canonical: "/" } };
 
 export default async function Home() {
   const locale = getLocale();
-  const t = dict(locale);
+  const launch = await launchStatus();
+  const t = withLaunch(dict(locale), launch, locale);
 
   const NICHES = [
     { ic: "📊", c: "#4B7BF5", h: t.n1_h, p: t.n1_p, ceil: t.n1_c, ex: "Plausible · Fathom" },
@@ -76,7 +78,7 @@ export default async function Home() {
         brand: { "@type": "Brand", name: "IdeaForge" },
         url: SITE,
         offers: [
-          { "@type": "Offer", name: "Accès à vie", price: String(PRICE_LIFETIME), priceCurrency: "EUR", availability: "https://schema.org/InStock", url: `${SITE}/#pricing` },
+          { "@type": "Offer", name: "Accès à vie", price: String(launch.price), priceCurrency: "EUR", availability: "https://schema.org/InStock", url: `${SITE}/#pricing` },
           { "@type": "Offer", name: "Abonnement mensuel", price: String(PRICE_MONTHLY), priceCurrency: "EUR", availability: "https://schema.org/InStock", url: `${SITE}/#pricing` },
         ],
       })} />
@@ -137,7 +139,7 @@ export default async function Home() {
       <ForgeHero
         video={HERO.video} poster={HERO.poster} ending={HERO.ending} bytes={HERO.bytes}
         bands={c.bands}
-        primary={member ? { href: "#catalogue", label: c.ctaIdeas } : { href: "#pricing", label: `${c.ctaLife} · ${PRICE_LIFETIME} €` }}
+        primary={member ? { href: "#catalogue", label: c.ctaIdeas } : { href: "#pricing", label: `${c.ctaLife} · ${launch.price} €` }}
         secondary={member ? undefined : { href: "#catalogue", label: c.ctaIdeas }}
         staticKicker={c.staticKicker} staticH={c.staticH} staticP={c.staticP}
       />
@@ -175,7 +177,8 @@ export default async function Home() {
               <div className="plan feat">
                 <span className="badge">{t.most_chosen}</span>
                 <span className="pname">{t.p_life}</span>
-                <div className="price"><span className="amt">129€</span><span className="was">199€</span></div>
+                <div className="price"><span className="amt">{launch.price}€</span>{launch.active && <span className="was">{launch.full}€</span>}</div>
+                {launch.active && <div className="launch-seats"><span>🔥 Offre de lancement</span><b className="mono">{launch.remaining} / {50} places restantes</b><i style={{ width: `${(launch.remaining / 50) * 100}%` }} /></div>}
                 <ul>
                   <li>{t.p_l_f1}</li><li>{t.p_l_f2}</li><li>{t.p_l_f3}</li><li>{t.p_l_f4}</li>
                   <li className="bonus">{t.p_l_b1}</li><li className="bonus">{t.p_l_b2}</li>
@@ -230,6 +233,12 @@ export default async function Home() {
       </section>
 
       <Trace d="M0 20 H420 L460 45 H680 L720 70 H1140" nodes={[[460, 45], [720, 70]]} />
+
+      {!member && (
+        <section id="top10" style={{ paddingBlock: "clamp(30px, 5vw, 60px)" }}>
+          <div className="wrap"><LeadMagnet locale={locale} /></div>
+        </section>
+      )}
 
       <section id="catalogue">
         <div className="wrap">
@@ -288,7 +297,7 @@ export default async function Home() {
               <h2>{c.finalH}</h2>
               <p>{c.finalP}</p>
               <div className="fh-cta">
-                <a className="btn amber lg" href="#pricing">{c.ctaLife} · {PRICE_LIFETIME} €</a>
+                <a className="btn amber lg" href="#pricing">{c.ctaLife} · {launch.price} €</a>
                 <a className="btn ghost lg" href="#catalogue">{c.ctaIdeas}</a>
               </div>
             </div>
@@ -296,9 +305,7 @@ export default async function Home() {
         </section>
       )}
 
-      <section>
-        <div className="wrap"><Newsletter t={t} /></div>
-      </section>
+      {!member && <ExitOffer locale={locale} />}
 
       <footer>
         <div className="wrap">

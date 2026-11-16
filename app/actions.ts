@@ -3,6 +3,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
+import { sendTop10 } from "@/lib/email/flows";
 
 // Enregistre une demande de devis (table quote_requests — insertion ouverte à tous).
 export async function submitQuote(formData: FormData) {
@@ -58,4 +60,20 @@ export async function toggleFavorite(ideaId: string) {
   }
   revalidatePath("/");
   return { ok: true, saved: !existing };
+}
+
+// Aimant à e-mails : « le Top 10 des idées les mieux notées », envoyé tout de suite par e-mail.
+export async function getTop10(formData: FormData) {
+  const email = String(formData.get("email") || "").trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, error: "email" };
+  const locale = cookies().get("locale")?.value ?? "fr";
+  const src = String(formData.get("source") || "top10").slice(0, 20);
+  const supabase = createClient();
+  const { error } = await supabase.from("newsletter_subscribers").insert({ email, locale, source: src });
+  if (error && error.code !== "23505") return { ok: false, error: error.message };
+  if (error?.code === "23505" && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    await createAdminClient().from("newsletter_subscribers").update({ unsubscribed_at: null }).ilike("email", email);
+  }
+  try { await sendTop10(email, locale); } catch (e) { console.error("[top10]", e); }
+  return { ok: true };
 }

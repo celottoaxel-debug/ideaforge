@@ -15,6 +15,9 @@ import PromptBox from "@/components/PromptBox";
 import Checklist from "@/components/Checklist";
 import RevenueCalc from "@/components/RevenueCalc";
 import LangSwitcher from "@/components/LangSwitcher";
+import FreeUnlock from "@/components/FreeUnlock";
+import { launchStatus, withLaunch } from "@/lib/launch";
+import { LeadMagnet, ExitOffer } from "@/components/LeadMagnet";
 import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 
@@ -53,10 +56,25 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
   if (original) permanentRedirect(`/idea/${original}`);
 
   const locale = getLocale();
-  const t = dict(locale);
+  const t = withLaunch(dict(locale), await launchStatus(), locale);
   const diff: Record<number, string> = { 1: t.diff1, 2: t.diff2, 3: t.diff3 };
   const plan = await getPlan();
-  const member = isMember(plan);
+  const paidMember = isMember(plan);
+  // Fiche offerte à l'inscription : un compte gratuit débloque UNE fiche de son choix
+  const { data: { user } } = await createClient().auth.getUser();
+  let freeUnlockId: string | null = null;
+  if (user && !paidMember) {
+    try {
+      const { data } = await createClient().from("profiles").select("free_unlock_id").eq("id", user.id).maybeSingle();
+      freeUnlockId = (data?.free_unlock_id as string) ?? null;
+    } catch {}
+  }
+  const member = paidMember || freeUnlockId === it.id;
+  const GIFT = {
+    fr: { out: "🎁 Crée ton compte gratuit : 1 fiche complète offerte", outBtn: "Créer mon compte et débloquer cette fiche", can: "🎁 Ta fiche complète offerte t'attend", canSub: "Tu peux débloquer gratuitement une fiche de ton choix. Celle-ci ?", used: "Tu as déjà utilisé ta fiche offerte", or: "ou débloque toutes les fiches" },
+    en: { out: "🎁 Create your free account: 1 full sheet included", outBtn: "Create my account and unlock this sheet", can: "🎁 Your free full sheet is waiting", canSub: "You can unlock one sheet of your choice for free. This one?", used: "You've already used your free sheet", or: "or unlock every sheet" },
+    es: { out: "🎁 Crea tu cuenta gratis: 1 ficha completa de regalo", outBtn: "Crear mi cuenta y desbloquear esta ficha", can: "🎁 Tu ficha completa gratis te espera", canSub: "Puedes desbloquear gratis una ficha a tu elección. ¿Esta?", used: "Ya usaste tu ficha gratis", or: "o desbloquea todas las fichas" },
+  }[locale as "fr" | "en" | "es"] ?? null;
   const faq = ideaFaq(it);
   const cols = collectionsOf(it);
   const similar = (await allIdeas()).filter((x) => x.id !== it!.id && x.sector === it!.sector).slice(0, 5);
@@ -165,11 +183,32 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
             <div style={{ fontSize: 26 }}>🔒</div>
             <h2>{t.gate_title}</h2>
             <p style={{ color: "var(--ink-2)", maxWidth: "42ch", margin: "0 auto" }}>{t.gate_sub}</p>
+            {GIFT && (
+              <div className="gift">
+                {!user ? (
+                  <>
+                    <b>{GIFT.out}</b>
+                    <a className="btn primary lg" href={`/login?next=/idea/${it.id}`}>{GIFT.outBtn}</a>
+                  </>
+                ) : !freeUnlockId ? (
+                  <>
+                    <b>{GIFT.can}</b>
+                    <span>{GIFT.canSub}</span>
+                    <FreeUnlock id={it.id} locale={locale} />
+                  </>
+                ) : (
+                  <span>{GIFT.used}.</span>
+                )}
+                <span className="gift-or">{GIFT.or}</span>
+              </div>
+            )}
             <div style={{ maxWidth: 320, margin: "10px auto 0" }}>
               <CheckoutButton plan="lifetime" label={t.p_l_cta} redirecting={t.redirecting} unavailable={t.pay_unavailable} />
             </div>
           </div>
         )}
+        {!member && <div className="lm-narrow" style={{ margin: "30px 0" }}><LeadMagnet locale={locale} /></div>}
+        {!member && <ExitOffer locale={locale} />}
         <section className="coll-faq">
           <h2>Questions fréquentes sur {shortName(it.title)}</h2>
           {faq.map((f) => <details key={f.q}><summary>{f.q}</summary><p>{f.a}</p></details>)}

@@ -282,3 +282,15 @@ export function adminReferralEmail(referrer: string, referred: string, paidCount
   const body = eyebrow("Parrainage") + h1("🤝 Un filleul vient de payer") + p(`<b>${esc(referred)}</b>, parrainé par <b>${esc(referrer)}</b>, vient de payer. ${esc(referrer)} a maintenant <b>${paidCount}</b> filleul${paidCount > 1 ? "s" : ""} payant${paidCount > 1 ? "s" : ""}.`) + tiers + button("Voir le parrainage", `${site}/admin/parrainage`);
   return done(`Parrainage : ${referred} (parrain ${referrer}, ${paidCount} au total)`, layout({ body, lang: "fr", site }));
 }
+
+// ---------- 10. Aimant à e-mails : le Top 10 des idées les mieux notées ----------
+const TOP10 = {
+  fr: { s: "🏆 Ton Top 10 des idées de business les mieux notées", pre: "Les 10 idées chiffrées avec le meilleur score IdeaForge.", eb: "Ton Top 10", h: "Les 10 idées les mieux notées", intro: "Comme promis, voici les 10 idées qui ont le meilleur score IdeaForge en ce moment : forte demande, peu de concurrence directe, bonne marge et lancement rapide. Chacune a sa fiche avec le budget de départ et les revenus projetés.", card: "Voir la fiche", cta: "Voir tout le catalogue", ps: "Astuce : crée ton compte gratuit, tu peux débloquer une fiche complète de ton choix, offerte." },
+  en: { s: "🏆 Your Top 10 best-rated business ideas", pre: "The 10 costed ideas with the best IdeaForge score.", eb: "Your Top 10", h: "The 10 best-rated ideas", intro: "As promised, here are the 10 ideas with the best IdeaForge score right now: strong demand, little direct competition, good margins and a fast launch. Each one has its sheet with starting budget and projected revenue.", card: "Read the sheet", cta: "See the whole catalog", ps: "Tip: create your free account, you can unlock one full sheet of your choice for free." },
+  es: { s: "🏆 Tu Top 10 de ideas de negocio mejor puntuadas", pre: "Las 10 ideas con mejor puntuación IdeaForge.", eb: "Tu Top 10", h: "Las 10 ideas mejor puntuadas", intro: "Como prometimos, aquí están las 10 ideas con mejor puntuación IdeaForge ahora mismo: demanda fuerte, poca competencia directa, buen margen y lanzamiento rápido. Cada una tiene su ficha con presupuesto inicial e ingresos proyectados.", card: "Ver la ficha", cta: "Ver todo el catálogo", ps: "Consejo: crea tu cuenta gratis, puedes desbloquear una ficha completa a tu elección." },
+};
+export function top10Email(l: Lang, site: string, unsub: string, ideas: MailIdea[]): Rendered {
+  const t = TOP10[l];
+  const body = eyebrow(t.eb) + h1(t.h) + p(t.intro) + ideaCards(ideas, site, t.card) + button(t.cta, `${site}/#catalogue`) + p(`<span style="font-size:14px">${t.ps} <a href="${site}/login" style="color:${C.green}">${site.replace(/^https?:\/\//, "")}/login</a></span>`);
+  return done(t.s, layout({ body, preheader: t.pre, lang: l, site, unsub, marketing: true }));
+}
