@@ -15,8 +15,8 @@ function Backdrop() {
         <pattern id="dg" width="36" height="36" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.2" fill="#5ad69c" fillOpacity="0.09" /></pattern>
       </defs>
       <rect width="1080" height="1350" fill="url(#dg)" />
-      <path d="M0 262 H560 L600 238 H1080" fill="none" stroke="url(#tr)" strokeWidth="2" strokeLinecap="round" />
-      <circle cx="600" cy="238" r="6" fill="#2fc07d" />
+      <path d="M0 176 H560 L600 152 H1080" fill="none" stroke="url(#tr)" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="600" cy="152" r="6" fill="#2fc07d" />
       {DOTS.map(([x, y, r, o, c], i) => <circle key={i} cx={x} cy={y} r={r} fill={c} fillOpacity={o} />)}
     </svg>
   );
@@ -41,14 +41,14 @@ function Icon({ name, color }: { name: string; color: string }) {
 
 function Card({ v, icon, num, kicker, title, sub }: { v: typeof G; icon?: string; num?: number; kicker?: string; title: string; sub?: string }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 26, padding: "28px 32px", borderRadius: 28, border: `1.5px solid ${v.bd}`, backgroundImage: v.bg }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 26, padding: "34px 36px", borderRadius: 28, border: `1.5px solid ${v.bd}`, backgroundImage: v.bg }}>
       <div style={{ display: "flex", width: 84, height: 84, flexShrink: 0, borderRadius: 22, alignItems: "center", justifyContent: "center", background: v.icBg, border: `1.5px solid ${v.bd}`, color: v.ic, fontFamily: "GeistMono", fontSize: 34 }}>
         {icon ? <Icon name={icon} color={v.ic} /> : String(num ?? "")}
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 1 }}>
         {kicker && <div style={{ display: "flex", fontFamily: "GeistMono", fontSize: 18, letterSpacing: 2.8, color: v.ic }}>{kicker.toUpperCase()}</div>}
-        <div style={{ display: "flex", fontSize: 38, fontWeight: 600, lineHeight: 1.12, letterSpacing: -1, color: C.ink }}>{title}</div>
-        {sub && <div style={{ display: "flex", fontSize: 25, lineHeight: 1.35, color: C.ink2 }}>{sub}</div>}
+        <div style={{ display: "flex", fontSize: 42, fontWeight: 600, lineHeight: 1.14, letterSpacing: -1, color: C.ink }}>{title}</div>
+        {sub && <div style={{ display: "flex", fontSize: 27, lineHeight: 1.35, color: C.ink2 }}>{sub}</div>}
       </div>
     </div>
   );
@@ -56,13 +56,22 @@ function Card({ v, icon, num, kicker, title, sub }: { v: typeof G; icon?: string
 
 /** Titre en deux tons : la fin (après « | ») passe en vert, comme sur le visuel. */
 function Title({ text, size = 82 }: { text: string; size?: number }) {
-  const [a, b] = text.split("|");
+  let [a, b] = text.split("|");
+  if (b === undefined) {
+    const w = a.trim().split(/\s+/);
+    const k = w.length > 2 ? Math.max(1, Math.round(w.length / 3)) : 0;
+    if (k) { a = w.slice(0, -k).join(" "); b = w.slice(-k).join(" "); }
+  }
   return (
     <div style={{ display: "flex", flexDirection: "column", fontSize: size, fontWeight: 600, lineHeight: 0.98, letterSpacing: -size * 0.045 }}>
       <div style={{ display: "flex" }}>{a.trim()}</div>
       {b && <div style={{ display: "flex", color: C.green }}>{b.trim()}</div>}
     </div>
   );
+}
+
+function Kicker({ text }: { text: string }) {
+  return <div style={{ display: "flex", fontFamily: "GeistMono", fontSize: 24, letterSpacing: 4, color: C.green }}>{text.toUpperCase()}</div>;
 }
 
 const PILL: Record<string, string> = { cover: "NOUVEAU", text: "LE MARCHÉ", stats: "LES CHIFFRES", list: "LE PLAN", rank: "TOP 5", cta: "IDEAFORGE" };
@@ -81,39 +90,40 @@ export function SlideView({ s, handle, pill }: { s: Slide; handle: string; pill?
           </div>
           <div style={{ display: "flex", fontFamily: "GeistMono", fontSize: 20, letterSpacing: 3.6, color: "#07130f", background: C.green, padding: "10px 20px", borderRadius: 999 }}>{(pill ?? PILL[s.t]).toUpperCase()}</div>
         </div>
+        <div style={{ display: "flex", flexGrow: 1 }} />
 
         {s.t === "cover" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 30, marginTop: 18 }}>
-            <div style={{ display: "flex", fontFamily: "GeistMono", fontSize: 22, letterSpacing: 4, color: C.green }}>{s.kicker.toUpperCase()}</div>
-            <Title text={s.title} size={s.title.length > 60 ? 70 : 82} />
+          <div style={{ display: "flex", flexDirection: "column", gap: 30, }}>
+            <Kicker text={s.kicker} />
+            <Title text={s.title} size={s.title.length > 60 ? 76 : 88} />
             {s.sub && <div style={{ display: "flex", fontSize: 29, lineHeight: 1.4, color: C.ink2 }}>{s.sub}</div>}
             {s.stat && <Card v={A} icon="chart" kicker="Potentiel" title={`≈ ${s.stat}`} sub={s.statLabel} />}
           </div>
         )}
         {s.t === "text" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 30, marginTop: 18 }}>
-            <Title text={`${s.title}|${s.kicker}`} size={76} />
+          <div style={{ display: "flex", flexDirection: "column", gap: 30, }}>
+            <Kicker text={s.kicker} /><Title text={s.title} size={80} />
             <Card v={G} icon="star" title={s.body} />
           </div>
         )}
         {s.t === "stats" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 20, marginTop: 18 }}>
-            <Title text={`${s.title}|${s.kicker.toLowerCase()}`} size={76} />
+          <div style={{ display: "flex", flexDirection: "column", gap: 20, }}>
+            <Kicker text={s.kicker} /><Title text={s.title} size={80} />
             <div style={{ display: "flex", flexDirection: "column", gap: 18, marginTop: 10 }}>
               {s.tiles.map((t, i) => <Card key={i} v={i === s.tiles.length - 1 ? A : G} icon={["coin", "chart", "clock", "star"][i] ?? "star"} kicker={t.k} title={t.v} />)}
             </div>
           </div>
         )}
         {s.t === "list" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 20, marginTop: 18 }}>
-            <Title text={`${s.title}|${s.kicker.toLowerCase()}`} size={76} />
+          <div style={{ display: "flex", flexDirection: "column", gap: 20, }}>
+            <Kicker text={s.kicker} /><Title text={s.title} size={80} />
             <div style={{ display: "flex", flexDirection: "column", gap: 18, marginTop: 10 }}>
               {s.items.map((it, i) => <Card key={i} v={s.kicker === "Attention" ? A : G} num={i + 1} title={it} />)}
             </div>
           </div>
         )}
         {s.t === "rank" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 26, marginTop: 18 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 26, }}>
             <div style={{ display: "flex", fontFamily: "GeistMono", fontSize: 130, color: C.amber, lineHeight: 1 }}>#{s.rank}</div>
             <Title text={s.title} size={s.title.length > 50 ? 62 : 74} />
             {s.pitch && <div style={{ display: "flex", fontSize: 29, lineHeight: 1.4, color: C.ink2 }}>{s.pitch}</div>}
@@ -123,8 +133,8 @@ export function SlideView({ s, handle, pill }: { s: Slide; handle: string; pill?
           </div>
         )}
         {s.t === "cta" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 24, marginTop: 18 }}>
-            <Title text={`${s.title}|sur IdeaForge`} size={82} />
+          <div style={{ display: "flex", flexDirection: "column", gap: 24, }}>
+            <Title text={`${s.title}|sur IdeaForge`} size={86} />
             <div style={{ display: "flex", fontSize: 29, lineHeight: 1.4, color: C.ink2 }}>Plus de 100 idées de business chiffrées, prêtes à lancer.</div>
             <Card v={G} icon="gift" kicker="Offert à l'inscription" title="1 fiche complète gratuite" sub="Crée ton compte et débloque la fiche de ton choix." />
             <Card v={G} icon="trophy" kicker="Gratuit par e-mail" title="Le Top 10 des idées les mieux notées" />
