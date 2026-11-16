@@ -80,8 +80,8 @@ const PILL: Record<string, string> = { cover: "NOUVEAU", text: "LE MARCHÉ", sta
 export function SlideView({ s, handle, pill, reel, bare }: { s: Slide; handle: string; pill?: string; reel?: boolean; bare?: boolean }) {
   const page = "n" in s ? `${s.n}/${s.total}` : "";
   return (
-    <div style={{ width: 1080, height: 1350, position: "relative", display: "flex", fontFamily: "Geist", color: C.ink, backgroundColor: bare ? "transparent" : C.bg,
-      backgroundImage: bare ? "none" : "radial-gradient(circle at 85% 8%, rgba(47,192,125,0.22) 0%, rgba(47,192,125,0) 45%), radial-gradient(circle at 0% 100%, rgba(231,172,60,0.10) 0%, rgba(231,172,60,0) 45%)" }}>
+    <div style={{ width: 1080, height: 1350, position: "relative", display: "flex", fontFamily: "Geist", color: C.ink, backgroundColor: bare ? undefined : C.bg,
+      backgroundImage: bare ? undefined : "radial-gradient(circle at 85% 8%, rgba(47,192,125,0.22) 0%, rgba(47,192,125,0) 45%), radial-gradient(circle at 0% 100%, rgba(231,172,60,0.10) 0%, rgba(231,172,60,0) 45%)" }}>
       {!bare && <Backdrop />}
       <div style={{ position: "absolute", left: 0, top: 0, width: 1080, height: 1350, display: "flex", flexDirection: "column", padding: "64px 64px 60px", gap: 34 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
