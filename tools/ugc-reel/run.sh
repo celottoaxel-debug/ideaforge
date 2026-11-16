@@ -9,7 +9,7 @@ cp "$D"/*.mjs "$D"/*.py .
 curl -sL -o Geist-SemiBold.ttf https://cdn.jsdelivr.net/npm/geist@1.3.1/dist/fonts/geist-sans/Geist-SemiBold.ttf
 curl -sL -o yunet.onnx https://github.com/opencv/opencv_zoo/raw/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx
 curl -sL -o face.mp4 "$FACE_URL"
-IDEA_PATH="$IDEA" node rec.mjs > /dev/null
+IDEA_PATH="$IDEA" USED="${USED:-}" node rec.mjs > /dev/null
 python3 - "$HOOK" <<'PY'
 import json, sys
 m = dict(json.load(open('marks.json'))); secs = round(m['end'] - m['s1'])
@@ -22,4 +22,5 @@ python3 synth.py beat.wav $((118 + SEED % 10)) 28 $(python3 -c "print([49,51.9,5
 python3 build.py face.mp4 "$START" $MIRROR
 python3 build.py face.mp4 "$START" $MIRROR music
 ls -la out.mp4 out-musique.mp4
+cat chosen.json; echo
 echo "DONE $W"

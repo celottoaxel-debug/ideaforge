@@ -4,6 +4,7 @@ import { chromium } from '/usr/local/lib/node_modules/playwright/index.mjs';
 import fs from 'fs';
 const SITE = 'https://ideaforges.io';
 const IDEA = process.env.IDEA_PATH || '';
+const USED = (process.env.USED || '').split(',').map((x) => x.trim()).filter(Boolean);
 const b = await chromium.launch();
 const ctx = await b.newContext({ viewport: { width: 1280, height: 1019 }, recordVideo: { dir: 'vid', size: { width: 1280, height: 1019 } } });
 const t0 = Date.now();
@@ -41,12 +42,18 @@ await smooth(await p.evaluate(() => scrollY + 220), 900);
 await p.waitForTimeout(800);
 mark('s4');
 let card = IDEA ? await p.$(`a[href="${IDEA}"]`) : null;
-if (card) { await card.scrollIntoViewIfNeeded(); await p.waitForTimeout(400); } else card = await p.$('a[href^="/idea/"]');
+if (!card) {
+  // Première idée du filtre « Meilleur score » jamais utilisée dans un réel
+  for (const a of await p.$$('a[href^="/idea/"]')) { if (!USED.includes(await a.getAttribute('href'))) { card = a; break; } }
+  card = card || (await p.$('a[href^="/idea/"]'));
+}
+await card.scrollIntoViewIfNeeded(); await p.waitForTimeout(400);
 await pointEl(card);
 await p.waitForTimeout(300);
 const href = IDEA || (await card.getAttribute('href'));
 await p.goto(SITE + href, { waitUntil: 'load' });
 await p.evaluate(cursor);
+fs.writeFileSync('chosen.json', JSON.stringify({ path: href, title: (await p.$eval('h1', (h) => h.innerText.trim()).catch(() => '')) }));
 await p.waitForTimeout(2600);
 mark('s5');
 await smooth(await h2('SCORE', 120), 1800);
