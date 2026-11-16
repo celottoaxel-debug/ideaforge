@@ -67,6 +67,33 @@ export async function refreshIgToken(): Promise<boolean> {
   return false;
 }
 
+// ───────── Hashtags : 5 différents à chaque publication, choisis dans la niche SaaS / IA ─────────
+const TAGS = {
+  core: ["#saas", "#microsaas", "#saasbusiness", "#intelligenceartificielle", "#ia", "#ai", "#iagenerative", "#aitools", "#outilsia"],
+  business: ["#entrepreneuriat", "#entrepreneur", "#ideedebusiness", "#businessenligne", "#businessideas", "#creerunbusiness", "#startup", "#startupfrance", "#frenchtech", "#solopreneur", "#entrepreneurfrancais"],
+  build: ["#indiehacker", "#nocode", "#lowcode", "#buildinpublic", "#sideproject", "#automatisation", "#chatgpt", "#claudeai", "#productivite"],
+};
+const ALL_TAGS = new Set([...TAGS.core, ...TAGS.business, ...TAGS.build]);
+/** Remplace les hashtags d'une légende par 5 nouveaux, jamais utilisés dans les publications récentes. */
+async function withFreshHashtags(caption: string): Promise<string> {
+  let recent: string[] = [];
+  try { recent = JSON.parse((await setting("ig_hashtags_recent")) || "[]"); } catch {}
+  const pick = (list: string[], n: number, taken: string[]) => {
+    const fresh = list.filter((t) => !recent.includes(t) && !taken.includes(t));
+    const pool = fresh.length >= n ? fresh : list.filter((t) => !taken.includes(t)).sort((a, b) => recent.indexOf(b) - recent.indexOf(a));
+    const out = fresh.length >= n ? [...pool].sort(() => Math.random() - 0.5) : pool;
+    return out.slice(0, n);
+  };
+  const chosen: string[] = [];
+  chosen.push(...pick(TAGS.core, 2, chosen));
+  chosen.push(...pick(TAGS.business, 2, chosen));
+  chosen.push(...pick(TAGS.build, 1, chosen));
+  // On retire les anciens hashtags (lignes ou mots qui commencent par #) puis on ajoute la nouvelle ligne
+  const body = caption.split("\n").map((l) => l.split(/\s+/).filter((w) => !(w.startsWith("#") && (ALL_TAGS.has(w.toLowerCase()) || /^#[\p{L}\d_]+$/u.test(w)))).join(" ").replace(/\s+$/, "")).join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  await saveSetting("ig_hashtags_recent", JSON.stringify([...chosen, ...recent].slice(0, 25)));
+  return `${body}\n\n${chosen.join(" ")}`;
+}
+
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 async function waitReady(id: string, token: string, tries = 20) {
   for (let i = 0; i < tries; i++) {
@@ -108,12 +135,13 @@ export async function publishPost(id: number): Promise<{ ok: boolean; permalink?
       children.push(c.id);
     }
     for (const c of children) await waitReady(c, token);
-    const parent = await ig(`${acc.id}/media`, { media_type: "CAROUSEL", children: children.join(","), caption: post.caption, access_token: token });
+    const caption = await withFreshHashtags(post.caption as string);
+    const parent = await ig(`${acc.id}/media`, { media_type: "CAROUSEL", children: children.join(","), caption, access_token: token });
     await waitReady(parent.id, token);
     const pub = await ig(`${acc.id}/media_publish`, { creation_id: parent.id, access_token: token });
     let permalink: string | undefined;
     try { permalink = (await ig(pub.id, { fields: "permalink", access_token: token }, "GET")).permalink; } catch {}
-    await admin.from("ig_posts").update({ status: "published", media_id: pub.id, permalink: permalink ?? null, published_at: new Date().toISOString(), error: null }).eq("id", id);
+    await admin.from("ig_posts").update({ status: "published", caption, media_id: pub.id, permalink: permalink ?? null, published_at: new Date().toISOString(), error: null }).eq("id", id);
     return { ok: true, permalink };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
@@ -267,7 +295,7 @@ export async function publishReel(postId: number): Promise<{ ok: boolean; permal
     if (!token) throw new Error("Instagram non connecté");
     const acc = await igAccount();
     if (!acc.ok || !acc.id) throw new Error(acc.error || "Compte Instagram introuvable");
-    const c = await ig(`${acc.id}/media`, { media_type: "REELS", video_url: row.url!, caption: post.caption as string, share_to_feed: "true", access_token: token });
+    const c = await ig(`${acc.id}/media`, { media_type: "REELS", video_url: row.url!, caption: await withFreshHashtags(post.caption as string), share_to_feed: "true", access_token: token });
     await waitReady(c.id, token, 45);
     const pub = await ig(`${acc.id}/media_publish`, { creation_id: c.id, access_token: token });
     let permalink: string | undefined;
@@ -322,12 +350,13 @@ export async function publishUgc(date: string): Promise<{ ok: boolean; permalink
     if (!token) throw new Error("Instagram non connecté");
     const acc = await igAccount();
     if (!acc.ok || !acc.id) throw new Error(acc.error || "Compte Instagram introuvable");
-    const c = await ig(`${acc.id}/media`, { media_type: "REELS", video_url: row.url_music || row.url, caption: row.caption, share_to_feed: "true", access_token: token });
+    const caption = await withFreshHashtags(row.caption);
+    const c = await ig(`${acc.id}/media`, { media_type: "REELS", video_url: row.url_music || row.url, caption, share_to_feed: "true", access_token: token });
     await waitReady(c.id, token, 45);
     const pub = await ig(`${acc.id}/media_publish`, { creation_id: c.id, access_token: token });
     let permalink: string | undefined;
     try { permalink = (await ig(pub.id, { fields: "permalink", access_token: token }, "GET")).permalink; } catch {}
-    await putUgc(date, { ...row, status: "published", media_id: pub.id, permalink, error: undefined, at: new Date().toISOString() });
+    await putUgc(date, { ...row, caption, status: "published", media_id: pub.id, permalink, error: undefined, at: new Date().toISOString() });
     return { ok: true, permalink };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
