@@ -1,11 +1,18 @@
-// Publication sur Instagram via l'API officielle (« Instagram API with Instagram Login », graph.instagram.com).
+// Publication sur Instagram via l'API officielle (graph.instagram.com ou graph.facebook.com selon le jeton).
 // Réglages : INSTAGRAM_TOKEN (jeton longue durée) dans Vercel. Le jeton est ensuite renouvelé
 // automatiquement et rangé dans la table app_settings (il expire au bout de 60 jours sinon).
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SITE } from "@/lib/seo";
 import { buildDraft, kindForToday, type Kind, type Slide } from "@/lib/instagram/content";
 
-const API = "https://graph.instagram.com/v21.0";
+// Deux sortes de jetons existent : « IGAA… » (connexion Instagram → graph.instagram.com)
+// et « EAA… » (connexion unifiée / Facebook → graph.facebook.com). On gère les deux.
+const IG_API = "https://graph.instagram.com/v21.0";
+const FB_API = "https://graph.facebook.com/v21.0";
+// Identifiant du compte @ideasforge.io (pas secret), modifiable via INSTAGRAM_USER_ID.
+const IG_USER_ID = process.env.INSTAGRAM_USER_ID || "17841462242150942";
+let API = IG_API;
+const apiFor = (token: string) => (token.startsWith("IG") ? IG_API : FB_API);
 
 async function setting(key: string): Promise<string | null> {
   try {
@@ -31,18 +38,24 @@ async function ig(path: string, params: Record<string, string>, method: "GET" | 
 
 /** Compte connecté (vérifie aussi que le jeton marche). */
 export async function igAccount(): Promise<{ ok: boolean; id?: string; username?: string; error?: string }> {
-  const token = await igToken();
+  const token = (await igToken())?.trim();
   if (!token) return { ok: false, error: "INSTAGRAM_TOKEN absent" };
+  API = apiFor(token);
   try {
-    const me = await ig("me", { fields: "user_id,username", access_token: token }, "GET");
-    return { ok: true, id: String(me.user_id || me.id), username: me.username };
+    if (API === IG_API) {
+      const me = await ig("me", { fields: "user_id,username", access_token: token }, "GET");
+      return { ok: true, id: String(me.user_id || me.id), username: me.username };
+    }
+    const me = await ig(IG_USER_ID, { fields: "id,username", access_token: token }, "GET");
+    return { ok: true, id: String(me.id), username: me.username };
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : String(e) }; }
 }
 
 /** Renouvelle le jeton (valable 60 jours de plus). Appelé chaque semaine par la tâche quotidienne. */
 export async function refreshIgToken(): Promise<boolean> {
   const token = await igToken();
-  if (!token) return false;
+  if (!token || !token.startsWith("IG")) return false; // les jetons « EAA… » système n'expirent pas
+  API = IG_API;
   try {
     const r = await ig("../refresh_access_token", { grant_type: "ig_refresh_token", access_token: token }, "GET");
     if (r.access_token) { await saveSetting("ig_token", r.access_token); return true; }
@@ -79,7 +92,7 @@ export async function publishPost(id: number): Promise<{ ok: boolean; permalink?
   const { data: post } = await admin.from("ig_posts").select("*").eq("id", id).maybeSingle();
   if (!post) return { ok: false, error: "Carrousel introuvable" };
   if (post.status === "published") return { ok: true, permalink: post.permalink };
-  const token = await igToken();
+  const token = (await igToken())?.trim();
   if (!token) return { ok: false, error: "Instagram n'est pas encore connecté (INSTAGRAM_TOKEN)" };
   try {
     const acc = await igAccount();
