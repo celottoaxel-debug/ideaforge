@@ -82,9 +82,12 @@ export default async function AdminInstagram() {
             {(() => { const r = reels.get(p.id); return r ? (
               <div className="ig-reel">
                 <b>🎬 Réel</b> <span className={`ref-pill ${r.status === "published" ? "paid" : "signed_up"}`}>{r.status === "published" ? "Publié" : r.status === "error" ? "Erreur" : "Vidéo prête"}</span>
-                {r.url && <video src={r.url} controls muted playsInline preload="metadata" style={{ display: "block", width: 200, borderRadius: 10, marginTop: 8 }} />}
+                {r.url && <video src={r.url} controls playsInline preload="metadata" style={{ display: "block", width: 220, borderRadius: 10, marginTop: 8 }} />}
                 {r.error && <p className="msg err">{r.error}</p>}
-                {r.permalink && <a className="btn" href={r.permalink} target="_blank" rel="noopener noreferrer">Voir le réel ↗</a>}
+                <div className="ig-actions" style={{ marginTop: 8 }}>
+                  {r.url && <a className="btn" href={`${r.url}?download=reel-ideaforge-${p.id}.mp4`}>⬇️ Télécharger (TikTok, Shorts)</a>}
+                  {r.permalink && <a className="btn" href={r.permalink} target="_blank" rel="noopener noreferrer">Voir le réel ↗</a>}
+                </div>
               </div>) : null; })()}
             <div className="ig-actions">
               {p.status !== "published" && <PublishButton id={p.id} disabled={!acc.ok} />}

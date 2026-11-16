@@ -1,4 +1,4 @@
-// Réels automatiques : chaque carrousel publié devient une vidéo verticale (fondus entre les slides),
+// Réels automatiques : chaque carrousel publié devient une vidéo verticale animée (plans en mouvement, motion blur, son calé),
 // rangée dans Supabase Storage (dossier public « ig-media ») puis publiée comme réel.
 // Calendrier : mardi, jeudi, samedi → le dernier carrousel publié qui n'a pas encore son réel.
 import { spawn } from "node:child_process";
@@ -8,11 +8,9 @@ import path from "node:path";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SITE } from "@/lib/seo";
 import type { Slide } from "@/lib/instagram/content";
+import { pickSoundtrack, renderSoundtrack } from "@/lib/instagram/sound";
 
 export type ReelRow = { status: "draft" | "published" | "error"; url?: string; media_id?: string; permalink?: string; error?: string; at?: string };
-
-const FADE = 0.5;
-const dur = (s: Slide, i: number, n: number) => (i === 0 ? 3 : i === n - 1 ? 3.5 : s.t === "text" ? 4 : 3.5);
 
 async function ffmpegPath(): Promise<string> {
   const mod = (await import("ffmpeg-static")) as unknown as { default?: string } | string;
@@ -31,40 +29,79 @@ function run(bin: string, args: string[]): Promise<void> {
   });
 }
 
-/** Monte la vidéo du carrousel `id` et la dépose dans Supabase Storage. Renvoie son adresse publique. */
+type Style = "punch" | "left" | "right" | "up" | "down";
+const BLUR: Record<Style, string> = {
+  punch: "gblur=sigma=14", left: "dblur=angle=0:radius=60", right: "dblur=angle=0:radius=60", up: "dblur=angle=90:radius=70", down: "dblur=angle=90:radius=70",
+};
+const easeOut = (p: string) => `(1-pow(1-(${p}),3))`;
+const easeIn = (p: string) => `pow((${p}),3)`;
+
+/** Mouvement de la slide dans son plan : entrée rapide, léger zoom pendant le plan, sortie rapide. */
+function motion(style: Style, D: number, ti: number, to: number) {
+  const ei = easeOut(`min(t/${ti},1)`), eo = easeIn(`max((t-${(D - to).toFixed(3)})/${to},0)`), push = `(1+0.035*t/${D.toFixed(3)})`;
+  switch (style) {
+    case "punch": return { S: `(${push}*(1+0.55*(1-${ei}))*(1-0.35*${eo}))`, DX: "0", DY: "0" };
+    case "left": return { S: push, DX: `(1150*(1-${ei})-1150*${eo})`, DY: "0" };
+    case "right": return { S: push, DX: `(-1150*(1-${ei})+1150*${eo})`, DY: "0" };
+    case "up": return { S: push, DX: "0", DY: `(1500*(1-${ei})-1600*${eo})` };
+    case "down": return { S: push, DX: "0", DY: `(-1500*(1-${ei})+1600*${eo})` };
+  }
+}
+
+/** Monte le réel animé du carrousel `id` (plans en mouvement, motion blur, bande son calée sur le tempo)
+ *  et le dépose dans Supabase Storage. Renvoie son adresse publique. */
 export async function renderReel(id: number): Promise<string> {
   const admin = createAdminClient();
   const { data: post } = await admin.from("ig_posts").select("slides").eq("id", id).maybeSingle();
-  const slides = ((post?.slides ?? []) as Slide[]).slice(0, 10);
+  const slides = ((post?.slides ?? []) as Slide[]).slice(0, 8);
   if (!slides.length) throw new Error("Carrousel introuvable");
   const dir = await mkdtemp(path.join(tmpdir(), "reel-"));
   try {
+    // 1. Calques : décor + contenu transparent de chaque slide
     const files: string[] = [];
-    for (let n = 1; n <= slides.length; n++) {
-      const r = await fetch(`${SITE}/api/ig/reel-png/${id}/${n}`, { cache: "no-store" });
-      if (!r.ok) throw new Error(`Image ${n} indisponible`);
-      const f = path.join(dir, `f${n}.png`);
-      await writeFile(f, Buffer.from(await r.arrayBuffer()));
+    for (let n = 0; n <= slides.length; n++) {
+      const r = await fetch(`${SITE}/api/ig/reel-layer/${id}/${n}`, { cache: "no-store" });
+      if (!r.ok) throw new Error(`Calque ${n} indisponible`);
+      const buf = Buffer.from(await r.arrayBuffer());
+      if (!buf.length) throw new Error(`Calque ${n} vide`);
+      const f = path.join(dir, `L${n}.png`);
+      await writeFile(f, buf);
       files.push(f);
     }
-    const ds = slides.map((s, i) => dur(s, i, slides.length));
-    const total = ds.reduce((a, b) => a + b, 0) - FADE * (slides.length - 1);
-    const args: string[] = ["-y"];
-    files.forEach((f, i) => args.push("-loop", "1", "-t", String(ds[i]), "-i", f));
-    args.push("-f", "lavfi", "-t", total.toFixed(2), "-i", "anullsrc=r=44100:cl=stereo");
-    const parts: string[] = files.map((_, i) => `[${i}:v]scale=1080:1920,setsar=1,fps=30,format=yuv420p[v${i}]`);
-    let last = "v0", offset = 0;
-    for (let i = 1; i < files.length; i++) {
-      offset += ds[i - 1] - FADE;
-      const out = i === files.length - 1 ? "vout" : `x${i}`;
-      parts.push(`[${last}][v${i}]xfade=transition=fade:duration=${FADE}:offset=${offset.toFixed(2)}[${out}]`);
-      last = out;
-    }
-    if (files.length === 1) parts.push(`[v0]null[vout]`);
+    // 2. Tempo et plans (durées en temps, toutes calées sur les temps de la musique)
+    const st = pickSoundtrack(id);
+    const B = 60 / st.bpm, FPS = 60, n = slides.length;
+    const order: Style[][] = [["punch", "left", "up", "right", "down", "left", "up", "punch"], ["punch", "up", "right", "left", "up", "down", "right", "punch"], ["punch", "right", "down", "left", "up", "right", "left", "punch"]];
+    const styles = order[id % order.length];
+    const segs = slides.map((s, i) => {
+      const beats = i === 0 ? 6 : i === n - 1 ? 7 : s.t === "text" || s.t === "list" ? 6 : 5;
+      const D = beats * B;
+      const style: Style = i === n - 1 ? "punch" : styles[i % styles.length];
+      return { D, style, ...motion(style, D, 0.38, i === n - 1 ? 0.01 : 0.26), ti: 0.38, to: 0.26 };
+    });
+    const total = segs.reduce((a, s) => a + s.D, 0);
+    const starts = segs.map((_, i) => segs.slice(0, i).reduce((a, s) => a + s.D, 0));
+    // 3. Bande son : whoosh à chaque changement de plan, impact au début et sur le dernier plan
+    const audio = path.join(dir, "sound.wav");
+    await renderSoundtrack(audio, id, total, starts.slice(1), [0, starts[n - 1]]);
+    // 4. Montage vidéo
+    const args: string[] = ["-y", "-v", "error"];
+    files.forEach((f) => args.push("-loop", "1", "-framerate", String(FPS), "-i", f));
+    args.push("-i", audio);
+    const fc: string[] = [];
+    fc.push(`[0:v]scale=1242:2208,crop=1080:1920:x='81+60*sin(t/2.3)':y='144+90*sin(t/3.1)',trim=duration=${total.toFixed(3)},setpts=PTS-STARTPTS,split=${n}${segs.map((_, i) => `[bg${i}]`).join("")}`);
+    segs.forEach((g, i) => {
+      fc.push(`[bg${i}]trim=start=${starts[i].toFixed(3)}:duration=${g.D.toFixed(3)},setpts=PTS-STARTPTS,eq=brightness='0.10*exp(-t*14)':eval=frame[b${i}]`);
+      fc.push(`[${i + 1}:v]trim=duration=${g.D.toFixed(3)},setpts=PTS-STARTPTS,format=rgba,scale=w='trunc(1080*${g.S}/2)*2':h='trunc(1350*${g.S}/2)*2':eval=frame[c${i}]`);
+      const shake = "(8*sin(t*90)*exp(-t*12))";
+      const blurOn = i === n - 1 ? `lt(t,${(g.ti * 0.7).toFixed(3)})` : `lt(t,${(g.ti * 0.7).toFixed(3)})+gt(t,${(g.D - g.to * 0.8).toFixed(3)})`;
+      fc.push(`[b${i}][c${i}]overlay=x='(W-w)/2+${g.DX}+${shake}':y='285+(1350-h)/2+${g.DY}':eval=frame:shortest=1,format=yuv420p,${BLUR[g.style]}:enable='${blurOn}'[s${i}]`);
+    });
+    fc.push(`${segs.map((_, i) => `[s${i}]`).join("")}concat=n=${n}:v=1:a=0,tmix=frames=2:weights='1 1',fps=30,format=yuv420p[vout]`);
     const out = path.join(dir, "reel.mp4");
-    args.push("-filter_complex", parts.join(";"), "-map", "[vout]", "-map", `${files.length}:a`,
-      "-c:v", "libx264", "-preset", "veryfast", "-crf", "21", "-pix_fmt", "yuv420p", "-r", "30",
-      "-c:a", "aac", "-b:a", "128k", "-shortest", "-movflags", "+faststart", out);
+    args.push("-filter_complex", fc.join(";"), "-map", "[vout]", "-map", `${n + 1}:a`,
+      "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p",
+      "-c:a", "aac", "-b:a", "160k", "-t", total.toFixed(3), "-movflags", "+faststart", out);
     await run(await ffmpegPath(), args);
     const key = `reels/${id}-${Date.now()}.mp4`;
     const { error } = await admin.storage.from("ig-media").upload(key, await readFile(out), { contentType: "video/mp4", upsert: true });
