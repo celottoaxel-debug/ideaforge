@@ -94,3 +94,24 @@ export function ReelButtons({ id, canPublish, hasVideo }: { id: number; canPubli
     </>
   );
 }
+
+export function UgcPublish({ date, disabled }: { date: string; disabled?: boolean }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  async function go() {
+    setBusy(true); setErr("");
+    try {
+      const r = await fetch("/api/admin/instagram", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "ugc-publish", date }) });
+      const j = await r.json();
+      if (j.ok) { window.location.reload(); return; }
+      setErr(j.error || "Erreur");
+    } catch { setErr("Erreur réseau"); }
+    setBusy(false);
+  }
+  return (
+    <>
+      <button type="button" className="btn primary" disabled={disabled || busy} onClick={go}>{busy ? "Publication… (1-2 min)" : "🎥 Publier sur Instagram"}</button>
+      {err && <p className="msg err">{err}</p>}
+    </>
+  );
+}

@@ -142,7 +142,12 @@ export async function runInstagram(): Promise<{ ran: boolean; id?: number; ok?: 
   }
   let reel: { ok: boolean; id?: number; error?: string } | undefined;
   if ([2, 4, 6].includes(parisDay)) {
-    try { reel = await runReel(); } catch (e) { reel = { ok: false, error: e instanceof Error ? e.message : String(e) }; }
+    try {
+      // Mardi et samedi : d'abord le réel « face caméra » préparé dans la nuit ; sinon, le réel animé du carrousel.
+      const ugc = [2, 6].includes(parisDay) ? await getUgc(todayKey()) : null;
+      if (ugc && ugc.status !== "published") { const r = await publishUgc(todayKey()); reel = { ok: r.ok, error: r.error }; }
+      else if (!ugc) reel = await runReel();
+    } catch (e) { reel = { ok: false, error: e instanceof Error ? e.message : String(e) }; }
   }
   let story: { ok: boolean; error?: string } | undefined;
   try { story = await runStory(); } catch (e) { story = { ok: false, error: e instanceof Error ? e.message : String(e) }; }
@@ -297,4 +302,41 @@ export async function runReel(): Promise<{ ok: boolean; id?: number; error?: str
     return { ...out, id: p.id as number };
   }
   return { ok: true };
+}
+
+// ───────── Réels « face caméra » (mardi, samedi) ─────────
+// Fabriqués chaque nuit par la tâche programmée (bac à sable Higgsfield) puis rangés dans app_settings « ig_ugc:<date> ».
+export type UgcRow = { status: "ready" | "published" | "error"; url: string; url_music?: string; caption: string; idea?: string; title?: string; media_id?: string; permalink?: string; error?: string; at?: string };
+export async function getUgc(date: string): Promise<UgcRow | null> {
+  const v = await setting(`ig_ugc:${date}`);
+  try { return v ? (JSON.parse(v) as UgcRow) : null; } catch { return null; }
+}
+const putUgc = (date: string, row: UgcRow) => saveSetting(`ig_ugc:${date}`, JSON.stringify(row));
+
+export async function publishUgc(date: string): Promise<{ ok: boolean; permalink?: string; error?: string }> {
+  const row = await getUgc(date);
+  if (!row) return { ok: false, error: "Réel introuvable" };
+  if (row.status === "published") return { ok: true, permalink: row.permalink };
+  try {
+    const token = (await igToken())?.trim();
+    if (!token) throw new Error("Instagram non connecté");
+    const acc = await igAccount();
+    if (!acc.ok || !acc.id) throw new Error(acc.error || "Compte Instagram introuvable");
+    const c = await ig(`${acc.id}/media`, { media_type: "REELS", video_url: row.url_music || row.url, caption: row.caption, share_to_feed: "true", access_token: token });
+    await waitReady(c.id, token, 45);
+    const pub = await ig(`${acc.id}/media_publish`, { creation_id: c.id, access_token: token });
+    let permalink: string | undefined;
+    try { permalink = (await ig(pub.id, { fields: "permalink", access_token: token }, "GET")).permalink; } catch {}
+    await putUgc(date, { ...row, status: "published", media_id: pub.id, permalink, error: undefined, at: new Date().toISOString() });
+    return { ok: true, permalink };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    await putUgc(date, { ...row, status: "error", error: msg });
+    return { ok: false, error: msg };
+  }
+}
+
+export async function recentUgc(n = 8): Promise<{ date: string; row: UgcRow }[]> {
+  const { data } = await createAdminClient().from("app_settings").select("key, value").like("key", "ig_ugc:%").order("key", { ascending: false }).limit(n);
+  return (data ?? []).flatMap((d) => { try { return [{ date: (d.key as string).slice(7), row: JSON.parse(d.value as string) as UgcRow }]; } catch { return []; } });
 }

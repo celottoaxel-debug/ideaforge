@@ -1,8 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin";
-import { igAccount, recentStories, getReel } from "@/lib/instagram/publish";
-import { GenerateCarousel, PublishButton, CopyCaption, StoryButtons, ReelButtons } from "@/components/AdminInstagram";
+import { igAccount, recentStories, getReel, recentUgc } from "@/lib/instagram/publish";
+import { GenerateCarousel, PublishButton, CopyCaption, StoryButtons, ReelButtons, UgcPublish } from "@/components/AdminInstagram";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Instagram · Admin", robots: { index: false, follow: false } };
@@ -26,6 +26,8 @@ export default async function AdminInstagram() {
   try { stories = await recentStories(7); } catch {}
   const reels = new Map<number, Awaited<ReturnType<typeof getReel>>>();
   await Promise.all(posts.map(async (p) => { try { reels.set(p.id, await getReel(p.id)); } catch {} }));
+  let ugcs: Awaited<ReturnType<typeof recentUgc>> = [];
+  try { ugcs = await recentUgc(8); } catch {}
   const today = new Date().toISOString().slice(0, 10);
   const todayStory = stories.find((x) => x.date === today);
 
@@ -37,9 +39,33 @@ export default async function AdminInstagram() {
 
       <div className="tiles" style={{ marginBottom: 22 }}>
         <div className={`tile ${acc.ok ? "hot" : ""}`}><div className="tile-k">Compte connecté</div><div className="tile-v" style={{ fontSize: 20 }}>{acc.ok ? `@${acc.username}` : "Non connecté"}</div><div className="tile-s">{acc.ok ? "Publication automatique active" : acc.error}</div></div>
-        <div className="tile"><div className="tile-k">Calendrier</div><div className="tile-v" style={{ fontSize: 20 }}>Lun · Mer · Ven</div><div className="tile-s">carrousels vers 9 h · réels mar/jeu/sam · 1 story/jour</div></div>
+        <div className="tile"><div className="tile-k">Calendrier</div><div className="tile-v" style={{ fontSize: 20 }}>Lun · Mer · Ven</div><div className="tile-s">carrousels 9 h · réels face caméra mar/sam · réel animé jeu · 1 story/jour</div></div>
         <div className="tile"><div className="tile-k">Publiés</div><div className="tile-v">{posts.filter((p) => p.status === "published").length}</div><div className="tile-s">sur les 20 derniers</div></div>
         <div className="tile"><div className="tile-k">Brouillons</div><div className="tile-v">{posts.filter((p) => p.status !== "published").length}</div><div className="tile-s">prêts ou en erreur</div></div>
+      </div>
+
+      <h2 className="val-sec">🎥 Réels face caméra (mardi, samedi)</h2>
+      {ugcs.length === 0 && <p className="vis-empty">Le premier arrive mardi matin : il est monté dans la nuit avec tes vidéos face caméra et une idée du catalogue, puis publié vers 9 h.</p>}
+      <div className="ig-list" style={{ marginBottom: 26 }}>
+        {ugcs.map(({ date, row }) => (
+          <article key={date} className="ig-post">
+            <div className="ig-head">
+              <b>{row.title ?? "Réel face caméra"}</b>
+              <span className={`ref-pill ${row.status === "published" ? "paid" : "signed_up"}`}>{row.status === "published" ? "Publié" : row.status === "error" ? "Erreur" : "Prêt"}</span>
+              <span className="ref-date">{date}</span>
+            </div>
+            <video src={row.url_music || row.url} controls playsInline preload="metadata" style={{ display: "block", width: 220, borderRadius: 10 }} />
+            {row.error && <p className="msg err">{row.error}</p>}
+            <details className="ig-cap"><summary>Légende</summary><pre>{row.caption}</pre></details>
+            <div className="ig-actions">
+              <a className="btn" href={row.url} target="_blank" rel="noopener noreferrer">⬇️ Sans musique (TikTok, Shorts)</a>
+              {row.url_music && <a className="btn" href={row.url_music} target="_blank" rel="noopener noreferrer">⬇️ Avec beat</a>}
+              {row.status !== "published" && <UgcPublish date={date} disabled={!acc.ok} />}
+              {row.permalink && <a className="btn" href={row.permalink} target="_blank" rel="noopener noreferrer">Voir sur Instagram ↗</a>}
+              <CopyCaption text={row.caption} />
+            </div>
+          </article>
+        ))}
       </div>
 
       <h2 className="val-sec">Stories (une par jour)</h2>
