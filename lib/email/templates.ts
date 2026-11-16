@@ -294,3 +294,12 @@ export function top10Email(l: Lang, site: string, unsub: string, ideas: MailIdea
   const body = eyebrow(t.eb) + h1(t.h) + p(t.intro) + ideaCards(ideas, site, t.card) + button(t.cta, `${site}/#catalogue`) + p(`<span style="font-size:14px">${t.ps} <a href="${site}/login" style="color:${C.green}">${site.replace(/^https?:\/\//, "")}/login</a></span>`);
   return done(t.s, layout({ body, preheader: t.pre, lang: l, site, unsub, marketing: true }));
 }
+
+// ---------- 11. Alerte admin : carrousel Instagram du jour ----------
+export function adminInstagramEmail(state: "published" | "draft", error: string | null, site: string): Rendered {
+  const ok = state === "published";
+  const body = eyebrow("Instagram") + h1(ok ? "📸 Carrousel publié" : "📝 Carrousel prêt, pas encore publié") +
+    p(ok ? "Le carrousel du jour vient d'être publié sur ton compte Instagram." : `Le carrousel du jour est prêt dans ton panel. ${error ? `Raison : <b>${esc(error)}</b>.` : ""}`) +
+    button("Voir dans le panel", `${site}/admin/instagram`);
+  return done(ok ? "📸 Carrousel Instagram publié" : "📝 Carrousel Instagram prêt à publier", layout({ body, lang: "fr", site }));
+}

@@ -99,6 +99,7 @@ export default async function AdminPage({ searchParams }: { searchParams: { p?: 
         <span className="pill" style={{ background: "var(--green-wash)", color: "var(--green-ink)", fontWeight: 600 }}>Admin</span>
         <a className="btn" href="/admin/blog">📝 Blog</a>
         <a className="btn" href="/admin/parrainage">🤝 Parrainage</a>
+        <a className="btn" href="/admin/instagram">📸 Instagram</a>
         <a className="btn" href="/">← Site</a>
         <a className="btn dark" href="/auth/signout">Déconnexion</a>
       </div></header>

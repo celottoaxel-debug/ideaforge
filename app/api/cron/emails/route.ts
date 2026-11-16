@@ -25,6 +25,13 @@ export async function GET(request: Request) {
     await fetch(`${new URL(request.url).origin}/api/cron/blog`, { headers: { authorization: `Bearer ${secret}` }, signal: ctrl.signal }).catch(() => {});
   } catch {}
 
+  // Carrousels Instagram (lundi, mercredi, vendredi) : eux aussi dans leur propre fonction.
+  try {
+    const ctrl = new AbortController();
+    setTimeout(() => ctrl.abort(), 2500);
+    await fetch(`${new URL(request.url).origin}/api/cron/instagram`, { headers: { authorization: `Bearer ${secret}` }, signal: ctrl.signal }).catch(() => {});
+  } catch {}
+
   if (!emailEnabled()) return NextResponse.json({ skipped: true, reason: "missing RESEND_API_KEY" });
 
   const url = new URL(request.url);

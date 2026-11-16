@@ -1049,3 +1049,14 @@ footer { margin-top: 0; }
 .launch-seats span { color: var(--amber-ink); font-weight: 600; }
 .launch-seats b { color: var(--ink); font-size: 12.5px; }
 .launch-seats i { position: absolute; left: 0; bottom: 0; height: 4px; background: linear-gradient(90deg, #f2bd55, #d99520); border-radius: 0 4px 4px 0; }
+
+/* --- admin : carrousels Instagram --- */
+.ig-gen { display: flex; gap: 10px; flex-wrap: wrap; }
+.ig-list { display: flex; flex-direction: column; gap: 16px; }
+.ig-post { border: 1px solid var(--line); border-radius: 18px; padding: 16px; background: linear-gradient(180deg, rgba(20,38,31,.55), rgba(9,22,17,.55)); display: flex; flex-direction: column; gap: 12px; }
+.ig-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ig-strip { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; }
+.ig-strip img { width: 160px; height: 200px; object-fit: cover; border-radius: 10px; border: 1px solid var(--line); background: #06130d; display: block; }
+.ig-cap summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--ink-2); }
+.ig-cap pre { white-space: pre-wrap; font-family: var(--f); font-size: 14px; line-height: 1.55; color: var(--ink-2); background: rgba(4,16,12,.5); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin: 8px 0 0; }
+.ig-actions { display: flex; gap: 8px; flex-wrap: wrap; }
