@@ -25,7 +25,7 @@ async function saveSetting(key: string, value: string) {
 }
 
 export async function igToken(): Promise<string | null> {
-  return (await setting("ig_token")) || process.env.INSTAGRAM_TOKEN || null;
+  return (await setting("ig_token")) || process.env.INSTAGRAM_TOKEN || process.env.INSTGRAM_TOKEN || null;
 }
 
 async function ig(path: string, params: Record<string, string>, method: "GET" | "POST" = "POST") {
