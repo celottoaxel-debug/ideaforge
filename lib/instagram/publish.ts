@@ -340,3 +340,46 @@ export async function recentUgc(n = 8): Promise<{ date: string; row: UgcRow }[]>
   const { data } = await createAdminClient().from("app_settings").select("key, value").like("key", "ig_ugc:%").order("key", { ascending: false }).limit(n);
   return (data ?? []).flatMap((d) => { try { return [{ date: (d.key as string).slice(7), row: JSON.parse(d.value as string) as UgcRow }]; } catch { return []; } });
 }
+
+// ───────── Studio « face caméra » du panel ─────────
+export type UgcMedia = { url: string; label: string; duration?: number; path?: string; at?: string };
+export type UgcRequest = { status: "pending" | "working" | "done" | "error"; face: string; end?: string; idea?: string; hook: string; at: string; result?: string; error?: string };
+const HOOKS = [
+  "POV : tu trouves une idée|de business rentable en {s} sec",
+  "POV : tu cherches quoi lancer|et tu trouves en {s} sec",
+  "Comment je trouve une idée|de SaaS rentable en {s} sec",
+  "POV : ton prochain business|trouvé en {s} sec",
+];
+export const UGC_HOOKS = HOOKS;
+async function listSetting<T>(key: string): Promise<T[]> {
+  const v = await setting(key);
+  try { return v ? (JSON.parse(v) as T[]) : []; } catch { return []; }
+}
+export const ugcFaces = () => listSetting<UgcMedia>("ugc_facecams");
+export const ugcEndings = () => listSetting<UgcMedia>("ugc_endings");
+export async function addUgcMedia(kind: "face" | "end", m: UgcMedia) {
+  const key = kind === "face" ? "ugc_facecams" : "ugc_endings";
+  const list = await listSetting<UgcMedia>(key);
+  await saveSetting(key, JSON.stringify([...list, { ...m, at: new Date().toISOString() }]));
+}
+export async function removeUgcMedia(kind: "face" | "end", url: string) {
+  const key = kind === "face" ? "ugc_facecams" : "ugc_endings";
+  const list = await listSetting<UgcMedia>(key);
+  await saveSetting(key, JSON.stringify(list.filter((x) => x.url !== url)));
+}
+export async function requestUgc(r: Omit<UgcRequest, "status" | "at">) {
+  const at = new Date().toISOString();
+  await saveSetting(`ugc_request:${at.replace(/[:.]/g, "-")}`, JSON.stringify({ ...r, status: "pending", at }));
+}
+export async function recentUgcRequests(n = 6): Promise<{ key: string; row: UgcRequest }[]> {
+  const { data } = await createAdminClient().from("app_settings").select("key, value").like("key", "ugc_request:%").order("key", { ascending: false }).limit(n);
+  return (data ?? []).flatMap((d) => { try { return [{ key: d.key as string, row: JSON.parse(d.value as string) as UgcRequest }]; } catch { return []; } });
+}
+/** Adresse d'envoi directe vers Supabase Storage (le fichier ne passe pas par le serveur). */
+export async function ugcUploadUrl(kind: "face" | "end", filename: string) {
+  const ext = (filename.split(".").pop() || "mp4").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const path = `${kind === "face" ? "facecam" : "endings"}/${Date.now()}.${ext === "mov" ? "mov" : "mp4"}`;
+  const { data, error } = await createAdminClient().storage.from("ig-media").createSignedUploadUrl(path);
+  if (error || !data) throw new Error(error?.message || "Envoi impossible");
+  return { path, token: data.token, publicUrl: createAdminClient().storage.from("ig-media").getPublicUrl(path).data.publicUrl };
+}

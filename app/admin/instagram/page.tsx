@@ -1,8 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin";
-import { igAccount, recentStories, getReel, recentUgc } from "@/lib/instagram/publish";
-import { GenerateCarousel, PublishButton, CopyCaption, StoryButtons, ReelButtons, UgcPublish } from "@/components/AdminInstagram";
+import { igAccount, recentStories, getReel, recentUgc, ugcFaces, ugcEndings, recentUgcRequests, UGC_HOOKS } from "@/lib/instagram/publish";
+import { allIdeas } from "@/lib/seo";
+import { scoreIdea } from "@/lib/score";
+import { GenerateCarousel, PublishButton, CopyCaption, StoryButtons, ReelButtons, UgcPublish, UgcStudio } from "@/components/AdminInstagram";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Instagram · Admin", robots: { index: false, follow: false } };
@@ -28,6 +30,10 @@ export default async function AdminInstagram() {
   await Promise.all(posts.map(async (p) => { try { reels.set(p.id, await getReel(p.id)); } catch {} }));
   let ugcs: Awaited<ReturnType<typeof recentUgc>> = [];
   try { ugcs = await recentUgc(8); } catch {}
+  const [faces, endings, requests] = await Promise.all([ugcFaces().catch(() => []), ugcEndings().catch(() => []), recentUgcRequests(6).catch(() => [])]);
+  let topIdeas: { path: string; title: string; score: number }[] = [];
+  try { topIdeas = (await allIdeas()).map((i) => ({ path: `/idea/${i.id}`, title: i.title, score: scoreIdea(i).score })).sort((a, b) => b.score - a.score).slice(0, 40); } catch {}
+  const queued = requests.filter((r) => r.row.status === "pending" || r.row.status === "working" || r.row.status === "error");
   const today = new Date().toISOString().slice(0, 10);
   const todayStory = stories.find((x) => x.date === today);
 
@@ -66,6 +72,24 @@ export default async function AdminInstagram() {
             </div>
           </article>
         ))}
+      </div>
+
+      <h2 className="val-sec">🎬 Créer un réel face caméra</h2>
+      {queued.length > 0 && (
+        <div className="ig-list" style={{ marginBottom: 12 }}>
+          {queued.map(({ key, row }) => (
+            <div key={key} className="ig-post" style={{ padding: 12 }}>
+              <div className="ig-head">
+                <b>{row.status === "error" ? "⚠️ Échec du montage" : row.status === "working" ? "⏳ Montage en cours…" : "🕐 En file : prêt dans l'heure"}</b>
+                <span className="ref-date">{new Date(row.at).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" })}</span>
+              </div>
+              {row.error && <p className="msg err">{row.error}</p>}
+            </div>
+          ))}
+        </div>
+      )}
+      <div style={{ marginBottom: 26 }}>
+        <UgcStudio faces={faces} endings={endings} ideas={topIdeas} hooks={UGC_HOOKS} />
       </div>
 
       <h2 className="val-sec">Stories (une par jour)</h2>
