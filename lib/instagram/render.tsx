@@ -7,7 +7,7 @@ const G = { bd: "rgba(47,192,125,0.45)", bg: "linear-gradient(180deg, rgba(22,46
 const A = { bd: "rgba(231,172,60,0.6)", bg: "linear-gradient(180deg, rgba(36,40,24,0.95), rgba(12,22,16,0.95))", icBg: "rgba(231,172,60,0.14)", ic: "#f1c26a" };
 const DOTS: [number, number, number, number, string][] = [[489,756,2.2,0.4,"#5ad69c"],[663,251,2.2,0.32,"#5ad69c"],[1061,1302,2.8,0.51,"#5ad69c"],[898,85,1,0.25,"#5ad69c"],[32,626,2.2,0.48,"#5ad69c"],[595,1258,1,0.54,"#5ad69c"],[828,541,2.2,0.19,"#e7ac3c"],[740,288,1,0.41,"#5ad69c"],[429,99,1.4,0.58,"#5ad69c"],[94,449,1,0.22,"#5ad69c"],[12,628,2.2,0.25,"#5ad69c"],[483,257,1.4,0.38,"#5ad69c"],[426,1337,1,0.3,"#5ad69c"],[868,411,1.4,0.25,"#5ad69c"],[80,282,1.4,0.16,"#5ad69c"],[672,172,2.8,0.42,"#5ad69c"],[936,247,1.4,0.32,"#5ad69c"],[51,147,2.8,0.68,"#5ad69c"],[761,347,2.8,0.42,"#5ad69c"],[1004,1319,1.4,0.28,"#5ad69c"],[991,275,1,0.19,"#5ad69c"],[269,63,1.8,0.35,"#5ad69c"],[142,489,1.8,0.51,"#5ad69c"],[631,189,1,0.66,"#5ad69c"],[646,101,1,0.55,"#5ad69c"],[1079,102,2.8,0.35,"#e7ac3c"],[1040,461,1,0.53,"#5ad69c"],[87,863,2.2,0.55,"#5ad69c"],[905,113,2.8,0.17,"#5ad69c"],[537,830,1.8,0.64,"#5ad69c"],[814,462,2.2,0.64,"#5ad69c"],[719,268,2.2,0.59,"#5ad69c"],[216,289,1.4,0.47,"#5ad69c"],[147,670,1,0.54,"#5ad69c"],[299,228,2.2,0.41,"#5ad69c"],[726,967,2.8,0.4,"#e7ac3c"],[34,1178,1,0.52,"#5ad69c"],[861,1328,1,0.4,"#5ad69c"],[707,1090,1.4,0.26,"#5ad69c"],[193,15,2.2,0.44,"#e7ac3c"],[1023,676,1.4,0.37,"#5ad69c"],[979,118,2.2,0.22,"#5ad69c"],[676,1228,2.2,0.45,"#5ad69c"],[353,1326,1,0.55,"#5ad69c"],[972,1324,1.8,0.45,"#5ad69c"],[346,1228,1,0.34,"#5ad69c"],[526,38,1,0.39,"#e7ac3c"],[576,927,2.2,0.23,"#5ad69c"],[1021,665,1,0.57,"#5ad69c"],[177,694,1.8,0.32,"#5ad69c"],[913,1216,1.4,0.32,"#5ad69c"],[444,154,1,0.48,"#e7ac3c"],[1047,697,2.2,0.45,"#5ad69c"],[132,126,1.4,0.19,"#5ad69c"],[447,1292,2.2,0.3,"#5ad69c"],[137,585,2.2,0.44,"#5ad69c"],[453,40,1.8,0.22,"#5ad69c"],[25,262,1.4,0.16,"#5ad69c"],[540,786,2.8,0.29,"#5ad69c"],[875,1219,1.8,0.48,"#5ad69c"],[105,1200,1.4,0.55,"#5ad69c"],[853,170,2.2,0.5,"#5ad69c"],[685,464,1.4,0.59,"#5ad69c"],[26,1029,2.8,0.43,"#5ad69c"],[158,249,1.4,0.24,"#5ad69c"],[383,284,1.8,0.16,"#5ad69c"]];
 
-function Backdrop({ h = 1350 }: { h?: number }) {
+function Backdrop({ h = 1350, line = true }: { h?: number; line?: boolean }) {
   const ky = h / 1350;
   return (
     <svg width="1080" height={String(h)} viewBox={`0 0 1080 ${h}`} style={{ position: "absolute", left: 0, top: 0 }}>
@@ -16,8 +16,8 @@ function Backdrop({ h = 1350 }: { h?: number }) {
         <pattern id="dg" width="36" height="36" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.2" fill="#5ad69c" fillOpacity="0.09" /></pattern>
       </defs>
       <rect width="1080" height={String(h)} fill="url(#dg)" />
-      <path d="M0 176 H560 L600 152 H1080" fill="none" stroke="url(#tr)" strokeWidth="2" strokeLinecap="round" />
-      <circle cx="600" cy="152" r="6" fill="#2fc07d" />
+      {line && <path d="M0 176 H560 L600 152 H1080" fill="none" stroke="url(#tr)" strokeWidth="2" strokeLinecap="round" />}
+      {line && <circle cx="600" cy="152" r="6" fill="#2fc07d" />}
       {DOTS.map(([x, y, r, o, c], i) => <circle key={i} cx={x} cy={Math.round(y * ky)} r={r} fill={c} fillOpacity={o} />)}
     </svg>
   );
@@ -77,7 +77,7 @@ function Kicker({ text }: { text: string }) {
 
 const PILL: Record<string, string> = { cover: "NOUVEAU", text: "LE MARCHÉ", stats: "LES CHIFFRES", list: "LE PLAN", rank: "TOP 5", cta: "IDEAFORGE" };
 
-export function SlideView({ s, handle, pill }: { s: Slide; handle: string; pill?: string }) {
+export function SlideView({ s, handle, pill, reel }: { s: Slide; handle: string; pill?: string; reel?: boolean }) {
   const page = "n" in s ? `${s.n}/${s.total}` : "";
   return (
     <div style={{ width: 1080, height: 1350, position: "relative", display: "flex", fontFamily: "Geist", color: C.ink, backgroundColor: C.bg,
@@ -154,7 +154,7 @@ export function SlideView({ s, handle, pill }: { s: Slide; handle: string; pill?
             <div style={{ display: "flex" }}>{handle}</div>
             <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
               <div style={{ display: "flex" }}>{page}</div>
-              <div style={{ display: "flex", color: "#03140c", background: C.green, padding: "10px 20px", borderRadius: 999 }}>Glisse →</div>
+              {!reel && <div style={{ display: "flex", color: "#03140c", background: C.green, padding: "10px 20px", borderRadius: 999 }}>Glisse →</div>}
             </div>
           </div>
         )}
@@ -206,9 +206,9 @@ export function ReelFrame({ s, handle }: { s: Slide; handle: string }) {
   return (
     <div style={{ width: 1080, height: 1920, position: "relative", display: "flex", fontFamily: "Geist", color: C.ink, backgroundColor: C.bg,
       backgroundImage: "radial-gradient(circle at 85% 6%, rgba(47,192,125,0.22) 0%, rgba(47,192,125,0) 42%), radial-gradient(circle at 0% 100%, rgba(231,172,60,0.10) 0%, rgba(231,172,60,0) 45%)" }}>
-      <Backdrop h={1920} />
+      <Backdrop h={1920} line={false} />
       <div style={{ position: "absolute", left: 0, top: 230, width: 1080, height: 1350, display: "flex", overflow: "hidden", borderTop: "1px solid rgba(90,214,156,0.18)", borderBottom: "1px solid rgba(90,214,156,0.18)" }}>
-        <SlideView s={s} handle={handle} />
+        <SlideView s={s} handle={handle} reel />
       </div>
     </div>
   );
