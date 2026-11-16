@@ -75,7 +75,7 @@ export async function renderReel(id: number): Promise<string> {
     const styles = order[id % order.length];
     const segs = slides.map((s, i) => {
       const beats = i === 0 ? 6 : i === n - 1 ? 7 : s.t === "text" || s.t === "list" ? 6 : 5;
-      const D = beats * B;
+      const D = Math.round(beats * B * 30) / 30; // aligné sur les images (30 i/s) pour rester synchro avec le son
       const style: Style = i === n - 1 ? "punch" : styles[i % styles.length];
       return { D, style, ...motion(style, D, 0.38, i === n - 1 ? 0.01 : 0.26), ti: 0.38, to: 0.26 };
     });
@@ -84,25 +84,28 @@ export async function renderReel(id: number): Promise<string> {
     // 3. Bande son : whoosh à chaque changement de plan, impact au début et sur le dernier plan
     const audio = path.join(dir, "sound.wav");
     await renderSoundtrack(audio, id, total, starts.slice(1), [0, starts[n - 1]]);
-    // 4. Montage vidéo
-    const args: string[] = ["-y", "-v", "error"];
-    files.forEach((f) => args.push("-loop", "1", "-framerate", String(FPS), "-i", f));
-    args.push("-i", audio);
-    const fc: string[] = [];
-    fc.push(`[0:v]scale=1242:2208,crop=1080:1920:x='81+60*sin(t/2.3)':y='144+90*sin(t/3.1)',trim=duration=${total.toFixed(3)},setpts=PTS-STARTPTS,split=${n}${segs.map((_, i) => `[bg${i}]`).join("")}`);
-    segs.forEach((g, i) => {
-      fc.push(`[bg${i}]trim=start=${starts[i].toFixed(3)}:duration=${g.D.toFixed(3)},setpts=PTS-STARTPTS,eq=brightness='0.10*exp(-t*14)':eval=frame[b${i}]`);
-      fc.push(`[${i + 1}:v]trim=duration=${g.D.toFixed(3)},setpts=PTS-STARTPTS,format=rgba,scale=w='trunc(1080*${g.S}/2)*2':h='trunc(1350*${g.S}/2)*2':eval=frame[c${i}]`);
+    // 4. Montage vidéo : un plan à la fois (peu de mémoire), puis assemblage avec le son
+    const bin = await ffmpegPath();
+    const list: string[] = [];
+    for (let i = 0; i < n; i++) {
+      const g = segs[i], t0 = starts[i].toFixed(3), D = g.D.toFixed(3);
       const shake = "(8*sin(t*90)*exp(-t*12))";
       const blurOn = i === n - 1 ? `lt(t,${(g.ti * 0.7).toFixed(3)})` : `lt(t,${(g.ti * 0.7).toFixed(3)})+gt(t,${(g.D - g.to * 0.8).toFixed(3)})`;
-      fc.push(`[b${i}][c${i}]overlay=x='(W-w)/2+${g.DX}+${shake}':y='285+(1350-h)/2+${g.DY}':eval=frame:shortest=1,format=yuv420p,${BLUR[g.style]}:enable='${blurOn}'[s${i}]`);
-    });
-    fc.push(`${segs.map((_, i) => `[s${i}]`).join("")}concat=n=${n}:v=1:a=0,tmix=frames=2:weights='1 1',fps=30,format=yuv420p[vout]`);
+      const fc = [
+        `[0:v]scale=1242:2208,crop=1080:1920:x='81+60*sin((t+${t0})/2.3)':y='144+90*sin((t+${t0})/3.1)',eq=brightness='0.10*exp(-t*14)':eval=frame[b]`,
+        `[1:v]format=rgba,scale=w='trunc(1080*${g.S}/2)*2':h='trunc(1350*${g.S}/2)*2':eval=frame[c]`,
+        `[b][c]overlay=x='(W-w)/2+${g.DX}+${shake}':y='285+(1350-h)/2+${g.DY}':eval=frame,format=yuv420p,${BLUR[g.style]}:enable='${blurOn}',tmix=frames=2:weights='1 1',fps=30[v]`,
+      ].join(";");
+      const seg = path.join(dir, `seg${i}.mp4`);
+      await run(bin, ["-y", "-v", "error", "-loop", "1", "-framerate", String(FPS), "-t", D, "-i", files[0], "-loop", "1", "-framerate", String(FPS), "-t", D, "-i", files[i + 1],
+        "-filter_complex", fc, "-map", "[v]", "-t", D, "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p", "-threads", "2", seg]);
+      list.push(`file '${seg}'`);
+    }
+    const listFile = path.join(dir, "list.txt");
+    await writeFile(listFile, list.join("\n"));
     const out = path.join(dir, "reel.mp4");
-    args.push("-filter_complex", fc.join(";"), "-map", "[vout]", "-map", `${n + 1}:a`,
-      "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p",
-      "-c:a", "aac", "-b:a", "160k", "-t", total.toFixed(3), "-movflags", "+faststart", out);
-    await run(await ffmpegPath(), args);
+    await run(bin, ["-y", "-v", "error", "-f", "concat", "-safe", "0", "-i", listFile, "-i", audio, "-map", "0:v", "-map", "1:a",
+      "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", "-t", total.toFixed(3), "-movflags", "+faststart", out]);
     const key = `reels/${id}-${Date.now()}.mp4`;
     const { error } = await admin.storage.from("ig-media").upload(key, await readFile(out), { contentType: "video/mp4", upsert: true });
     if (error) throw new Error(error.message);
