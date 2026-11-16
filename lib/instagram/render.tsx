@@ -1,107 +1,152 @@
-// Dessin d'une slide de carrousel (1080 × 1350), aux couleurs d'IdeaForge.
+// Dessin d'une slide de carrousel (1080 × 1350) : exactement le design du visuel Instagram IdeaForge
+// (fond vert forêt, grille de points, ligne de circuit, particules, cartes à icône, bouton vert « Lien en bio »).
 import type { Slide } from "@/lib/instagram/content";
 
-const C = { bg: "#07130f", ink: "#f4f8f5", ink2: "#c3d0c9", ink3: "#8fa39a", green: "#5ad69c", greenDeep: "#2fc07d", amber: "#f1c26a", line: "rgba(47,192,125,0.35)" };
-const card = { display: "flex", borderRadius: 28, border: `2px solid ${C.line}`, background: "rgba(16,36,28,0.92)" } as const;
+const C = { bg: "#07130f", ink: "#f4f8f5", ink2: "#c3d0c9", ink3: "#9fb0a7", green: "#5ad69c", amber: "#f1c26a" };
+const G = { bd: "rgba(47,192,125,0.45)", bg: "linear-gradient(180deg, rgba(22,46,36,0.92), rgba(9,22,17,0.92))", icBg: "rgba(47,192,125,0.12)", ic: "#5ad69c" };
+const A = { bd: "rgba(231,172,60,0.6)", bg: "linear-gradient(180deg, rgba(36,40,24,0.95), rgba(12,22,16,0.95))", icBg: "rgba(231,172,60,0.14)", ic: "#f1c26a" };
+const DOTS: [number, number, number, number, string][] = [[489,756,2.2,0.4,"#5ad69c"],[663,251,2.2,0.32,"#5ad69c"],[1061,1302,2.8,0.51,"#5ad69c"],[898,85,1,0.25,"#5ad69c"],[32,626,2.2,0.48,"#5ad69c"],[595,1258,1,0.54,"#5ad69c"],[828,541,2.2,0.19,"#e7ac3c"],[740,288,1,0.41,"#5ad69c"],[429,99,1.4,0.58,"#5ad69c"],[94,449,1,0.22,"#5ad69c"],[12,628,2.2,0.25,"#5ad69c"],[483,257,1.4,0.38,"#5ad69c"],[426,1337,1,0.3,"#5ad69c"],[868,411,1.4,0.25,"#5ad69c"],[80,282,1.4,0.16,"#5ad69c"],[672,172,2.8,0.42,"#5ad69c"],[936,247,1.4,0.32,"#5ad69c"],[51,147,2.8,0.68,"#5ad69c"],[761,347,2.8,0.42,"#5ad69c"],[1004,1319,1.4,0.28,"#5ad69c"],[991,275,1,0.19,"#5ad69c"],[269,63,1.8,0.35,"#5ad69c"],[142,489,1.8,0.51,"#5ad69c"],[631,189,1,0.66,"#5ad69c"],[646,101,1,0.55,"#5ad69c"],[1079,102,2.8,0.35,"#e7ac3c"],[1040,461,1,0.53,"#5ad69c"],[87,863,2.2,0.55,"#5ad69c"],[905,113,2.8,0.17,"#5ad69c"],[537,830,1.8,0.64,"#5ad69c"],[814,462,2.2,0.64,"#5ad69c"],[719,268,2.2,0.59,"#5ad69c"],[216,289,1.4,0.47,"#5ad69c"],[147,670,1,0.54,"#5ad69c"],[299,228,2.2,0.41,"#5ad69c"],[726,967,2.8,0.4,"#e7ac3c"],[34,1178,1,0.52,"#5ad69c"],[861,1328,1,0.4,"#5ad69c"],[707,1090,1.4,0.26,"#5ad69c"],[193,15,2.2,0.44,"#e7ac3c"],[1023,676,1.4,0.37,"#5ad69c"],[979,118,2.2,0.22,"#5ad69c"],[676,1228,2.2,0.45,"#5ad69c"],[353,1326,1,0.55,"#5ad69c"],[972,1324,1.8,0.45,"#5ad69c"],[346,1228,1,0.34,"#5ad69c"],[526,38,1,0.39,"#e7ac3c"],[576,927,2.2,0.23,"#5ad69c"],[1021,665,1,0.57,"#5ad69c"],[177,694,1.8,0.32,"#5ad69c"],[913,1216,1.4,0.32,"#5ad69c"],[444,154,1,0.48,"#e7ac3c"],[1047,697,2.2,0.45,"#5ad69c"],[132,126,1.4,0.19,"#5ad69c"],[447,1292,2.2,0.3,"#5ad69c"],[137,585,2.2,0.44,"#5ad69c"],[453,40,1.8,0.22,"#5ad69c"],[25,262,1.4,0.16,"#5ad69c"],[540,786,2.8,0.29,"#5ad69c"],[875,1219,1.8,0.48,"#5ad69c"],[105,1200,1.4,0.55,"#5ad69c"],[853,170,2.2,0.5,"#5ad69c"],[685,464,1.4,0.59,"#5ad69c"],[26,1029,2.8,0.43,"#5ad69c"],[158,249,1.4,0.24,"#5ad69c"],[383,284,1.8,0.16,"#5ad69c"]];
 
-function Header({ right }: { right: string }) {
+function Backdrop() {
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-        <div style={{ display: "flex", width: 58, height: 58, borderRadius: 16, alignItems: "center", justifyContent: "center", backgroundImage: "radial-gradient(circle at 30% 20%, #3fd690 0%, #13744a 55%, #0a3a27 100%)", color: "#03140c", fontSize: 25, fontWeight: 700 }}>IF</div>
-        <div style={{ display: "flex", fontSize: 32, fontWeight: 600, color: C.ink }}>IdeaForge</div>
+    <svg width="1080" height="1350" viewBox="0 0 1080 1350" style={{ position: "absolute", left: 0, top: 0 }}>
+      <defs>
+        <linearGradient id="tr" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stopColor="#2fc07d" stopOpacity="0" /><stop offset="0.4" stopColor="#2fc07d" /><stop offset="1" stopColor="#e7ac3c" /></linearGradient>
+        <pattern id="dg" width="36" height="36" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.2" fill="#5ad69c" fillOpacity="0.09" /></pattern>
+      </defs>
+      <rect width="1080" height="1350" fill="url(#dg)" />
+      <path d="M0 262 H560 L600 238 H1080" fill="none" stroke="url(#tr)" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="600" cy="238" r="6" fill="#2fc07d" />
+      {DOTS.map(([x, y, r, o, c], i) => <circle key={i} cx={x} cy={y} r={r} fill={c} fillOpacity={o} />)}
+    </svg>
+  );
+}
+
+const icons: Record<string, string> = {
+  gift: "M3 8h18v4H3zM12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 0 1 0 5",
+  trophy: "M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3",
+  bolt: "M13 2 4 14h7l-1 8 9-12h-7l1-8z",
+  chart: "M3 3v18h18M7 15l4-4 3 3 6-6",
+  coin: "M12 2a10 10 0 1 0 0 20a10 10 0 1 0 0-20zM9 9.5h4.5a2 2 0 0 1 0 4H10a2 2 0 0 0 0 4H15M12 7v2.5M12 17.5V20",
+  clock: "M12 2a10 10 0 1 0 0 20a10 10 0 1 0 0-20zM12 6v6l4 2",
+  star: "M12 2l3 6.5 7 .8-5.2 4.8 1.5 7L12 17.6 5.7 21.1l1.5-7L2 9.3l7-.8z",
+};
+function Icon({ name, color }: { name: string; color: string }) {
+  return (
+    <svg width="40" height="40" viewBox="0 0 24 24">
+      <path d={icons[name] ?? icons.star} fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function Card({ v, icon, num, kicker, title, sub }: { v: typeof G; icon?: string; num?: number; kicker?: string; title: string; sub?: string }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 26, padding: "28px 32px", borderRadius: 28, border: `1.5px solid ${v.bd}`, backgroundImage: v.bg }}>
+      <div style={{ display: "flex", width: 84, height: 84, flexShrink: 0, borderRadius: 22, alignItems: "center", justifyContent: "center", background: v.icBg, border: `1.5px solid ${v.bd}`, color: v.ic, fontFamily: "GeistMono", fontSize: 34 }}>
+        {icon ? <Icon name={icon} color={v.ic} /> : String(num ?? "")}
       </div>
-      <div style={{ display: "flex", fontFamily: "GeistMono", fontSize: 22, color: C.ink3 }}>{right}</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 1 }}>
+        {kicker && <div style={{ display: "flex", fontFamily: "GeistMono", fontSize: 18, letterSpacing: 2.8, color: v.ic }}>{kicker.toUpperCase()}</div>}
+        <div style={{ display: "flex", fontSize: 38, fontWeight: 600, lineHeight: 1.12, letterSpacing: -1, color: C.ink }}>{title}</div>
+        {sub && <div style={{ display: "flex", fontSize: 25, lineHeight: 1.35, color: C.ink2 }}>{sub}</div>}
+      </div>
     </div>
   );
 }
 
-function Kicker({ text, amber }: { text: string; amber?: boolean }) {
-  return <div style={{ display: "flex", fontFamily: "GeistMono", fontSize: 24, letterSpacing: 4, color: amber ? C.amber : C.green }}>{text.toUpperCase()}</div>;
+/** Titre en deux tons : la fin (après « | ») passe en vert, comme sur le visuel. */
+function Title({ text, size = 82 }: { text: string; size?: number }) {
+  const [a, b] = text.split("|");
+  return (
+    <div style={{ display: "flex", flexDirection: "column", fontSize: size, fontWeight: 600, lineHeight: 0.98, letterSpacing: -size * 0.045 }}>
+      <div style={{ display: "flex" }}>{a.trim()}</div>
+      {b && <div style={{ display: "flex", color: C.green }}>{b.trim()}</div>}
+    </div>
+  );
 }
 
-function Tiles({ tiles }: { tiles: { k: string; v: string }[] }) {
+const PILL: Record<string, string> = { cover: "NOUVEAU", text: "LE MARCHÉ", stats: "LES CHIFFRES", list: "LE PLAN", rank: "TOP 5", cta: "IDEAFORGE" };
+
+export function SlideView({ s, handle, pill }: { s: Slide; handle: string; pill?: string }) {
+  const page = "n" in s ? `${s.n}/${s.total}` : "";
   return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 18, width: "100%" }}>
-      {tiles.map((t, i) => (
-        <div key={i} style={{ ...card, flexDirection: "column", gap: 10, padding: "26px 28px", width: tiles.length === 3 ? 296 : 461 }}>
-          <div style={{ display: "flex", fontFamily: "GeistMono", fontSize: 20, letterSpacing: 2, color: C.ink3 }}>{t.k.toUpperCase()}</div>
-          <div style={{ display: "flex", fontSize: tiles.length === 3 ? 32 : 40, fontWeight: 700, color: C.ink }}>{t.v}</div>
+    <div style={{ width: 1080, height: 1350, position: "relative", display: "flex", fontFamily: "Geist", color: C.ink, backgroundColor: C.bg,
+      backgroundImage: "radial-gradient(circle at 85% 8%, rgba(47,192,125,0.22) 0%, rgba(47,192,125,0) 45%), radial-gradient(circle at 0% 100%, rgba(231,172,60,0.10) 0%, rgba(231,172,60,0) 45%)" }}>
+      <Backdrop />
+      <div style={{ position: "absolute", left: 0, top: 0, width: 1080, height: 1350, display: "flex", flexDirection: "column", padding: "64px 64px 60px", gap: 34 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+            <div style={{ display: "flex", width: 64, height: 64, borderRadius: 18, alignItems: "center", justifyContent: "center", backgroundImage: "radial-gradient(circle at 30% 20%, #3fd690 0%, #13744a 55%, #0a3a27 100%)", color: "#03140c", fontSize: 27, fontWeight: 700, letterSpacing: -1 }}>IF</div>
+            <div style={{ display: "flex", fontSize: 34, fontWeight: 600, letterSpacing: -1 }}>IdeaForge</div>
+          </div>
+          <div style={{ display: "flex", fontFamily: "GeistMono", fontSize: 20, letterSpacing: 3.6, color: "#07130f", background: C.green, padding: "10px 20px", borderRadius: 999 }}>{(pill ?? PILL[s.t]).toUpperCase()}</div>
         </div>
-      ))}
-    </div>
-  );
-}
 
-export function SlideView({ s, handle }: { s: Slide; handle: string }) {
-  const page = "n" in s ? `${s.n}/${s.total}` : handle;
-  return (
-    <div style={{ width: 1080, height: 1350, display: "flex", flexDirection: "column", padding: "64px 70px 62px", fontFamily: "Geist", color: C.ink, backgroundColor: C.bg,
-      backgroundImage: "radial-gradient(circle at 88% 6%, rgba(47,192,125,0.28) 0%, rgba(47,192,125,0) 42%), radial-gradient(circle at 0% 100%, rgba(231,172,60,0.13) 0%, rgba(231,172,60,0) 45%)" }}>
-      <Header right={page} />
-      <div style={{ display: "flex", flexDirection: "column", flexGrow: 1, justifyContent: "center", gap: 34, width: "100%" }}>
         {s.t === "cover" && (
-          <>
-            <Kicker text={s.kicker} />
-            <div style={{ display: "flex", fontSize: s.title.length > 55 ? 72 : 88, fontWeight: 700, lineHeight: 1.02, letterSpacing: -3 }}>{s.title}</div>
-            {s.sub && <div style={{ display: "flex", fontSize: 32, lineHeight: 1.4, color: C.ink2 }}>{s.sub}</div>}
-            {s.stat && (
-              <div style={{ ...card, alignItems: "center", gap: 26, padding: "28px 32px", border: "2px solid rgba(231,172,60,0.55)", background: "rgba(40,36,18,0.6)" }}>
-                <div style={{ display: "flex", fontSize: 64, fontWeight: 700, color: C.amber }}>≈ {s.stat}</div>
-                <div style={{ display: "flex", fontSize: 26, lineHeight: 1.3, color: C.ink2, width: 420 }}>{s.statLabel}</div>
-              </div>
-            )}
-          </>
+          <div style={{ display: "flex", flexDirection: "column", gap: 30, marginTop: 18 }}>
+            <div style={{ display: "flex", fontFamily: "GeistMono", fontSize: 22, letterSpacing: 4, color: C.green }}>{s.kicker.toUpperCase()}</div>
+            <Title text={s.title} size={s.title.length > 60 ? 70 : 82} />
+            {s.sub && <div style={{ display: "flex", fontSize: 29, lineHeight: 1.4, color: C.ink2 }}>{s.sub}</div>}
+            {s.stat && <Card v={A} icon="chart" kicker="Potentiel" title={`≈ ${s.stat}`} sub={s.statLabel} />}
+          </div>
         )}
         {s.t === "text" && (
-          <>
-            <Kicker text={s.kicker} />
-            <div style={{ display: "flex", fontSize: 72, fontWeight: 700, lineHeight: 1.04, letterSpacing: -2 }}>{s.title}</div>
-            <div style={{ display: "flex", fontSize: 38, lineHeight: 1.45, color: C.ink2 }}>{s.body}</div>
-          </>
+          <div style={{ display: "flex", flexDirection: "column", gap: 30, marginTop: 18 }}>
+            <Title text={`${s.title}|${s.kicker}`} size={76} />
+            <Card v={G} icon="star" title={s.body} />
+          </div>
         )}
         {s.t === "stats" && (
-          <>
-            <Kicker text={s.kicker} />
-            <div style={{ display: "flex", fontSize: 72, fontWeight: 700, lineHeight: 1.04, letterSpacing: -2 }}>{s.title}</div>
-            <Tiles tiles={s.tiles} />
-          </>
+          <div style={{ display: "flex", flexDirection: "column", gap: 20, marginTop: 18 }}>
+            <Title text={`${s.title}|${s.kicker.toLowerCase()}`} size={76} />
+            <div style={{ display: "flex", flexDirection: "column", gap: 18, marginTop: 10 }}>
+              {s.tiles.map((t, i) => <Card key={i} v={i === s.tiles.length - 1 ? A : G} icon={["coin", "chart", "clock", "star"][i] ?? "star"} kicker={t.k} title={t.v} />)}
+            </div>
+          </div>
         )}
         {s.t === "list" && (
-          <>
-            <Kicker text={s.kicker} amber={s.kicker === "Attention"} />
-            <div style={{ display: "flex", fontSize: 72, fontWeight: 700, lineHeight: 1.04, letterSpacing: -2 }}>{s.title}</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-              {s.items.map((it, i) => (
-                <div key={i} style={{ ...card, alignItems: "center", gap: 24, padding: "22px 26px" }}>
-                  <div style={{ display: "flex", width: 54, height: 54, flexShrink: 0, borderRadius: 27, alignItems: "center", justifyContent: "center", border: `2px solid ${s.kicker === "Attention" ? "rgba(231,172,60,0.6)" : C.line}`, color: s.kicker === "Attention" ? C.amber : C.green, fontFamily: "GeistMono", fontSize: 24 }}>{i + 1}</div>
-                  <div style={{ display: "flex", fontSize: 32, lineHeight: 1.35, color: C.ink }}>{it}</div>
-                </div>
-              ))}
+          <div style={{ display: "flex", flexDirection: "column", gap: 20, marginTop: 18 }}>
+            <Title text={`${s.title}|${s.kicker.toLowerCase()}`} size={76} />
+            <div style={{ display: "flex", flexDirection: "column", gap: 18, marginTop: 10 }}>
+              {s.items.map((it, i) => <Card key={i} v={s.kicker === "Attention" ? A : G} num={i + 1} title={it} />)}
             </div>
-          </>
+          </div>
         )}
         {s.t === "rank" && (
-          <>
-            <div style={{ display: "flex", fontFamily: "GeistMono", fontSize: 150, fontWeight: 600, color: C.amber, lineHeight: 1 }}>#{s.rank}</div>
-            <div style={{ display: "flex", fontSize: s.title.length > 50 ? 62 : 74, fontWeight: 700, lineHeight: 1.04, letterSpacing: -2 }}>{s.title}</div>
-            {s.pitch && <div style={{ display: "flex", fontSize: 32, lineHeight: 1.4, color: C.ink2 }}>{s.pitch}</div>}
-            <Tiles tiles={s.tiles} />
-          </>
+          <div style={{ display: "flex", flexDirection: "column", gap: 26, marginTop: 18 }}>
+            <div style={{ display: "flex", fontFamily: "GeistMono", fontSize: 130, color: C.amber, lineHeight: 1 }}>#{s.rank}</div>
+            <Title text={s.title} size={s.title.length > 50 ? 62 : 74} />
+            {s.pitch && <div style={{ display: "flex", fontSize: 29, lineHeight: 1.4, color: C.ink2 }}>{s.pitch}</div>}
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {s.tiles.map((t, i) => <Card key={i} v={i === s.tiles.length - 1 ? A : G} icon={["coin", "chart", "star"][i] ?? "star"} kicker={t.k} title={t.v} />)}
+            </div>
+          </div>
         )}
         {s.t === "cta" && (
-          <>
-            <Kicker text="IdeaForge" />
-            <div style={{ display: "flex", fontSize: 86, fontWeight: 700, lineHeight: 1.02, letterSpacing: -3 }}>{s.title}</div>
-            <div style={{ display: "flex", fontSize: 34, lineHeight: 1.45, color: C.ink2 }}>{s.lines[0]}</div>
-            <div style={{ display: "flex", fontSize: 32, fontWeight: 600, color: C.amber }}>{s.lines[1]}</div>
-            <div style={{ display: "flex", alignSelf: "flex-start", alignItems: "center", gap: 18, padding: "26px 40px", borderRadius: 24, backgroundImage: "linear-gradient(180deg, #38cc87 0%, #1f9e63 100%)", color: "#03140c", fontSize: 38, fontWeight: 700 }}>{s.lines[2]} · ideaforges.io</div>
-          </>
+          <div style={{ display: "flex", flexDirection: "column", gap: 24, marginTop: 18 }}>
+            <Title text={`${s.title}|sur IdeaForge`} size={82} />
+            <div style={{ display: "flex", fontSize: 29, lineHeight: 1.4, color: C.ink2 }}>Plus de 100 idées de business chiffrées, prêtes à lancer.</div>
+            <Card v={G} icon="gift" kicker="Offert à l'inscription" title="1 fiche complète gratuite" sub="Crée ton compte et débloque la fiche de ton choix." />
+            <Card v={G} icon="trophy" kicker="Gratuit par e-mail" title="Le Top 10 des idées les mieux notées" />
+            <Card v={A} icon="bolt" kicker="Tout débloquer" title={s.lines[0]} />
+          </div>
         )}
-      </div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", fontFamily: "GeistMono", fontSize: 22, color: C.ink3 }}>
-        <div style={{ display: "flex" }}>{handle}</div>
-        <div style={{ display: "flex", color: s.t === "cta" ? C.ink3 : C.green }}>{s.t === "cta" ? "ideaforges.io" : "Glisse →"}</div>
+
+        <div style={{ display: "flex", flexGrow: 1 }} />
+        {s.t === "cta" ? (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "24px 30px", borderRadius: 24, backgroundImage: "linear-gradient(180deg, #38cc87 0%, #1f9e63 100%)" }}>
+            <div style={{ display: "flex", fontSize: 34, fontWeight: 700, color: "#03140c" }}>Lien en bio</div>
+            <div style={{ display: "flex", fontFamily: "GeistMono", fontSize: 28, color: "#03140c" }}>ideaforges.io →</div>
+          </div>
+        ) : (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontFamily: "GeistMono", fontSize: 22, color: C.ink3 }}>
+            <div style={{ display: "flex" }}>{handle}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+              <div style={{ display: "flex" }}>{page}</div>
+              <div style={{ display: "flex", color: "#03140c", background: C.green, padding: "10px 20px", borderRadius: 999 }}>Glisse →</div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
