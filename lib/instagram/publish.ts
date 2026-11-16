@@ -4,6 +4,9 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SITE } from "@/lib/seo";
 import { buildDraft, kindForToday, type Kind, type Slide } from "@/lib/instagram/content";
+import type { StoryData } from "@/lib/instagram/render";
+import { allIdeas, ideaFacts, clip } from "@/lib/seo";
+import { scoreIdea } from "@/lib/score";
 
 // Deux sortes de jetons existent : « IGAA… » (connexion Instagram → graph.instagram.com)
 // et « EAA… » (connexion unifiée / Facebook → graph.facebook.com). On gère les deux.
@@ -118,18 +121,118 @@ export async function publishPost(id: number): Promise<{ ok: boolean; permalink?
   }
 }
 
-/** Tâche du jour : lundi, mercredi, vendredi → un carrousel créé et publié. Le dimanche : renouvellement du jeton. */
-export async function runInstagram(): Promise<{ ran: boolean; id?: number; ok?: boolean; error?: string }> {
+/** Tâche du jour : lundi, mercredi, vendredi → un carrousel créé et publié. Chaque jour → une story.
+ *  Le dimanche : renouvellement du jeton. */
+export async function runInstagram(): Promise<{ ran: boolean; id?: number; ok?: boolean; error?: string; story?: { ok: boolean; error?: string } }> {
   const parisDay = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Paris" })).getDay();
   if (parisDay === 0) await refreshIgToken();
   const kind = kindForToday();
-  if (!kind) return { ran: false };
-  const slot = new Date().toISOString().slice(0, 10);
+  let res: { ran: boolean; id?: number; ok?: boolean; error?: string } = { ran: false };
+  if (kind) {
+    const slot = new Date().toISOString().slice(0, 10);
+    const admin = createAdminClient();
+    const { data: existing } = await admin.from("ig_posts").select("id, status").eq("slot", slot).maybeSingle();
+    if (existing?.status === "published") res = { ran: false, id: existing.id as number };
+    else {
+      const id = (existing?.id as number) ?? (await createPost(kind, slot));
+      if (!(await igToken())) res = { ran: true, id, ok: false, error: "Instagram non connecté : brouillon prêt dans le panel" };
+      else { const r = await publishPost(id); res = { ran: true, id, ok: r.ok, error: r.error }; }
+    }
+  }
+  let story: { ok: boolean; error?: string } | undefined;
+  try { story = await runStory(); } catch (e) { story = { ok: false, error: e instanceof Error ? e.message : String(e) }; }
+  return { ...res, story };
+}
+
+// ───────── Stories (une par jour) ─────────
+type StoryRow = { story: StoryData; status: "draft" | "published" | "error"; idea?: string; media_id?: string; error?: string; at?: string };
+const todayKey = () => new Date().toISOString().slice(0, 10);
+async function getStory(date: string): Promise<StoryRow | null> {
+  const v = await setting(`ig_story:${date}`);
+  try { return v ? (JSON.parse(v) as StoryRow) : null; } catch { return null; }
+}
+const putStory = (date: string, row: StoryRow) => saveSetting(`ig_story:${date}`, JSON.stringify(row));
+
+/** Contenu de la story : le carrousel du jour s'il existe, sinon « l'idée du jour » du catalogue. */
+export async function buildStory(date = todayKey()): Promise<StoryRow> {
   const admin = createAdminClient();
-  const { data: existing } = await admin.from("ig_posts").select("id, status").eq("slot", slot).maybeSingle();
-  if (existing?.status === "published") return { ran: false, id: existing.id as number };
-  const id = (existing?.id as number) ?? (await createPost(kind, slot));
-  if (!(await igToken())) return { ran: true, id, ok: false, error: "Instagram non connecté : brouillon prêt dans le panel" };
-  const r = await publishPost(id);
-  return { ran: true, id, ok: r.ok, error: r.error };
+  const { data: post } = await admin.from("ig_posts").select("kind, slides").eq("slot", date).maybeSingle();
+  const slides = (post?.slides ?? []) as Slide[];
+  const cover = slides[0];
+  if (post && cover?.t === "cover") {
+    const items: StoryData["items"] = [];
+    if (post.kind === "top5") slides.filter((x) => x.t === "rank").slice(0, 3).forEach((x) => x.t === "rank" && items.push({ num: x.rank, v: clip(x.title, 48) }));
+    else {
+      const st = slides.find((x) => x.t === "stats");
+      if (st?.t === "stats") st.tiles.slice(0, 3).forEach((t, i) => items.push({ k: t.k, v: t.v, icon: ["coin", "chart", "clock"][i], amber: i === 2 }));
+    }
+    return { status: "draft", story: { badge: "Nouveau post", kicker: cover.kicker, title: cover.title, sub: cover.sub, items, cta: "Le carrousel est sur le profil" } };
+  }
+  const usedRaw = await setting("ig_story_used");
+  const used = new Set<string>(usedRaw ? (JSON.parse(usedRaw) as string[]) : []);
+  const { data: prev } = await admin.from("ig_posts").select("ideas").limit(300);
+  (prev ?? []).forEach((p) => ((p.ideas as string[]) ?? []).forEach((i) => used.add(i)));
+  const ideas = (await allIdeas()).sort((a, b) => scoreIdea(b).score - scoreIdea(a).score);
+  const it = ideas.find((i) => !used.has(i.id)) ?? ideas[Math.floor(Math.random() * Math.min(30, ideas.length))];
+  const f = ideaFacts(it);
+  return {
+    status: "draft", idea: it.id,
+    story: {
+      badge: "Idée du jour", kicker: "Idée de business chiffrée", title: clip(it.title, 80), sub: it.pitch ? clip(it.pitch, 110) : undefined,
+      items: [
+        { k: "Mise de départ", v: it.budget || f.budget, icon: "coin" },
+        { k: "Potentiel", v: it.revenue || f.mrr12Txt, icon: "chart" },
+        { k: "Score IdeaForge", v: `${scoreIdea(it).score}/100`, icon: "star", amber: true },
+      ],
+      cta: "Fiche complète : lien en bio",
+    },
+  };
+}
+
+/** Publie la story d'une date (déjà préparée). */
+export async function publishStory(date = todayKey()): Promise<{ ok: boolean; error?: string }> {
+  const row = await getStory(date);
+  if (!row) return { ok: false, error: "Story introuvable" };
+  if (row.status === "published") return { ok: true };
+  const token = (await igToken())?.trim();
+  if (!token) return { ok: false, error: "Instagram non connecté" };
+  try {
+    const acc = await igAccount();
+    if (!acc.ok || !acc.id) throw new Error(acc.error || "Compte Instagram introuvable");
+    const c = await ig(`${acc.id}/media`, { image_url: `${SITE}/api/ig/story/${date}.jpg`, media_type: "STORIES", access_token: token });
+    await waitReady(c.id, token);
+    const pub = await ig(`${acc.id}/media_publish`, { creation_id: c.id, access_token: token });
+    await putStory(date, { ...row, status: "published", media_id: pub.id, error: undefined, at: new Date().toISOString() });
+    if (row.idea) {
+      const usedRaw = await setting("ig_story_used");
+      const list = usedRaw ? (JSON.parse(usedRaw) as string[]) : [];
+      await saveSetting("ig_story_used", JSON.stringify([row.idea, ...list.filter((x) => x !== row.idea)].slice(0, 120)));
+    }
+    return { ok: true };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    await putStory(date, { ...row, status: "error", error: msg });
+    return { ok: false, error: msg };
+  }
+}
+
+/** Story du jour : préparée une fois, puis publiée (si Instagram est connecté). */
+export async function runStory(date = todayKey()): Promise<{ ok: boolean; error?: string }> {
+  let row = await getStory(date);
+  if (row?.status === "published") return { ok: true };
+  if (!row) { row = await buildStory(date); await putStory(date, row); }
+  return publishStory(date);
+}
+
+/** (Re)prépare la story du jour sans la publier, tant qu'elle n'est pas en ligne. */
+export async function prepareStory(date = todayKey()) {
+  const row = await getStory(date);
+  if (row?.status === "published") return;
+  await putStory(date, await buildStory(date));
+}
+
+/** Les dernières stories (pour le panel). */
+export async function recentStories(n = 7): Promise<{ date: string; row: StoryRow }[]> {
+  const { data } = await createAdminClient().from("app_settings").select("key, value").like("key", "ig_story:%").order("key", { ascending: false }).limit(n);
+  return (data ?? []).flatMap((d) => { try { return [{ date: (d.key as string).slice(9), row: JSON.parse(d.value as string) as StoryRow }]; } catch { return []; } });
 }

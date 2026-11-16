@@ -1,8 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin";
-import { igAccount } from "@/lib/instagram/publish";
-import { GenerateCarousel, PublishButton, CopyCaption } from "@/components/AdminInstagram";
+import { igAccount, recentStories } from "@/lib/instagram/publish";
+import { GenerateCarousel, PublishButton, CopyCaption, StoryButtons } from "@/components/AdminInstagram";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Instagram · Admin", robots: { index: false, follow: false } };
@@ -22,6 +22,10 @@ export default async function AdminInstagram() {
     posts = (data ?? []) as Post[];
   } catch (e) { err = e instanceof Error ? e.message : "Erreur"; }
   const acc = await igAccount();
+  let stories: Awaited<ReturnType<typeof recentStories>> = [];
+  try { stories = await recentStories(7); } catch {}
+  const today = new Date().toISOString().slice(0, 10);
+  const todayStory = stories.find((x) => x.date === today);
 
   return (
     <main className="wrap" style={{ paddingBlock: "34px 60px" }}>
@@ -31,9 +35,26 @@ export default async function AdminInstagram() {
 
       <div className="tiles" style={{ marginBottom: 22 }}>
         <div className={`tile ${acc.ok ? "hot" : ""}`}><div className="tile-k">Compte connecté</div><div className="tile-v" style={{ fontSize: 20 }}>{acc.ok ? `@${acc.username}` : "Non connecté"}</div><div className="tile-s">{acc.ok ? "Publication automatique active" : acc.error}</div></div>
-        <div className="tile"><div className="tile-k">Calendrier</div><div className="tile-v" style={{ fontSize: 20 }}>Lun · Mer · Ven</div><div className="tile-s">vers 9 h, heure de Paris</div></div>
+        <div className="tile"><div className="tile-k">Calendrier</div><div className="tile-v" style={{ fontSize: 20 }}>Lun · Mer · Ven</div><div className="tile-s">carrousels vers 9 h · 1 story chaque jour</div></div>
         <div className="tile"><div className="tile-k">Publiés</div><div className="tile-v">{posts.filter((p) => p.status === "published").length}</div><div className="tile-s">sur les 20 derniers</div></div>
         <div className="tile"><div className="tile-k">Brouillons</div><div className="tile-v">{posts.filter((p) => p.status !== "published").length}</div><div className="tile-s">prêts ou en erreur</div></div>
+      </div>
+
+      <h2 className="val-sec">Stories (une par jour)</h2>
+      <div className="ig-post" style={{ marginBottom: 26 }}>
+        <div className="ig-head">
+          <b>📲 Story du jour</b>
+          {todayStory ? <span className={`ref-pill ${todayStory.row.status === "published" ? "paid" : "signed_up"}`}>{todayStory.row.status === "published" ? "Publiée" : todayStory.row.status === "error" ? "Erreur" : "Prête"}</span> : <span className="ref-date">pas encore préparée (elle part avec la tâche du matin)</span>}
+        </div>
+        <div className="ig-strip">
+          {stories.map((x) => (
+            <a key={x.date} href={`/api/ig/story/${x.date}.jpg`} target="_blank" rel="noopener noreferrer" title={x.date}>
+              <img src={`/api/ig/story/${x.date}.jpg`} alt={`Story du ${x.date}`} loading="lazy" width={152} height={270} style={{ width: 152, height: 270 }} />
+            </a>
+          ))}
+        </div>
+        {todayStory?.row.error && <p className="msg err">{todayStory.row.error}</p>}
+        <StoryButtons canPublish={acc.ok && !!todayStory} published={todayStory?.row.status === "published"} />
       </div>
 
       <h2 className="val-sec">Créer un carrousel maintenant</h2>

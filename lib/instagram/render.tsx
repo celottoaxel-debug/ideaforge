@@ -7,17 +7,18 @@ const G = { bd: "rgba(47,192,125,0.45)", bg: "linear-gradient(180deg, rgba(22,46
 const A = { bd: "rgba(231,172,60,0.6)", bg: "linear-gradient(180deg, rgba(36,40,24,0.95), rgba(12,22,16,0.95))", icBg: "rgba(231,172,60,0.14)", ic: "#f1c26a" };
 const DOTS: [number, number, number, number, string][] = [[489,756,2.2,0.4,"#5ad69c"],[663,251,2.2,0.32,"#5ad69c"],[1061,1302,2.8,0.51,"#5ad69c"],[898,85,1,0.25,"#5ad69c"],[32,626,2.2,0.48,"#5ad69c"],[595,1258,1,0.54,"#5ad69c"],[828,541,2.2,0.19,"#e7ac3c"],[740,288,1,0.41,"#5ad69c"],[429,99,1.4,0.58,"#5ad69c"],[94,449,1,0.22,"#5ad69c"],[12,628,2.2,0.25,"#5ad69c"],[483,257,1.4,0.38,"#5ad69c"],[426,1337,1,0.3,"#5ad69c"],[868,411,1.4,0.25,"#5ad69c"],[80,282,1.4,0.16,"#5ad69c"],[672,172,2.8,0.42,"#5ad69c"],[936,247,1.4,0.32,"#5ad69c"],[51,147,2.8,0.68,"#5ad69c"],[761,347,2.8,0.42,"#5ad69c"],[1004,1319,1.4,0.28,"#5ad69c"],[991,275,1,0.19,"#5ad69c"],[269,63,1.8,0.35,"#5ad69c"],[142,489,1.8,0.51,"#5ad69c"],[631,189,1,0.66,"#5ad69c"],[646,101,1,0.55,"#5ad69c"],[1079,102,2.8,0.35,"#e7ac3c"],[1040,461,1,0.53,"#5ad69c"],[87,863,2.2,0.55,"#5ad69c"],[905,113,2.8,0.17,"#5ad69c"],[537,830,1.8,0.64,"#5ad69c"],[814,462,2.2,0.64,"#5ad69c"],[719,268,2.2,0.59,"#5ad69c"],[216,289,1.4,0.47,"#5ad69c"],[147,670,1,0.54,"#5ad69c"],[299,228,2.2,0.41,"#5ad69c"],[726,967,2.8,0.4,"#e7ac3c"],[34,1178,1,0.52,"#5ad69c"],[861,1328,1,0.4,"#5ad69c"],[707,1090,1.4,0.26,"#5ad69c"],[193,15,2.2,0.44,"#e7ac3c"],[1023,676,1.4,0.37,"#5ad69c"],[979,118,2.2,0.22,"#5ad69c"],[676,1228,2.2,0.45,"#5ad69c"],[353,1326,1,0.55,"#5ad69c"],[972,1324,1.8,0.45,"#5ad69c"],[346,1228,1,0.34,"#5ad69c"],[526,38,1,0.39,"#e7ac3c"],[576,927,2.2,0.23,"#5ad69c"],[1021,665,1,0.57,"#5ad69c"],[177,694,1.8,0.32,"#5ad69c"],[913,1216,1.4,0.32,"#5ad69c"],[444,154,1,0.48,"#e7ac3c"],[1047,697,2.2,0.45,"#5ad69c"],[132,126,1.4,0.19,"#5ad69c"],[447,1292,2.2,0.3,"#5ad69c"],[137,585,2.2,0.44,"#5ad69c"],[453,40,1.8,0.22,"#5ad69c"],[25,262,1.4,0.16,"#5ad69c"],[540,786,2.8,0.29,"#5ad69c"],[875,1219,1.8,0.48,"#5ad69c"],[105,1200,1.4,0.55,"#5ad69c"],[853,170,2.2,0.5,"#5ad69c"],[685,464,1.4,0.59,"#5ad69c"],[26,1029,2.8,0.43,"#5ad69c"],[158,249,1.4,0.24,"#5ad69c"],[383,284,1.8,0.16,"#5ad69c"]];
 
-function Backdrop() {
+function Backdrop({ h = 1350 }: { h?: number }) {
+  const ky = h / 1350;
   return (
-    <svg width="1080" height="1350" viewBox="0 0 1080 1350" style={{ position: "absolute", left: 0, top: 0 }}>
+    <svg width="1080" height={String(h)} viewBox={`0 0 1080 ${h}`} style={{ position: "absolute", left: 0, top: 0 }}>
       <defs>
         <linearGradient id="tr" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stopColor="#2fc07d" stopOpacity="0" /><stop offset="0.4" stopColor="#2fc07d" /><stop offset="1" stopColor="#e7ac3c" /></linearGradient>
         <pattern id="dg" width="36" height="36" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.2" fill="#5ad69c" fillOpacity="0.09" /></pattern>
       </defs>
-      <rect width="1080" height="1350" fill="url(#dg)" />
+      <rect width="1080" height={String(h)} fill="url(#dg)" />
       <path d="M0 176 H560 L600 152 H1080" fill="none" stroke="url(#tr)" strokeWidth="2" strokeLinecap="round" />
       <circle cx="600" cy="152" r="6" fill="#2fc07d" />
-      {DOTS.map(([x, y, r, o, c], i) => <circle key={i} cx={x} cy={y} r={r} fill={c} fillOpacity={o} />)}
+      {DOTS.map(([x, y, r, o, c], i) => <circle key={i} cx={x} cy={Math.round(y * ky)} r={r} fill={c} fillOpacity={o} />)}
     </svg>
   );
 }
@@ -157,6 +158,44 @@ export function SlideView({ s, handle, pill }: { s: Slide; handle: string; pill?
             </div>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+export type StoryData = {
+  badge: string; kicker: string; title: string; sub?: string;
+  items: { k?: string; v: string; num?: number; icon?: string; amber?: boolean }[];
+  cta: string;
+};
+
+/** Story 1080 × 1920 : même univers que les carrousels (fond, logo, pastille, cartes, barre verte). */
+export function StoryView({ d, handle }: { d: StoryData; handle: string }) {
+  return (
+    <div style={{ width: 1080, height: 1920, position: "relative", display: "flex", fontFamily: "Geist", color: C.ink, backgroundColor: C.bg,
+      backgroundImage: "radial-gradient(circle at 85% 6%, rgba(47,192,125,0.24) 0%, rgba(47,192,125,0) 42%), radial-gradient(circle at 0% 100%, rgba(231,172,60,0.12) 0%, rgba(231,172,60,0) 45%)" }}>
+      <Backdrop h={1920} />
+      <div style={{ position: "absolute", left: 0, top: 0, width: 1080, height: 1920, display: "flex", flexDirection: "column", padding: "150px 72px 230px", gap: 34 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+            <div style={{ display: "flex", width: 74, height: 74, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundImage: "radial-gradient(circle at 30% 20%, #3fd690 0%, #13744a 55%, #0a3a27 100%)", color: "#03140c", fontSize: 31, fontWeight: 700, letterSpacing: -1 }}>IF</div>
+            <div style={{ display: "flex", fontSize: 40, fontWeight: 600, letterSpacing: -1 }}>IdeaForge</div>
+          </div>
+          <div style={{ display: "flex", fontFamily: "GeistMono", fontSize: 24, letterSpacing: 4, color: "#07130f", background: C.green, padding: "12px 24px", borderRadius: 999 }}>{d.badge.toUpperCase()}</div>
+        </div>
+        <div style={{ display: "flex", flexGrow: 1 }} />
+        <Kicker text={d.kicker} />
+        <Title text={d.title} size={d.title.length > 60 ? 84 : 98} />
+        {d.sub && <div style={{ display: "flex", fontSize: 34, lineHeight: 1.4, color: C.ink2 }}>{d.sub}</div>}
+        <div style={{ display: "flex", flexDirection: "column", gap: 20, marginTop: 6 }}>
+          {d.items.map((it, i) => <Card key={i} v={it.amber ? A : G} icon={it.num ? undefined : it.icon ?? "star"} num={it.num} kicker={it.k} title={it.v} />)}
+        </div>
+        <div style={{ display: "flex", flexGrow: 1 }} />
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "30px 36px", borderRadius: 28, backgroundImage: "linear-gradient(180deg, #38cc87 0%, #1f9e63 100%)" }}>
+          <div style={{ display: "flex", fontSize: 38, fontWeight: 700, color: "#03140c" }}>{d.cta}</div>
+          <div style={{ display: "flex", fontFamily: "GeistMono", fontSize: 30, color: "#03140c" }}>ideaforges.io →</div>
+        </div>
+        <div style={{ display: "flex", justifyContent: "center", fontFamily: "GeistMono", fontSize: 26, color: C.ink3 }}>{handle}</div>
       </div>
     </div>
   );

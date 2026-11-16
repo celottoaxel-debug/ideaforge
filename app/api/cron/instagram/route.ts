@@ -6,7 +6,7 @@ import { adminInstagramEmail } from "@/lib/email/templates";
 import { siteUrl } from "@/lib/email/unsubscribe";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 // Lancé chaque matin par /api/cron/emails : lundi, mercredi et vendredi, un carrousel est créé puis publié.
 export async function GET(request: Request) {

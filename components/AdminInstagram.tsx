@@ -49,3 +49,26 @@ export function CopyCaption({ text }: { text: string }) {
   const [ok, setOk] = useState(false);
   return <button type="button" className="btn" onClick={async () => { try { await navigator.clipboard.writeText(text); setOk(true); setTimeout(() => setOk(false), 1800); } catch {} }}>{ok ? "Copié ✓" : "Copier la légende"}</button>;
 }
+
+export function StoryButtons({ canPublish, published }: { canPublish: boolean; published: boolean }) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const [err, setErr] = useState("");
+  async function go(action: string) {
+    setBusy(action); setErr("");
+    try {
+      const r = await fetch("/api/admin/instagram", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action }) });
+      const j = await r.json();
+      if (j.ok) { window.location.reload(); return; }
+      setErr(j.error || "Erreur");
+    } catch { setErr("Erreur réseau"); }
+    setBusy(null);
+  }
+  if (published) return null;
+  return (
+    <div className="ig-actions">
+      <button type="button" className="btn" disabled={!!busy} onClick={() => go("story-prepare")}>{busy === "story-prepare" ? "Préparation…" : "🔄 Préparer la story du jour"}</button>
+      <button type="button" className="btn primary" disabled={!canPublish || !!busy} onClick={() => go("story-publish")}>{busy === "story-publish" ? "Publication…" : "📲 Publier la story"}</button>
+      {err && <p className="msg err">{err}</p>}
+    </div>
+  );
+}
