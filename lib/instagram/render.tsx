@@ -77,12 +77,12 @@ function Kicker({ text }: { text: string }) {
 
 const PILL: Record<string, string> = { cover: "NOUVEAU", text: "LE MARCHÉ", stats: "LES CHIFFRES", list: "LE PLAN", rank: "TOP 5", cta: "IDEAFORGE" };
 
-export function SlideView({ s, handle, pill, reel }: { s: Slide; handle: string; pill?: string; reel?: boolean }) {
+export function SlideView({ s, handle, pill, reel, bare }: { s: Slide; handle: string; pill?: string; reel?: boolean; bare?: boolean }) {
   const page = "n" in s ? `${s.n}/${s.total}` : "";
   return (
-    <div style={{ width: 1080, height: 1350, position: "relative", display: "flex", fontFamily: "Geist", color: C.ink, backgroundColor: C.bg,
-      backgroundImage: "radial-gradient(circle at 85% 8%, rgba(47,192,125,0.22) 0%, rgba(47,192,125,0) 45%), radial-gradient(circle at 0% 100%, rgba(231,172,60,0.10) 0%, rgba(231,172,60,0) 45%)" }}>
-      <Backdrop />
+    <div style={{ width: 1080, height: 1350, position: "relative", display: "flex", fontFamily: "Geist", color: C.ink, backgroundColor: bare ? "transparent" : C.bg,
+      backgroundImage: bare ? "none" : "radial-gradient(circle at 85% 8%, rgba(47,192,125,0.22) 0%, rgba(47,192,125,0) 45%), radial-gradient(circle at 0% 100%, rgba(231,172,60,0.10) 0%, rgba(231,172,60,0) 45%)" }}>
+      {!bare && <Backdrop />}
       <div style={{ position: "absolute", left: 0, top: 0, width: 1080, height: 1350, display: "flex", flexDirection: "column", padding: "64px 64px 60px", gap: 34 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
@@ -210,6 +210,16 @@ export function ReelFrame({ s, handle }: { s: Slide; handle: string }) {
       <div style={{ position: "absolute", left: 0, top: 230, width: 1080, height: 1350, display: "flex", overflow: "hidden", borderTop: "1px solid rgba(90,214,156,0.18)", borderBottom: "1px solid rgba(90,214,156,0.18)" }}>
         <SlideView s={s} handle={handle} reel />
       </div>
+    </div>
+  );
+}
+
+/** Décor seul (fond du réel), 1080 × 1920. */
+export function ReelBg() {
+  return (
+    <div style={{ width: 1080, height: 1920, position: "relative", display: "flex", backgroundColor: C.bg,
+      backgroundImage: "radial-gradient(circle at 80% 12%, rgba(47,192,125,0.30) 0%, rgba(47,192,125,0) 45%), radial-gradient(circle at 10% 92%, rgba(231,172,60,0.14) 0%, rgba(231,172,60,0) 45%)" }}>
+      <Backdrop h={1920} line={false} />
     </div>
   );
 }
