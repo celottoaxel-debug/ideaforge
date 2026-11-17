@@ -17,8 +17,12 @@
       "schedule": "0 7 * * *"
     },
     {
-      "path": "/api/cron/instagram-now",
-      "schedule": "14 14 17 11 *"
+      "path": "/api/cron/instagram-poll",
+      "schedule": "0 11 * * *"
+    },
+    {
+      "path": "/api/cron/instagram-poll",
+      "schedule": "0 18 * * *"
     }
   ],
   "functions": {
@@ -27,10 +31,6 @@
       "maxDuration": 300
     },
     "app/api/admin/instagram/route.ts": {
-      "memory": 3009,
-      "maxDuration": 300
-    },
-    "app/api/cron/instagram-now/route.ts": {
       "memory": 3009,
       "maxDuration": 300
     }

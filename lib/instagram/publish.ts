@@ -442,3 +442,80 @@ export async function ugcUploadUrl(kind: "face" | "end", filename: string) {
   if (error || !data) throw new Error(error?.message || "Envoi impossible");
   return { path, token: data.token, publicUrl: createAdminClient().storage.from("ig-media").getPublicUrl(path).data.publicUrl };
 }
+
+// ───────── Sondages en story (2 par jour, n'importe quel thème) ─────────
+const POLL_THEMES = ["Business", "IA", "Productivité", "Vie d'entrepreneur", "Argent", "Tech", "Marketing", "Réseaux sociaux", "Quotidien", "Cuisine", "Motivation", "Voyage", "Sport", "Culture", "Habitudes", "Travail"];
+const POLL_BANK: { theme: string; question: string; a: string; b: string }[] = [
+  { theme: "Business", question: "Pour te lancer, tu|choisis quoi ?", a: "Un SaaS en ligne", b: "Un business local" },
+  { theme: "IA", question: "L'IA va plutôt|t'aider ou te remplacer ?", a: "M'aider", b: "Me remplacer" },
+  { theme: "Productivité", question: "Tu bosses mieux|le matin ou le soir ?", a: "Le matin", b: "Le soir" },
+  { theme: "Argent", question: "1 000 € de côté :|tu en fais quoi ?", a: "Je lance un projet", b: "J'épargne" },
+  { theme: "Vie d'entrepreneur", question: "Plutôt seul|ou avec un associé ?", a: "Seul", b: "Avec un associé" },
+  { theme: "Quotidien", question: "Café ou thé|pour démarrer ?", a: "Café", b: "Thé" },
+  { theme: "Marketing", question: "Pour trouver tes clients|tu mises sur ?", a: "Instagram / TikTok", b: "Google (SEO)" },
+  { theme: "Travail", question: "Télétravail|ou bureau ?", a: "Télétravail", b: "Bureau" },
+  { theme: "Cuisine", question: "Plat maison|ou livraison ?", a: "Fait maison", b: "Livraison" },
+  { theme: "Motivation", question: "Ce qui te bloque|le plus pour te lancer ?", a: "Pas d'idée", b: "Peur d'échouer" },
+  { theme: "Tech", question: "iPhone|ou Android ?", a: "iPhone", b: "Android" },
+  { theme: "Habitudes", question: "Tu planifies ta semaine|ou tu improvises ?", a: "Je planifie", b: "J'improvise" },
+];
+
+export type PollRow = { theme: string; question: string; a: string; b: string; status: "draft" | "published" | "error"; media_id?: string; error?: string; at?: string };
+
+async function makePoll(recent: string[]): Promise<{ theme: string; question: string; a: string; b: string }> {
+  const theme = POLL_THEMES[Math.floor(Math.random() * POLL_THEMES.length)];
+  if (process.env.ANTHROPIC_API_KEY) {
+    try {
+      const { askClaude } = await import("@/lib/anthropic");
+      const out = await askClaude(
+        `Invente un sondage Instagram en story pour le compte @ideasforge.io (audience : jeunes entrepreneurs francophones intéressés par l'IA et les idées de business), sur le thème « ${theme} ».
+Une question courte et engageante (8 à 12 mots, tutoiement), deux réponses opposées très courtes (2 à 5 mots chacune), fun ou qui fait réfléchir, sans sujet sensible (politique, religion, santé).
+Ne reprends pas ces questions déjà posées : ${recent.slice(0, 20).join(" / ") || "aucune"}.
+Réponds UNIQUEMENT en JSON : {"question":"...","a":"...","b":"..."}. Coupe la question en deux avec un « | » à l'endroit où la 2e partie doit passer en vert. Pas de tiret cadratin, pas d'emoji.`,
+        200,
+      );
+      const j = JSON.parse(out.slice(out.indexOf("{"), out.lastIndexOf("}") + 1));
+      if (j.question && j.a && j.b && String(j.question).length < 110) return { theme, question: String(j.question), a: String(j.a).slice(0, 32), b: String(j.b).slice(0, 32) };
+    } catch {}
+  }
+  const left = POLL_BANK.filter((p) => !recent.includes(p.question));
+  return (left.length ? left : POLL_BANK)[Math.floor(Math.random() * (left.length || POLL_BANK.length))];
+}
+
+/** Sondage du créneau en cours (am / pm) : préparé puis publié en story. */
+export async function runPoll(): Promise<{ ok: boolean; key: string; error?: string }> {
+  const now = new Date();
+  const key = `${now.toISOString().slice(0, 10)}-${now.getUTCHours() < 15 ? "am" : "pm"}`;
+  const cur = await setting(`ig_poll:${key}`);
+  let row: PollRow | null = null;
+  try { row = cur ? (JSON.parse(cur) as PollRow) : null; } catch {}
+  if (row?.status === "published") return { ok: true, key };
+  if (!row) {
+    let recent: string[] = [];
+    try { recent = JSON.parse((await setting("ig_poll_recent")) || "[]"); } catch {}
+    const p = await makePoll(recent);
+    row = { ...p, status: "draft" };
+    await saveSetting(`ig_poll:${key}`, JSON.stringify(row));
+    await saveSetting("ig_poll_recent", JSON.stringify([p.question, ...recent].slice(0, 40)));
+  }
+  try {
+    const token = (await igToken())?.trim();
+    if (!token) throw new Error("Instagram non connecté");
+    const acc = await igAccount();
+    if (!acc.ok || !acc.id) throw new Error(acc.error || "Compte Instagram introuvable");
+    const c = await ig(`${acc.id}/media`, { image_url: `${SITE}/api/ig/poll/${key}.jpg`, media_type: "STORIES", access_token: token });
+    await waitReady(c.id, token);
+    const pub = await ig(`${acc.id}/media_publish`, { creation_id: c.id, access_token: token });
+    await saveSetting(`ig_poll:${key}`, JSON.stringify({ ...row, status: "published", media_id: pub.id, error: undefined, at: new Date().toISOString() }));
+    return { ok: true, key };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    await saveSetting(`ig_poll:${key}`, JSON.stringify({ ...row, status: "error", error: msg }));
+    return { ok: false, key, error: msg };
+  }
+}
+
+export async function recentPolls(n = 6): Promise<{ key: string; row: PollRow }[]> {
+  const { data } = await createAdminClient().from("app_settings").select("key, value").like("key", "ig_poll:%").order("key", { ascending: false }).limit(n);
+  return (data ?? []).flatMap((d) => { try { return [{ key: (d.key as string).slice(8), row: JSON.parse(d.value as string) as PollRow }]; } catch { return []; } });
+}

@@ -223,3 +223,42 @@ export function ReelBg() {
     </div>
   );
 }
+
+export type PollData = { theme: string; question: string; a: string; b: string };
+
+/** Story « Sondage » 1080 × 1920 : question + deux réponses A / B, on répond en message. */
+export function PollView({ d, handle }: { d: PollData; handle: string }) {
+  const opt = (letter: string, text: string, v: typeof G) => (
+    <div style={{ display: "flex", alignItems: "center", gap: 28, padding: "34px 36px", borderRadius: 30, border: `2px solid ${v.bd}`, backgroundImage: v.bg }}>
+      <div style={{ display: "flex", width: 96, height: 96, flexShrink: 0, borderRadius: 26, alignItems: "center", justifyContent: "center", background: v.icBg, border: `2px solid ${v.bd}`, color: v.ic, fontSize: 52, fontWeight: 700 }}>{letter}</div>
+      <div style={{ display: "flex", fontSize: 46, fontWeight: 600, lineHeight: 1.15, letterSpacing: -1, color: C.ink, flexShrink: 1 }}>{text}</div>
+    </div>
+  );
+  return (
+    <div style={{ width: 1080, height: 1920, position: "relative", display: "flex", fontFamily: "Geist", color: C.ink, backgroundColor: C.bg,
+      backgroundImage: "radial-gradient(circle at 85% 6%, rgba(47,192,125,0.24) 0%, rgba(47,192,125,0) 42%), radial-gradient(circle at 0% 100%, rgba(231,172,60,0.14) 0%, rgba(231,172,60,0) 45%)" }}>
+      <Backdrop h={1920} />
+      <div style={{ position: "absolute", left: 0, top: 0, width: 1080, height: 1920, display: "flex", flexDirection: "column", padding: "150px 72px 230px", gap: 34 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+            <div style={{ display: "flex", width: 74, height: 74, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundImage: "radial-gradient(circle at 30% 20%, #3fd690 0%, #13744a 55%, #0a3a27 100%)", color: "#03140c", fontSize: 31, fontWeight: 700, letterSpacing: -1 }}>IF</div>
+            <div style={{ display: "flex", fontSize: 40, fontWeight: 600, letterSpacing: -1 }}>IdeaForge</div>
+          </div>
+          <div style={{ display: "flex", fontFamily: "GeistMono", fontSize: 24, letterSpacing: 4, color: "#07130f", background: C.green, padding: "12px 24px", borderRadius: 999 }}>SONDAGE</div>
+        </div>
+        <div style={{ display: "flex", flexGrow: 1 }} />
+        <Kicker text={d.theme} />
+        <Title text={d.question} size={d.question.length > 70 ? 76 : 90} />
+        <div style={{ display: "flex", flexDirection: "column", gap: 22, marginTop: 10 }}>
+          {opt("A", d.a, G)}
+          {opt("B", d.b, A)}
+        </div>
+        <div style={{ display: "flex", flexGrow: 1 }} />
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "30px 36px", borderRadius: 28, backgroundImage: "linear-gradient(180deg, #38cc87 0%, #1f9e63 100%)" }}>
+          <div style={{ display: "flex", fontSize: 40, fontWeight: 700, color: "#03140c" }}>Réponds A ou B en message</div>
+        </div>
+        <div style={{ display: "flex", justifyContent: "center", fontFamily: "GeistMono", fontSize: 26, color: C.ink3 }}>{handle}</div>
+      </div>
+    </div>
+  );
+}

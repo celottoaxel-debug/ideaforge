@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin";
-import { igAccount, recentStories, getReel, recentUgc, ugcFaces, ugcEndings, recentUgcRequests, UGC_HOOKS } from "@/lib/instagram/publish";
+import { igAccount, recentStories, getReel, recentUgc, ugcFaces, ugcEndings, recentUgcRequests, UGC_HOOKS, recentPolls } from "@/lib/instagram/publish";
 import { allIdeas } from "@/lib/seo";
 import { scoreIdea } from "@/lib/score";
 import { GenerateCarousel, PublishButton, CopyCaption, StoryButtons, ReelButtons, UgcPublish, UgcStudio } from "@/components/AdminInstagram";
@@ -33,6 +33,7 @@ export default async function AdminInstagram() {
   const [faces, endings, requests] = await Promise.all([ugcFaces().catch(() => []), ugcEndings().catch(() => []), recentUgcRequests(6).catch(() => [])]);
   let topIdeas: { path: string; title: string; score: number }[] = [];
   try { topIdeas = (await allIdeas()).map((i) => ({ path: `/idea/${i.id}`, title: i.title, score: scoreIdea(i).score })).sort((a, b) => b.score - a.score).slice(0, 40); } catch {}
+  const polls = await recentPolls(6).catch(() => []);
   const queued = requests.filter((r) => r.row.status === "pending" || r.row.status === "working" || r.row.status === "error");
   const today = new Date().toISOString().slice(0, 10);
   const todayStory = stories.find((x) => x.date === today);
@@ -90,6 +91,19 @@ export default async function AdminInstagram() {
       )}
       <div style={{ marginBottom: 26 }}>
         <UgcStudio faces={faces} endings={endings} ideas={topIdeas} hooks={UGC_HOOKS} />
+      </div>
+
+      <h2 className="val-sec">📊 Sondages en story (12 h et 19 h)</h2>
+      <div className="ig-post" style={{ marginBottom: 26 }}>
+        {polls.length === 0 && <p className="vis-empty">Le premier sondage part aujourd&apos;hui à 12 h ou 19 h. Les réponses arrivent dans tes messages Instagram (« A » ou « B »).</p>}
+        <div className="ig-strip">
+          {polls.map(({ key, row }) => (
+            <a key={key} href={`/api/ig/poll/${key}.jpg`} target="_blank" rel="noopener noreferrer" title={`${row.question.replace("|", " ")} · ${row.status === "published" ? "publié" : row.status}`}>
+              <img src={`/api/ig/poll/${key}.jpg`} alt={row.question.replace("|", " ")} loading="lazy" width={152} height={270} style={{ width: 152, height: 270 }} />
+            </a>
+          ))}
+        </div>
+        {polls.filter((p) => p.row.status === "error").slice(0, 1).map((p) => <p key={p.key} className="msg err">{p.row.error}</p>)}
       </div>
 
       <h2 className="val-sec">Stories (une par jour)</h2>
