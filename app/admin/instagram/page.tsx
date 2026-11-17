@@ -47,7 +47,7 @@ export default async function AdminInstagram({ searchParams }: { searchParams?: 
         <a className={tab === "dash" ? "on" : ""} href="/admin/instagram">🛠️ À publier</a>
         <a className={tab === "archives" ? "on" : ""} href="/admin/instagram?tab=archives">🗂️ Archives</a>
       </nav>
-      {tab === "archives" ? <Archives /> : <>
+      {tab === "archives" ? <Archives canPublish={acc.ok} /> : <>
       {err && <div className="admin-warn">Les carrousels ne sont pas encore activés dans la base de données ({err}).</div>}
 
       <div className="tiles" style={{ marginBottom: 22 }}>
@@ -106,7 +106,7 @@ export default async function AdminInstagram({ searchParams }: { searchParams?: 
       <div className="ig-post" style={{ marginBottom: 26 }}>
         {polls.length === 0 && <p className="vis-empty">Le premier sondage part aujourd&apos;hui à 12 h ou 19 h. Les réponses arrivent dans tes messages Instagram (« A » ou « B »).</p>}
         <div className="ig-strip">
-          {polls.map(({ key, row }) => (
+          {polls.filter(({ row }) => row.status !== "published").map(({ key, row }) => (
             <a key={key} href={`/api/ig/poll/${key}.jpg`} target="_blank" rel="noopener noreferrer" title={`${row.question.replace("|", " ")} · ${row.status === "published" ? "publié" : row.status}`}>
               <img src={`/api/ig/poll/${key}.jpg`} alt={row.question.replace("|", " ")} loading="lazy" width={152} height={270} style={{ width: 152, height: 270 }} />
             </a>
@@ -122,7 +122,7 @@ export default async function AdminInstagram({ searchParams }: { searchParams?: 
           {todayStory ? <span className={`ref-pill ${todayStory.row.status === "published" ? "paid" : "signed_up"}`}>{todayStory.row.status === "published" ? "Publiée" : todayStory.row.status === "error" ? "Erreur" : "Prête"}</span> : <span className="ref-date">pas encore préparée (elle part avec la tâche du matin)</span>}
         </div>
         <div className="ig-strip">
-          {stories.map((x) => (
+          {stories.filter((x) => x.row.status !== "published").map((x) => (
             <a key={x.date} href={`/api/ig/story/${x.date}.jpg`} target="_blank" rel="noopener noreferrer" title={x.date}>
               <img src={`/api/ig/story/${x.date}.jpg`} alt={`Story du ${x.date}`} loading="lazy" width={152} height={270} style={{ width: 152, height: 270 }} />
             </a>
@@ -135,10 +135,11 @@ export default async function AdminInstagram({ searchParams }: { searchParams?: 
       <h2 className="val-sec">Créer un carrousel maintenant</h2>
       <GenerateCarousel />
 
-      <h2 className="val-sec" style={{ marginTop: 30 }}>Carrousels</h2>
+      <h2 className="val-sec" style={{ marginTop: 30 }}>Carrousels à publier</h2>
+      <p className="ugc-note" style={{ marginBottom: 10 }}>Dès qu&apos;un carrousel, un réel, une story ou un sondage est publié, il passe dans 🗂️ Archives.</p>
       {posts.length === 0 && <p className="vis-empty">Aucun carrousel pour l&apos;instant. Le premier sera créé automatiquement lundi, mercredi ou vendredi, ou tout de suite avec un bouton ci-dessus.</p>}
       <div className="ig-list">
-        {posts.filter((p) => p.status !== "published" || reels.get(p.id)?.status !== "published").map((p) => (
+        {posts.filter((p) => p.status !== "published").map((p) => (
           <article key={p.id} className="ig-post">
             <div className="ig-head">
               <b>{KIND[p.kind] ?? p.kind}</b>
@@ -177,7 +178,17 @@ export default async function AdminInstagram({ searchParams }: { searchParams?: 
 }
 
 /** Onglet Archives : tout ce qui est en ligne sur Instagram, plus l'historique des stories et sondages. */
-async function Archives() {
+async function Archives({ canPublish }: { canPublish: boolean }) {
+  const admin = createAdminClient();
+  const [{ data: postRows }, ugcList] = await Promise.all([
+    admin.from("ig_posts").select("*").eq("status", "published").order("published_at", { ascending: false }).limit(40),
+    recentUgc(40).catch(() => [] as Awaited<ReturnType<typeof recentUgc>>),
+  ]);
+  const pubPosts = (postRows ?? []) as Post[];
+  const pubUgc = ugcList.filter(({ row }) => row.status === "published");
+  const reelMap = new Map<number, Awaited<ReturnType<typeof getReel>>>();
+  await Promise.all(pubPosts.map(async (p) => { try { reelMap.set(p.id, await getReel(p.id)); } catch {} }));
+  const dl = (u: string, name: string) => `/api/ig/download?u=${encodeURIComponent(u)}&name=${name}`;
   const [media, stories, polls] = await Promise.all([
     igMedia(90).catch(() => [] as Awaited<ReturnType<typeof igMedia>>),
     recentStories(30).catch(() => [] as Awaited<ReturnType<typeof recentStories>>),
@@ -200,6 +211,57 @@ async function Archives() {
         <div className="tile"><div className="tile-k">Réels</div><div className="tile-v">{count("VIDEO")}</div><div className="tile-s">en ligne</div></div>
         <div className="tile"><div className="tile-k">Stories et sondages</div><div className="tile-v">{pubStories.length + pubPolls.length}</div><div className="tile-s">publiés (30 derniers jours)</div></div>
       </div>
+      <h2 className="val-sec">🎥 Réels face caméra publiés</h2>
+      {pubUgc.length === 0 && <p className="vis-empty" style={{ marginBottom: 20 }}>Aucun pour l&apos;instant.</p>}
+      <div className="ig-list" style={{ marginBottom: 26 }}>
+        {pubUgc.map(({ date, row }) => (
+          <article key={date} className="ig-post">
+            <div className="ig-head"><b>{row.title ?? "Réel face caméra"}</b><span className="ref-pill paid">Publié</span><span className="ref-date">{fmt(row.at ?? null) || date}</span></div>
+            <video src={row.url_music || row.url} controls playsInline preload="metadata" style={{ display: "block", width: 200, borderRadius: 10 }} />
+            <details className="ig-cap"><summary>Légende</summary><pre>{row.caption}</pre></details>
+            <div className="ig-actions">
+              <a className="btn" href={dl(row.url, `reel-${date}`)} download>⬇️ Sans musique</a>
+              {row.url_music && <a className="btn" href={dl(row.url_music, `reel-${date}-beat`)} download>⬇️ Avec beat</a>}
+              {row.permalink && <a className="btn" href={row.permalink} target="_blank" rel="noopener noreferrer">Voir sur Instagram ↗</a>}
+              <CopyCaption text={row.caption} />
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <h2 className="val-sec">🖼️ Carrousels publiés (et leurs réels animés)</h2>
+      {pubPosts.length === 0 && <p className="vis-empty" style={{ marginBottom: 20 }}>Aucun pour l&apos;instant.</p>}
+      <div className="ig-list" style={{ marginBottom: 26 }}>
+        {pubPosts.map((p) => {
+          const r = reelMap.get(p.id);
+          return (
+            <article key={p.id} className="ig-post">
+              <div className="ig-head"><b>{KIND[p.kind] ?? p.kind}</b><span className="ref-pill paid">Publié</span><span className="ref-date">{fmt(p.published_at)}</span></div>
+              <div className="ig-strip">
+                {p.slides.map((_, i) => (
+                  <a key={i} href={`/api/ig/jpg/${p.id}/${i + 1}.jpg`} target="_blank" rel="noopener noreferrer"><img src={`/api/ig/jpg/${p.id}/${i + 1}.jpg`} alt={`Slide ${i + 1}`} loading="lazy" width={216} height={270} /></a>
+                ))}
+              </div>
+              {r?.url && (
+                <div className="ig-reel">
+                  <b>🎬 Réel animé</b> <span className={`ref-pill ${r.status === "published" ? "paid" : "signed_up"}`}>{r.status === "published" ? "Publié" : "Vidéo prête"}</span>
+                  <video src={r.url} controls playsInline preload="metadata" style={{ display: "block", width: 200, borderRadius: 10, marginTop: 8 }} />
+                </div>
+              )}
+              <details className="ig-cap"><summary>Légende</summary><pre>{p.caption}</pre></details>
+              <div className="ig-actions">
+                {r?.url && <a className="btn" href={dl(r.url, `reel-anime-${p.id}`)} download>⬇️ Réel animé</a>}
+                {r?.status !== "published" && <ReelButtons id={p.id} canPublish={canPublish} hasVideo={!!r?.url} />}
+                {p.permalink && <a className="btn" href={p.permalink} target="_blank" rel="noopener noreferrer">Voir le carrousel ↗</a>}
+                {r?.permalink && <a className="btn" href={r.permalink} target="_blank" rel="noopener noreferrer">Voir le réel ↗</a>}
+                <CopyCaption text={p.caption} />
+              </div>
+            </article>
+          );
+        })}
+      </div>
+
+      <h2 className="val-sec">📱 Tout ce qui est en ligne sur ton compte</h2>
       {media.length === 0 && <p className="vis-empty">Aucune publication trouvée (ou Instagram n&apos;est pas connecté).</p>}
       {[...byMonth.entries()].map(([month, list]) => (
         <section key={month} style={{ marginBottom: 26 }}>
