@@ -572,3 +572,21 @@ export async function finishPending(): Promise<{ done: number; left: number }> {
   await saveSetting("ig_pending", JSON.stringify(keep));
   return { done, left: keep.length };
 }
+
+// ───────── Archives : tout ce qui est en ligne sur le compte Instagram ─────────
+export type IgMedia = { id: string; media_type: string; media_product_type?: string; caption?: string; media_url?: string; thumbnail_url?: string; permalink: string; timestamp: string; like_count?: number; comments_count?: number };
+export async function igMedia(limit = 60): Promise<IgMedia[]> {
+  const token = (await igToken())?.trim();
+  if (!token) return [];
+  const acc = await igAccount();
+  if (!acc.ok || !acc.id) return [];
+  const fields = "id,media_type,media_product_type,caption,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count";
+  const out: IgMedia[] = [];
+  let r = await ig(`${acc.id}/media`, { fields, limit: "50", access_token: token }, "GET");
+  out.push(...(r.data ?? []));
+  while (out.length < limit && r.paging?.next) {
+    const res = await fetch(r.paging.next); r = await res.json().catch(() => ({}));
+    if (!r.data?.length) break; out.push(...r.data);
+  }
+  return out.slice(0, limit);
+}

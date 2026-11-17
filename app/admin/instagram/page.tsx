@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin";
-import { igAccount, recentStories, getReel, recentUgc, ugcFaces, ugcEndings, recentUgcRequests, UGC_HOOKS, recentPolls } from "@/lib/instagram/publish";
+import { igAccount, recentStories, getReel, recentUgc, ugcFaces, ugcEndings, recentUgcRequests, UGC_HOOKS, recentPolls, igMedia } from "@/lib/instagram/publish";
 import { allIdeas } from "@/lib/seo";
 import { scoreIdea } from "@/lib/score";
 import { GenerateCarousel, PublishButton, CopyCaption, StoryButtons, ReelButtons, UgcPublish, UgcStudio } from "@/components/AdminInstagram";
@@ -13,7 +13,8 @@ type Post = { id: number; kind: string; slot: string | null; slides: unknown[]; 
 const KIND: Record<string, string> = { idea: "💡 Idée chiffrée", top5: "🏆 Top 5", new: "✨ Nouvelle idée IA" };
 const fmt = (d: string | null) => (d ? new Date(d).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" }) : "");
 
-export default async function AdminInstagram() {
+export default async function AdminInstagram({ searchParams }: { searchParams?: { tab?: string } }) {
+  const tab = searchParams?.tab === "archives" ? "archives" : "dash";
   const { data: { user } } = await createClient().auth.getUser();
   if (!user || !isAdminEmail(user.email)) return <main className="wrap" style={{ padding: 40 }}><p>Accès réservé. <a href="/admin">Panel admin</a></p></main>;
 
@@ -41,7 +42,12 @@ export default async function AdminInstagram() {
   return (
     <main className="wrap" style={{ paddingBlock: "34px 60px" }}>
       <a className="crumbs" href="/admin">← Panel admin</a>
-      <h1 style={{ fontSize: 34, margin: "6px 0 18px" }}>📸 Instagram</h1>
+      <h1 style={{ fontSize: 34, margin: "6px 0 14px" }}>📸 Instagram</h1>
+      <nav className="ig-tabs">
+        <a className={tab === "dash" ? "on" : ""} href="/admin/instagram">🛠️ À publier</a>
+        <a className={tab === "archives" ? "on" : ""} href="/admin/instagram?tab=archives">🗂️ Archives</a>
+      </nav>
+      {tab === "archives" ? <Archives /> : <>
       {err && <div className="admin-warn">Les carrousels ne sont pas encore activés dans la base de données ({err}).</div>}
 
       <div className="tiles" style={{ marginBottom: 22 }}>
@@ -52,9 +58,10 @@ export default async function AdminInstagram() {
       </div>
 
       <h2 className="val-sec">🎥 Réels face caméra (mardi, samedi)</h2>
+      {ugcs.filter(({ row }) => row.status !== "published").length === 0 && ugcs.length > 0 && <p className="vis-empty">Tous tes réels face caméra sont publiés : retrouve-les dans 🗂️ Archives.</p>}
       {ugcs.length === 0 && <p className="vis-empty">Le premier arrive mardi matin : il est monté dans la nuit avec tes vidéos face caméra et une idée du catalogue, puis publié vers 9 h.</p>}
       <div className="ig-list" style={{ marginBottom: 26 }}>
-        {ugcs.map(({ date, row }) => (
+        {ugcs.filter(({ row }) => row.status !== "published").map(({ date, row }) => (
           <article key={date} className="ig-post">
             <div className="ig-head">
               <b>{row.title ?? "Réel face caméra"}</b>
@@ -131,7 +138,7 @@ export default async function AdminInstagram() {
       <h2 className="val-sec" style={{ marginTop: 30 }}>Carrousels</h2>
       {posts.length === 0 && <p className="vis-empty">Aucun carrousel pour l&apos;instant. Le premier sera créé automatiquement lundi, mercredi ou vendredi, ou tout de suite avec un bouton ci-dessus.</p>}
       <div className="ig-list">
-        {posts.map((p) => (
+        {posts.filter((p) => p.status !== "published" || reels.get(p.id)?.status !== "published").map((p) => (
           <article key={p.id} className="ig-post">
             <div className="ig-head">
               <b>{KIND[p.kind] ?? p.kind}</b>
@@ -164,6 +171,72 @@ export default async function AdminInstagram() {
           </article>
         ))}
       </div>
+      </>}
     </main>
+  );
+}
+
+/** Onglet Archives : tout ce qui est en ligne sur Instagram, plus l'historique des stories et sondages. */
+async function Archives() {
+  const [media, stories, polls] = await Promise.all([
+    igMedia(90).catch(() => [] as Awaited<ReturnType<typeof igMedia>>),
+    recentStories(30).catch(() => [] as Awaited<ReturnType<typeof recentStories>>),
+    recentPolls(30).catch(() => [] as Awaited<ReturnType<typeof recentPolls>>),
+  ]);
+  const TYPE: Record<string, string> = { CAROUSEL_ALBUM: "Carrousel", VIDEO: "Réel", IMAGE: "Photo" };
+  const byMonth = new Map<string, typeof media>();
+  for (const m of media) {
+    const k = new Date(m.timestamp).toLocaleDateString("fr-FR", { month: "long", year: "numeric", timeZone: "Europe/Paris" });
+    byMonth.set(k, [...(byMonth.get(k) ?? []), m]);
+  }
+  const count = (t: string) => media.filter((m) => (m.media_product_type === "REELS" ? "VIDEO" : m.media_type) === t).length;
+  const pubStories = stories.filter((x) => x.row.status === "published");
+  const pubPolls = polls.filter((x) => x.row.status === "published");
+  return (
+    <>
+      <div className="tiles" style={{ marginBottom: 22 }}>
+        <div className="tile"><div className="tile-k">Publications</div><div className="tile-v">{media.length}</div><div className="tile-s">sur le compte</div></div>
+        <div className="tile"><div className="tile-k">Carrousels</div><div className="tile-v">{count("CAROUSEL_ALBUM")}</div><div className="tile-s">en ligne</div></div>
+        <div className="tile"><div className="tile-k">Réels</div><div className="tile-v">{count("VIDEO")}</div><div className="tile-s">en ligne</div></div>
+        <div className="tile"><div className="tile-k">Stories et sondages</div><div className="tile-v">{pubStories.length + pubPolls.length}</div><div className="tile-s">publiés (30 derniers jours)</div></div>
+      </div>
+      {media.length === 0 && <p className="vis-empty">Aucune publication trouvée (ou Instagram n&apos;est pas connecté).</p>}
+      {[...byMonth.entries()].map(([month, list]) => (
+        <section key={month} style={{ marginBottom: 26 }}>
+          <h2 className="val-sec" style={{ textTransform: "capitalize" }}>{month}</h2>
+          <div className="ig-arch">
+            {list.map((m) => {
+              const type = m.media_product_type === "REELS" ? "Réel" : TYPE[m.media_type] ?? m.media_type;
+              const img = m.media_type === "VIDEO" ? m.thumbnail_url : m.media_url;
+              return (
+                <a key={m.id} className="ig-arch-item" href={m.permalink} target="_blank" rel="noopener noreferrer">
+                  <div className="ig-arch-img">{img ? <img src={img} alt="" loading="lazy" /> : null}<span className="ig-arch-type">{type}</span></div>
+                  <div className="ig-arch-meta">
+                    <b>{new Date(m.timestamp).toLocaleDateString("fr-FR", { day: "numeric", month: "short", timeZone: "Europe/Paris" })}</b>
+                    <span>{m.like_count != null ? `♥ ${m.like_count}` : ""}{m.comments_count != null ? ` · 💬 ${m.comments_count}` : ""}</span>
+                  </div>
+                  <p>{(m.caption ?? "").split("\n")[0].slice(0, 90)}</p>
+                </a>
+              );
+            })}
+          </div>
+        </section>
+      ))}
+      <h2 className="val-sec">Stories et sondages publiés</h2>
+      <p className="ugc-note" style={{ marginBottom: 10 }}>Les stories disparaissent d&apos;Instagram après 24 h : elles restent visibles ici.</p>
+      <div className="ig-strip" style={{ marginBottom: 26 }}>
+        {pubPolls.map(({ key, row }) => (
+          <a key={`p${key}`} href={`/api/ig/poll/${key}.jpg`} target="_blank" rel="noopener noreferrer" title={`Sondage · ${row.question.replace("|", " ")}`}>
+            <img src={`/api/ig/poll/${key}.jpg`} alt="" loading="lazy" width={128} height={228} style={{ width: 128, height: 228 }} />
+          </a>
+        ))}
+        {pubStories.map(({ date }) => (
+          <a key={`s${date}`} href={`/api/ig/story/${date}.jpg`} target="_blank" rel="noopener noreferrer" title={`Story du ${date}`}>
+            <img src={`/api/ig/story/${date}.jpg`} alt="" loading="lazy" width={128} height={228} style={{ width: 128, height: 228 }} />
+          </a>
+        ))}
+        {pubStories.length + pubPolls.length === 0 && <p className="vis-empty">Aucune story publiée pour l&apos;instant.</p>}
+      </div>
+    </>
   );
 }
