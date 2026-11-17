@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/admin";
 import { createPost, publishPost, prepareStory, publishStory, prepareReel, publishReel, publishUgc, addUgcMedia, removeUgcMedia, requestUgc, ugcUploadUrl, UGC_HOOKS } from "@/lib/instagram/publish";
 import type { Kind } from "@/lib/instagram/content";
+import { runWatch, watchAccounts, setWatchAccounts, addCustomHook, customHooks } from "@/lib/instagram/watch";
 
 export const maxDuration = 300;
 
@@ -10,7 +11,7 @@ export const maxDuration = 300;
 export async function POST(request: Request) {
   const { data: { user } } = await createClient().auth.getUser();
   if (!user || !isAdminEmail(user.email)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
-  let body: { action?: string; kind?: string; id?: number; date?: string; filename?: string; url?: string; label?: string; duration?: number; path?: string; face?: string; end?: string; idea?: string; hook?: string } = {};
+  let body: { action?: string; kind?: string; id?: number; date?: string; username?: string; market?: string; theme?: string; filename?: string; url?: string; label?: string; duration?: number; path?: string; face?: string; end?: string; idea?: string; hook?: string } = {};
   try { body = await request.json(); } catch {}
   try {
     if (body.action === "generate") {
@@ -30,8 +31,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true });
     }
     if (body.action === "ugc-media-remove" && body.url) { await removeUgcMedia(kind, body.url); return NextResponse.json({ ok: true }); }
+    if (body.action === "watch-refresh") { const r = await runWatch(); return NextResponse.json({ ok: true, outliers: r.outliers.length }); }
+    if (body.action === "watch-add" && body.username) {
+      const u = String(body.username).trim().replace(/^@/, "").toLowerCase().replace(/[^a-z0-9._]/g, "");
+      if (!u) return NextResponse.json({ ok: false, error: "Nom de compte invalide" });
+      const list = await watchAccounts();
+      if (!list.some((a) => a.username === u)) await setWatchAccounts([...list, { username: u, market: body.market === "US" ? "US" : "FR", theme: String(body.theme || "Business IA").slice(0, 30) }]);
+      return NextResponse.json({ ok: true });
+    }
+    if (body.action === "watch-remove" && body.username) {
+      await setWatchAccounts((await watchAccounts()).filter((a) => a.username !== body.username));
+      return NextResponse.json({ ok: true });
+    }
+    if (body.action === "hook-add" && body.hook) { await addCustomHook(String(body.hook).slice(0, 120)); return NextResponse.json({ ok: true }); }
     if (body.action === "ugc-request" && body.face) {
-      const hook = UGC_HOOKS.includes(String(body.hook)) ? String(body.hook) : UGC_HOOKS[Math.floor(Math.random() * UGC_HOOKS.length)];
+      const allHooks = [...UGC_HOOKS, ...(await customHooks())];
+      const hook = allHooks.includes(String(body.hook)) ? String(body.hook) : allHooks[Math.floor(Math.random() * allHooks.length)];
       await requestUgc({ face: body.face, end: body.end || undefined, idea: body.idea || undefined, hook });
       return NextResponse.json({ ok: true });
     }

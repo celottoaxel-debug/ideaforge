@@ -211,3 +211,43 @@ export function UgcStudio({ faces, endings, ideas, hooks }: { faces: Media[]; en
     </div>
   );
 }
+
+/** Veille concurrents : actualiser, ajouter / retirer un compte, réutiliser une accroche. */
+export function WatchRefresh() {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  return (
+    <>
+      <button type="button" className="btn primary" disabled={busy} onClick={async () => { setBusy(true); setErr(""); try { await api({ action: "watch-refresh" }); window.location.reload(); } catch (e) { setErr(e instanceof Error ? e.message : "Erreur"); setBusy(false); } }}>
+        {busy ? "Analyse en cours… (1 min)" : "🔄 Actualiser maintenant"}
+      </button>
+      {err && <p className="msg err">{err}</p>}
+    </>
+  );
+}
+
+export function WatchAdd() {
+  const [u, setU] = useState("");
+  const [market, setMarket] = useState("FR");
+  const [busy, setBusy] = useState(false);
+  return (
+    <form className="watch-add" onSubmit={async (e) => { e.preventDefault(); if (!u.trim()) return; setBusy(true); try { await api({ action: "watch-add", username: u, market }); window.location.reload(); } catch { setBusy(false); } }}>
+      <input value={u} onChange={(e) => setU(e.target.value)} placeholder="@compte à surveiller" autoCapitalize="none" autoCorrect="off" />
+      <select value={market} onChange={(e) => setMarket(e.target.value)}><option value="FR">🇫🇷 FR</option><option value="US">🇺🇸 US</option></select>
+      <button type="submit" className="btn" disabled={busy}>{busy ? "…" : "＋ Ajouter"}</button>
+    </form>
+  );
+}
+
+export function WatchRemove({ username }: { username: string }) {
+  return <button type="button" className="ugc-x" style={{ position: "static" }} aria-label={`Retirer ${username}`} onClick={async () => { if (!window.confirm(`Ne plus surveiller @${username} ?`)) return; try { await api({ action: "watch-remove", username }); window.location.reload(); } catch {} }}>×</button>;
+}
+
+export function UseHook({ hook }: { hook: string }) {
+  const [state, setState] = useState<"" | "busy" | "ok">("");
+  return (
+    <button type="button" className="btn" disabled={state !== ""} onClick={async () => { setState("busy"); try { await api({ action: "hook-add", hook }); setState("ok"); } catch { setState(""); } }}>
+      {state === "ok" ? "Ajoutée ✓" : state === "busy" ? "…" : "＋ À mes accroches de réels"}
+    </button>
+  );
+}

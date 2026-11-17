@@ -3,8 +3,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin";
 import { igAccount, recentStories, getReel, recentUgc, ugcFaces, ugcEndings, recentUgcRequests, UGC_HOOKS, recentPolls, igMedia } from "@/lib/instagram/publish";
 import { allIdeas } from "@/lib/seo";
+import { watchAccounts, watchData, customHooks } from "@/lib/instagram/watch";
 import { scoreIdea } from "@/lib/score";
-import { GenerateCarousel, PublishButton, CopyCaption, StoryButtons, ReelButtons, UgcPublish, UgcStudio } from "@/components/AdminInstagram";
+import { GenerateCarousel, PublishButton, CopyCaption, StoryButtons, ReelButtons, UgcPublish, UgcStudio, WatchRefresh, WatchAdd, WatchRemove, UseHook } from "@/components/AdminInstagram";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Instagram · Admin", robots: { index: false, follow: false } };
@@ -14,7 +15,7 @@ const KIND: Record<string, string> = { idea: "💡 Idée chiffrée", top5: "🏆
 const fmt = (d: string | null) => (d ? new Date(d).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" }) : "");
 
 export default async function AdminInstagram({ searchParams }: { searchParams?: { tab?: string } }) {
-  const tab = searchParams?.tab === "archives" ? "archives" : "dash";
+  const tab = searchParams?.tab === "archives" ? "archives" : searchParams?.tab === "veille" ? "veille" : "dash";
   const { data: { user } } = await createClient().auth.getUser();
   if (!user || !isAdminEmail(user.email)) return <main className="wrap" style={{ padding: 40 }}><p>Accès réservé. <a href="/admin">Panel admin</a></p></main>;
 
@@ -46,8 +47,9 @@ export default async function AdminInstagram({ searchParams }: { searchParams?: 
       <nav className="ig-tabs">
         <a className={tab === "dash" ? "on" : ""} href="/admin/instagram">🛠️ À publier</a>
         <a className={tab === "archives" ? "on" : ""} href="/admin/instagram?tab=archives">🗂️ Archives</a>
+        <a className={tab === "veille" ? "on" : ""} href="/admin/instagram?tab=veille">🔍 Veille concurrents</a>
       </nav>
-      {tab === "archives" ? <Archives canPublish={acc.ok} /> : <>
+      {tab === "veille" ? <Veille /> : tab === "archives" ? <Archives canPublish={acc.ok} /> : <>
       {err && <div className="admin-warn">Les carrousels ne sont pas encore activés dans la base de données ({err}).</div>}
 
       <div className="tiles" style={{ marginBottom: 22 }}>
@@ -99,7 +101,7 @@ export default async function AdminInstagram({ searchParams }: { searchParams?: 
         </div>
       )}
       <div style={{ marginBottom: 26 }}>
-        <UgcStudio faces={faces} endings={endings} ideas={topIdeas} hooks={UGC_HOOKS} />
+        <UgcStudio faces={faces} endings={endings} ideas={topIdeas} hooks={[...(await customHooks().catch(() => [])), ...UGC_HOOKS]} />
       </div>
 
       <h2 className="val-sec">📊 Sondages en story (12 h et 19 h)</h2>
@@ -298,6 +300,66 @@ async function Archives({ canPublish }: { canPublish: boolean }) {
           </a>
         ))}
         {pubStories.length + pubPolls.length === 0 && <p className="vis-empty">Aucune story publiée pour l&apos;instant.</p>}
+      </div>
+    </>
+  );
+}
+
+/** Onglet Veille concurrents : comptes surveillés, posts qui explosent, accroches à réutiliser. */
+async function Veille() {
+  const [accounts, data] = await Promise.all([watchAccounts(), watchData()]);
+  const status = new Map((data?.accounts ?? []).map((a) => [a.username, a]));
+  const fmtN = (n?: number) => (n == null ? "" : n >= 1000 ? `${Math.round(n / 100) / 10}k` : String(n));
+  return (
+    <>
+      <div className="ig-head" style={{ marginBottom: 14, justifyContent: "space-between" }}>
+        <span className="ugc-note">{data ? `Dernière analyse : ${fmt(data.at)} · mise à jour automatique chaque matin` : "Pas encore analysé : lance la première analyse."}</span>
+        <WatchRefresh />
+      </div>
+      <h2 className="val-sec">Comptes surveillés ({accounts.length})</h2>
+      <div className="watch-accounts">
+        {accounts.map((a) => {
+          const st = status.get(a.username);
+          return (
+            <span key={a.username} className={`watch-acc ${st ? (st.ok ? "ok" : "bad") : ""}`} title={st?.error ?? `${a.theme} · ${a.market}`}>
+              {a.market === "US" ? "🇺🇸" : "🇫🇷"} <b>@{a.username}</b>{st?.ok ? ` · ${fmtN(st.followers)}` : st ? " · ❌" : ""}
+              <WatchRemove username={a.username} />
+            </span>
+          );
+        })}
+      </div>
+      {(data?.accounts ?? []).some((a) => !a.ok) && <p className="msg err" style={{ marginTop: 0 }}>❌ = compte introuvable ou pas en mode professionnel : vérifie le @ exact sur Instagram, retire-le et ajoute le bon.</p>}
+      <WatchAdd />
+
+      <h2 className="val-sec">🔥 Posts qui ont explosé (90 derniers jours)</h2>
+      <p className="ugc-note" style={{ marginBottom: 12 }}>« ×5 » = 5 fois plus de likes et commentaires que la moyenne du compte. On reprend la mécanique de l&apos;accroche, jamais la phrase telle quelle.</p>
+      {(!data || data.outliers.length === 0) && <p className="vis-empty">Aucun post marquant pour l&apos;instant.</p>}
+      <div className="ig-list">
+        {(data?.outliers ?? []).map((o) => (
+          <article key={o.id} className="ig-post">
+            <div className="watch-out">
+              <a className="wimg" href={o.permalink} target="_blank" rel="noopener noreferrer">{o.img ? <img src={o.img} alt="" loading="lazy" /> : null}</a>
+              <div>
+                <div className="ig-head">
+                  <b>@{o.username}</b><span className="watch-ratio">×{o.ratio}</span><span className="ref-pill signed_up">{o.type}</span>
+                  <span className="ref-date">{new Date(o.timestamp).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })} · ♥ {fmtN(o.likes)} · 💬 {fmtN(o.comments)}</span>
+                </div>
+                <dl>
+                  {o.hook && <><dt>Accroche</dt><dd>{o.hook}</dd></>}
+                  {o.structure && <><dt>Structure</dt><dd>{o.structure}</dd></>}
+                  {o.cta && <><dt>Appel à l&apos;action</dt><dd>{o.cta}</dd></>}
+                  {o.idea && <><dt>Pour IdeaForge</dt><dd><b>{o.idea.replace("|", " ")}</b></dd></>}
+                </dl>
+                {!o.hook && <p className="ugc-note">{o.caption.split("\n")[0].slice(0, 160)}</p>}
+                <div className="ig-actions" style={{ marginTop: 10 }}>
+                  {o.idea && <UseHook hook={o.idea.includes("|") ? o.idea : o.idea} />}
+                  {o.idea && <CopyCaption text={o.idea.replace("|", " ")} />}
+                  <a className="btn" href={o.permalink} target="_blank" rel="noopener noreferrer">Voir le post ↗</a>
+                </div>
+              </div>
+            </div>
+          </article>
+        ))}
       </div>
     </>
   );
