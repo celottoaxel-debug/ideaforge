@@ -73,7 +73,21 @@ const TAGS = {
   business: ["#entrepreneuriat", "#entrepreneur", "#ideedebusiness", "#businessenligne", "#businessideas", "#creerunbusiness", "#startup", "#startupfrance", "#frenchtech", "#solopreneur", "#entrepreneurfrancais"],
   build: ["#indiehacker", "#nocode", "#lowcode", "#buildinpublic", "#sideproject", "#automatisation", "#chatgpt", "#claudeai", "#productivite"],
 };
-const ALL_TAGS = new Set([...TAGS.core, ...TAGS.business, ...TAGS.build]);
+// Hashtag lié au sujet du post (repéré dans la légende), pour coller au contenu
+const TOPICS: [RegExp, string[]][] = [
+  [/e-?commerce|boutique|shopify|colis|vente en ligne/i, ["#ecommerce", "#shopify"]],
+  [/immobili|loyer|locati|airbnb|conciergerie/i, ["#immobilier", "#investissementimmobilier"]],
+  [/artisan|btp|chantier|bâtiment|plomb/i, ["#artisan", "#btp"]],
+  [/santé|médic|kiné|patient|bien-être/i, ["#esante", "#healthtech"]],
+  [/école|cours|élève|formation|éducati|apprend/i, ["#edtech", "#formationenligne"]],
+  [/compta|factur|banque|finance|paiement|devis/i, ["#fintech", "#gestionentreprise"]],
+  [/marketing|linkedin|réseaux sociaux|contenu|newsletter|seo/i, ["#marketingdigital", "#growthhacking"]],
+  [/recrut|rh\b|salarié|emploi/i, ["#rh", "#recrutement"]],
+  [/restaurant|cuisine|recette|food|traiteur/i, ["#restauration", "#foodtech"]],
+  [/écolo|déchet|rse|esg|climat|durab/i, ["#greentech", "#rse"]],
+  [/juridi|avocat|contrat|litige|rgpd/i, ["#legaltech", "#juridique"]],
+];
+const ALL_TAGS = new Set([...TAGS.core, ...TAGS.business, ...TAGS.build, ...TOPICS.flatMap(([, t]) => t)]);
 /** Remplace les hashtags d'une légende par 5 nouveaux, jamais utilisés dans les publications récentes. */
 async function withFreshHashtags(caption: string): Promise<string> {
   let recent: string[] = [];
@@ -87,7 +101,8 @@ async function withFreshHashtags(caption: string): Promise<string> {
   const chosen: string[] = [];
   chosen.push(...pick(TAGS.core, 2, chosen));
   chosen.push(...pick(TAGS.business, 2, chosen));
-  chosen.push(...pick(TAGS.build, 1, chosen));
+  const topic = TOPICS.find(([re]) => re.test(caption))?.[1].filter((t) => !recent.includes(t)) ?? [];
+  chosen.push(...(topic.length ? [topic[0]] : pick(TAGS.build, 1, chosen)));
   // On retire les anciens hashtags (lignes ou mots qui commencent par #) puis on ajoute la nouvelle ligne
   const body = caption.split("\n").map((l) => l.split(/\s+/).filter((w) => !(w.startsWith("#") && (ALL_TAGS.has(w.toLowerCase()) || /^#[\p{L}\d_]+$/u.test(w)))).join(" ").replace(/\s+$/, "")).join("\n").replace(/\n{3,}/g, "\n\n").trim();
   await saveSetting("ig_hashtags_recent", JSON.stringify([...chosen, ...recent].slice(0, 25)));
