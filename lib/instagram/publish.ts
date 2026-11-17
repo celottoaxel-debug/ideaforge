@@ -109,6 +109,22 @@ async function withFreshHashtags(caption: string): Promise<string> {
   return `${body}\n\n${chosen.join(" ")}`;
 }
 
+// ───────── Conteneurs qu'Instagram n'a pas fini de traiter : publiés plus tard par /api/cron/instagram-finish ─────────
+type Pending = { container: string; kind: "ugc" | "poll" | "story" | "reel" | "post"; key: string; at: string };
+async function addPending(p: Omit<Pending, "at">) {
+  let list: Pending[] = [];
+  try { list = JSON.parse((await setting("ig_pending")) || "[]"); } catch {}
+  await saveSetting("ig_pending", JSON.stringify([...list.filter((x) => x.container !== p.container), { ...p, at: new Date().toISOString() }]));
+}
+/** Attend un conteneur ; s'il n'est pas prêt à temps, il est mis en file et l'erreur « PENDING » est levée. */
+async function readyOrQueue(container: string, token: string, kind: Pending["kind"], key: string, tries = 20) {
+  try { await waitReady(container, token, tries); }
+  catch (e) {
+    if (e instanceof Error && /trop de temps/.test(e.message)) { await addPending({ container, kind, key }); throw new Error("PENDING"); }
+    throw e;
+  }
+}
+
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 async function waitReady(id: string, token: string, tries = 20) {
   for (let i = 0; i < tries; i++) {
@@ -254,7 +270,7 @@ export async function publishStory(date = todayKey()): Promise<{ ok: boolean; er
     const acc = await igAccount();
     if (!acc.ok || !acc.id) throw new Error(acc.error || "Compte Instagram introuvable");
     const c = await ig(`${acc.id}/media`, { image_url: `${SITE}/api/ig/story/${date}.jpg`, media_type: "STORIES", access_token: token });
-    await waitReady(c.id, token);
+    await readyOrQueue(c.id, token, "story", date);
     const pub = await ig(`${acc.id}/media_publish`, { creation_id: c.id, access_token: token });
     await putStory(date, { ...row, status: "published", media_id: pub.id, error: undefined, at: new Date().toISOString() });
     if (row.idea) {
@@ -265,6 +281,7 @@ export async function publishStory(date = todayKey()): Promise<{ ok: boolean; er
     return { ok: true };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
+    if (msg === "PENDING") return { ok: true, error: "en cours de traitement" };
     await putStory(date, { ...row, status: "error", error: msg });
     return { ok: false, error: msg };
   }
@@ -377,9 +394,12 @@ export async function publishUgc(date: string): Promise<{ ok: boolean; permalink
       container = (await ig(`${acc.id}/media`, { media_type: "REELS", video_url: row.url_music || row.url, caption, share_to_feed: "true", access_token: token })).id as string;
       await putUgc(date, { ...row, container, caption_final: caption, error: undefined } as UgcRow);
     }
-    try { await waitReady(container, token, 70); }
+    try { await readyOrQueue(container, token, "ugc", date, 40); }
     catch (e) {
-      await putUgc(date, { ...row, container, caption_final: caption, status: "ready", error: "Instagram traite encore la vidéo : nouvel essai automatique au prochain passage" } as UgcRow);
+      if (e instanceof Error && e.message === "PENDING") {
+        await putUgc(date, { ...row, container, caption_final: caption, status: "ready", error: "Instagram traite la vidéo : publication automatique dans quelques minutes" } as UgcRow);
+        return { ok: true };
+      }
       throw e;
     }
     const pub = await ig(`${acc.id}/media_publish`, { creation_id: container, access_token: token });
@@ -504,18 +524,51 @@ export async function runPoll(): Promise<{ ok: boolean; key: string; error?: str
     const acc = await igAccount();
     if (!acc.ok || !acc.id) throw new Error(acc.error || "Compte Instagram introuvable");
     const c = await ig(`${acc.id}/media`, { image_url: `${SITE}/api/ig/poll/${key}.jpg`, media_type: "STORIES", access_token: token });
-    await waitReady(c.id, token);
+    await readyOrQueue(c.id, token, "poll", key);
     const pub = await ig(`${acc.id}/media_publish`, { creation_id: c.id, access_token: token });
     await saveSetting(`ig_poll:${key}`, JSON.stringify({ ...row, status: "published", media_id: pub.id, error: undefined, at: new Date().toISOString() }));
     return { ok: true, key };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    await saveSetting(`ig_poll:${key}`, JSON.stringify({ ...row, status: "error", error: msg }));
-    return { ok: false, key, error: msg };
+    await saveSetting(`ig_poll:${key}`, JSON.stringify({ ...row, status: msg === "PENDING" ? "draft" : "error", error: msg === "PENDING" ? "Instagram traite l'image : publication dans quelques minutes" : msg }));
+    return { ok: msg === "PENDING", key, error: msg };
   }
 }
 
 export async function recentPolls(n = 6): Promise<{ key: string; row: PollRow }[]> {
   const { data } = await createAdminClient().from("app_settings").select("key, value").like("key", "ig_poll:%").order("key", { ascending: false }).limit(n);
   return (data ?? []).flatMap((d) => { try { return [{ key: (d.key as string).slice(8), row: JSON.parse(d.value as string) as PollRow }]; } catch { return []; } });
+}
+
+/** Publie les conteneurs devenus prêts (appelé toutes les 5 minutes). */
+export async function finishPending(): Promise<{ done: number; left: number }> {
+  let list: Pending[] = [];
+  try { list = JSON.parse((await setting("ig_pending")) || "[]"); } catch {}
+  if (!list.length) return { done: 0, left: 0 };
+  const token = (await igToken())?.trim();
+  const acc = await igAccount();
+  if (!token || !acc.ok || !acc.id) return { done: 0, left: list.length };
+  const keep: Pending[] = []; let done = 0;
+  for (const p of list) {
+    try {
+      const st = await ig(p.container, { fields: "status_code", access_token: token }, "GET");
+      if (st.status_code === "IN_PROGRESS" && Date.now() - new Date(p.at).getTime() < 3 * 3600_000) { keep.push(p); continue; }
+      if (st.status_code !== "FINISHED") throw new Error(`Instagram a refusé le média (${st.status_code})`);
+      const pub = await ig(`${acc.id}/media_publish`, { creation_id: p.container, access_token: token });
+      let permalink: string | undefined;
+      try { permalink = (await ig(pub.id, { fields: "permalink", access_token: token }, "GET")).permalink; } catch {}
+      const now = new Date().toISOString();
+      if (p.kind === "ugc") { const r = await getUgc(p.key); if (r) await putUgc(p.key, { ...r, caption: (r as UgcRow & { caption_final?: string }).caption_final || r.caption, status: "published", media_id: pub.id, permalink, error: undefined, at: now }); }
+      if (p.kind === "poll") { const v = await setting(`ig_poll:${p.key}`); if (v) await saveSetting(`ig_poll:${p.key}`, JSON.stringify({ ...JSON.parse(v), status: "published", media_id: pub.id, error: undefined, at: now })); }
+      if (p.kind === "story") { const r = await getStory(p.key); if (r) await putStory(p.key, { ...r, status: "published", media_id: pub.id, error: undefined, at: now }); }
+      done++;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (p.kind === "ugc") { const r = await getUgc(p.key); if (r) await putUgc(p.key, { ...r, status: "error", error: msg }); }
+      if (p.kind === "poll") { const v = await setting(`ig_poll:${p.key}`); if (v) await saveSetting(`ig_poll:${p.key}`, JSON.stringify({ ...JSON.parse(v), status: "error", error: msg })); }
+      if (p.kind === "story") { const r = await getStory(p.key); if (r) await putStory(p.key, { ...r, status: "error", error: msg }); }
+    }
+  }
+  await saveSetting("ig_pending", JSON.stringify(keep));
+  return { done, left: keep.length };
 }
