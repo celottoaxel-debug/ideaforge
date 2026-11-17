@@ -65,8 +65,8 @@ export default async function AdminInstagram() {
             {row.error && <p className="msg err">{row.error}</p>}
             <details className="ig-cap"><summary>Légende</summary><pre>{row.caption}</pre></details>
             <div className="ig-actions">
-              <a className="btn" href={row.url} target="_blank" rel="noopener noreferrer">⬇️ Sans musique (TikTok, Shorts)</a>
-              {row.url_music && <a className="btn" href={row.url_music} target="_blank" rel="noopener noreferrer">⬇️ Avec beat</a>}
+              <a className="btn" href={`/api/ig/download?u=${encodeURIComponent(row.url)}&name=reel-${date}`} download>⬇️ Sans musique (TikTok, Shorts)</a>
+              {row.url_music && <a className="btn" href={`/api/ig/download?u=${encodeURIComponent(row.url_music)}&name=reel-${date}-beat`} download>⬇️ Avec beat</a>}
               {row.status !== "published" && <UgcPublish date={date} disabled={!acc.ok} />}
               {row.permalink && <a className="btn" href={row.permalink} target="_blank" rel="noopener noreferrer">Voir sur Instagram ↗</a>}
               <CopyCaption text={row.caption} />
@@ -74,6 +74,8 @@ export default async function AdminInstagram() {
           </article>
         ))}
       </div>
+
+      <p className="ugc-note" style={{ marginTop: -14, marginBottom: 22 }}>Sur iPhone : appuie sur ⬇️, puis « Télécharger ». La vidéo va dans l&apos;app Fichiers (dossier Téléchargements) : ouvre-la, appuie sur Partager puis « Enregistrer la vidéo » pour l&apos;avoir dans tes Photos.</p>
 
       <h2 className="val-sec">🎬 Créer un réel face caméra</h2>
       {queued.length > 0 && (
@@ -149,7 +151,7 @@ export default async function AdminInstagram() {
                 {r.url && <video src={r.url} controls playsInline preload="metadata" style={{ display: "block", width: 220, borderRadius: 10, marginTop: 8 }} />}
                 {r.error && <p className="msg err">{r.error}</p>}
                 <div className="ig-actions" style={{ marginTop: 8 }}>
-                  {r.url && <a className="btn" href={`${r.url}?download=reel-ideaforge-${p.id}.mp4`}>⬇️ Télécharger (TikTok, Shorts)</a>}
+                  {r.url && <a className="btn" href={`/api/ig/download?u=${encodeURIComponent(r.url)}&name=reel-anime-${p.id}`} download>⬇️ Télécharger (TikTok, Shorts)</a>}
                   {r.permalink && <a className="btn" href={r.permalink} target="_blank" rel="noopener noreferrer">Voir le réel ↗</a>}
                 </div>
               </div>) : null; })()}
