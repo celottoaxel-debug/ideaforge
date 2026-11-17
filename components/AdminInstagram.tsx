@@ -129,17 +129,21 @@ function MediaUpload({ kind, label }: { kind: "face" | "end"; label: string }) {
   const [state, setState] = useState("");
   async function onFile(f: File | undefined) {
     if (!f) return;
-    setState("Envoi en cours… (1 à 3 min selon ta connexion)");
+    const mo = Math.round(f.size / 1048576);
+    setState(`Envoi de ${mo} Mo en cours… (garde la page ouverte)`);
     try {
       const { createClient } = await import("@/lib/supabase/client");
       const up = await api({ action: "ugc-upload-url", kind, filename: f.name });
       const { error } = await createClient().storage.from("ig-media").uploadToSignedUrl(up.path, up.token, f, { contentType: f.type || "video/mp4" });
-      if (error) throw new Error(error.message);
+      if (error) throw new Error(/maximum allowed size|too large|413/i.test(error.message) ? `vidéo trop lourde (${mo} Mo) pour la limite d'envoi de Supabase` : error.message);
       const duration = await new Promise<number>((res) => { const v = document.createElement("video"); v.preload = "metadata"; v.onloadedmetadata = () => res(v.duration || 0); v.onerror = () => res(0); v.src = URL.createObjectURL(f); });
       const name = (f.name.replace(/\.[^.]+$/, "") || "Vidéo").slice(0, 40);
       await api({ action: "ugc-media-add", kind, url: up.publicUrl, path: up.path, label: name, duration: Math.round(duration * 10) / 10 });
       window.location.reload();
-    } catch (e) { setState(`Erreur : ${e instanceof Error ? e.message : "envoi impossible"}`); }
+    } catch (e) {
+      const m = e instanceof Error ? e.message : "envoi impossible";
+      setState(`Erreur : ${/load failed|failed to fetch|network/i.test(m) ? `connexion coupée pendant l'envoi (${mo} Mo)` : m}`);
+    }
   }
   return (
     <label className="btn" style={{ cursor: "pointer" }}>
