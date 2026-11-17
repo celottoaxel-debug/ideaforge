@@ -112,12 +112,13 @@ async function withFreshHashtags(caption: string): Promise<string> {
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 async function waitReady(id: string, token: string, tries = 20) {
   for (let i = 0; i < tries; i++) {
-    const s = await ig(id, { fields: "status_code", access_token: token }, "GET");
+    const s = await ig(id, { fields: "status_code,status", access_token: token }, "GET");
     if (s.status_code === "FINISHED") return;
-    if (s.status_code === "ERROR" || s.status_code === "EXPIRED") throw new Error(`Conteneur ${s.status_code}`);
+    if (s.status_code === "ERROR" || s.status_code === "EXPIRED") throw new Error(`Conteneur ${s.status_code} ${s.status ?? ""}`.trim());
     await wait(3000);
   }
-  throw new Error("Instagram met trop de temps à traiter les images");
+  const last = await ig(id, { fields: "status_code,status", access_token: token }, "GET").catch(() => ({}));
+  throw new Error(`Instagram met trop de temps à traiter (${last.status_code ?? "?"} ${last.status ?? ""})`.trim());
 }
 
 /** Crée un brouillon de carrousel (sans publier). */
