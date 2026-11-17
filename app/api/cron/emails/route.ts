@@ -18,13 +18,7 @@ export async function GET(request: Request) {
   // Statistiques de visite : on ne garde que 13 mois (voir la politique de confidentialité).
   try { await createAdminClient().from("page_views").delete().lt("created_at", new Date(Date.now() - 395 * 86_400_000).toISOString()); } catch {}
 
-  // Pilote automatique du blog : lancé dans sa propre fonction (elle a son propre délai d'exécution).
-  try {
-    const ctrl = new AbortController();
-    setTimeout(() => ctrl.abort(), 2500);
-    await fetch(`${new URL(request.url).origin}/api/cron/blog`, { headers: { authorization: `Bearer ${secret}` }, signal: ctrl.signal }).catch(() => {});
-  } catch {}
-
+  // Blog : tâche Vercel séparée (/api/cron/blog, 7 h UTC), voir vercel.json.
   // Instagram : tâche Vercel séparée (/api/cron/instagram, 8 h UTC), voir vercel.json.
 
   if (!emailEnabled()) return NextResponse.json({ skipped: true, reason: "missing RESEND_API_KEY" });
