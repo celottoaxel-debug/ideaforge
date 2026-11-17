@@ -170,6 +170,8 @@ export async function publishPost(id: number): Promise<{ ok: boolean; permalink?
 export async function runInstagram(): Promise<{ ran: boolean; id?: number; ok?: boolean; error?: string; reel?: { ok: boolean; id?: number; error?: string }; story?: { ok: boolean; error?: string } }> {
   const parisDay = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Paris" })).getDay();
   if (parisDay === 0) await refreshIgToken();
+  let story: { ok: boolean; error?: string } | undefined;
+  try { story = await runStory(); } catch (e) { story = { ok: false, error: e instanceof Error ? e.message : String(e) }; }
   const kind = kindForToday();
   let res: { ran: boolean; id?: number; ok?: boolean; error?: string } = { ran: false };
   if (kind) {
@@ -192,8 +194,6 @@ export async function runInstagram(): Promise<{ ran: boolean; id?: number; ok?: 
       else if (!ugc) reel = await runReel();
     } catch (e) { reel = { ok: false, error: e instanceof Error ? e.message : String(e) }; }
   }
-  let story: { ok: boolean; error?: string } | undefined;
-  try { story = await runStory(); } catch (e) { story = { ok: false, error: e instanceof Error ? e.message : String(e) }; }
   return { ...res, reel, story };
 }
 
@@ -311,7 +311,7 @@ export async function publishReel(postId: number): Promise<{ ok: boolean; permal
     const acc = await igAccount();
     if (!acc.ok || !acc.id) throw new Error(acc.error || "Compte Instagram introuvable");
     const c = await ig(`${acc.id}/media`, { media_type: "REELS", video_url: row.url!, caption: await withFreshHashtags(post.caption as string), share_to_feed: "true", access_token: token });
-    await waitReady(c.id, token, 45);
+    await waitReady(c.id, token, 70);
     const pub = await ig(`${acc.id}/media_publish`, { creation_id: c.id, access_token: token });
     let permalink: string | undefined;
     try { permalink = (await ig(pub.id, { fields: "permalink", access_token: token }, "GET")).permalink; } catch {}
@@ -357,7 +357,7 @@ export async function getUgc(date: string): Promise<UgcRow | null> {
 const putUgc = (date: string, row: UgcRow) => saveSetting(`ig_ugc:${date}`, JSON.stringify(row));
 
 export async function publishUgc(date: string): Promise<{ ok: boolean; permalink?: string; error?: string }> {
-  const row = await getUgc(date);
+  const row = await getUgc(date) as (UgcRow & { container?: string; caption_final?: string }) | null;
   if (!row) return { ok: false, error: "Réel introuvable" };
   if (row.status === "published") return { ok: true, permalink: row.permalink };
   try {
@@ -365,17 +365,31 @@ export async function publishUgc(date: string): Promise<{ ok: boolean; permalink
     if (!token) throw new Error("Instagram non connecté");
     const acc = await igAccount();
     if (!acc.ok || !acc.id) throw new Error(acc.error || "Compte Instagram introuvable");
-    const caption = await withFreshHashtags(row.caption);
-    const c = await ig(`${acc.id}/media`, { media_type: "REELS", video_url: row.url_music || row.url, caption, share_to_feed: "true", access_token: token });
-    await waitReady(c.id, token, 45);
-    const pub = await ig(`${acc.id}/media_publish`, { creation_id: c.id, access_token: token });
+    const caption = row.caption_final || (await withFreshHashtags(row.caption));
+    let container = row.container;
+    if (container) {
+      // Conteneur déjà envoyé lors d'un essai précédent : on vérifie qu'il est toujours valable
+      const st = await ig(container, { fields: "status_code", access_token: token }, "GET").catch(() => null);
+      if (!st || st.status_code === "ERROR" || st.status_code === "EXPIRED") container = undefined;
+    }
+    if (!container) {
+      container = (await ig(`${acc.id}/media`, { media_type: "REELS", video_url: row.url_music || row.url, caption, share_to_feed: "true", access_token: token })).id as string;
+      await putUgc(date, { ...row, container, caption_final: caption, error: undefined } as UgcRow);
+    }
+    try { await waitReady(container, token, 70); }
+    catch (e) {
+      await putUgc(date, { ...row, container, caption_final: caption, status: "ready", error: "Instagram traite encore la vidéo : nouvel essai automatique au prochain passage" } as UgcRow);
+      throw e;
+    }
+    const pub = await ig(`${acc.id}/media_publish`, { creation_id: container, access_token: token });
     let permalink: string | undefined;
     try { permalink = (await ig(pub.id, { fields: "permalink", access_token: token }, "GET")).permalink; } catch {}
     await putUgc(date, { ...row, caption, status: "published", media_id: pub.id, permalink, error: undefined, at: new Date().toISOString() });
     return { ok: true, permalink };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    await putUgc(date, { ...row, status: "error", error: msg });
+    const cur = await getUgc(date);
+    if (!cur || cur.status !== "ready") await putUgc(date, { ...(cur ?? row), status: "error", error: msg });
     return { ok: false, error: msg };
   }
 }
