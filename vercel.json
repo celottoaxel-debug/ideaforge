@@ -27,10 +27,6 @@
     {
       "path": "/api/cron/instagram-finish",
       "schedule": "*/5 * * * *"
-    },
-    {
-      "path": "/api/cron/instagram-watch",
-      "schedule": "30 6 * * *"
     }
   ],
   "functions": {

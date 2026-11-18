@@ -5,7 +5,7 @@ import { igAccount, recentStories, getReel, recentUgc, ugcFaces, ugcEndings, rec
 import { allIdeas } from "@/lib/seo";
 import { watchAccounts, watchData, customHooks } from "@/lib/instagram/watch";
 import { scoreIdea } from "@/lib/score";
-import { GenerateCarousel, PublishButton, CopyCaption, StoryButtons, ReelButtons, UgcPublish, UgcStudio, WatchRefresh, WatchAdd, WatchRemove, UseHook } from "@/components/AdminInstagram";
+import { GenerateCarousel, PublishButton, CopyCaption, StoryButtons, ReelButtons, UgcPublish, UgcStudio, WatchAdd, WatchRemove, UseHook } from "@/components/AdminInstagram";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Instagram · Admin", robots: { index: false, follow: false } };
@@ -319,15 +319,16 @@ async function Archives({ canPublish }: { canPublish: boolean }) {
 /** Onglet Veille concurrents : comptes surveillés, posts qui explosent, accroches à réutiliser. */
 async function Veille() {
   const [accounts, data] = await Promise.all([watchAccounts(), watchData()]);
-  const status = new Map((data?.accounts ?? []).map((a) => [a.username, a]));
+  const web = data?.source === "web";
+  const status = new Map(web ? [] : (data?.accounts ?? []).map((a) => [a.username, a]));
   const fmtN = (n?: number) => (n == null ? "" : n >= 1000 ? `${Math.round(n / 100) / 10}k` : String(n));
   return (
     <>
       <div className="ig-head" style={{ marginBottom: 14, justifyContent: "space-between" }}>
-        <span className="ugc-note">{data ? `Dernière analyse : ${fmt(data.at)} · mise à jour automatique chaque matin` : "Pas encore analysé : lance la première analyse."}</span>
-        <WatchRefresh />
+        <span className="ugc-note">{data ? `Dernière analyse : ${fmt(data.at)} · recherche web automatique chaque matin vers 7 h` : "La première analyse arrive demain matin vers 7 h."}</span>
       </div>
       <h2 className="val-sec">Comptes surveillés ({accounts.length})</h2>
+      <p className="ugc-note" style={{ marginBottom: 10 }}>Chaque matin, la recherche part de ces comptes et de ta niche (business IA, SaaS, marketing IA) pour trouver les contenus qui cartonnent.</p>
       <div className="watch-accounts">
         {accounts.map((a) => {
           const st = status.get(a.username);
@@ -339,23 +340,24 @@ async function Veille() {
           );
         })}
       </div>
-      {(data?.accounts ?? []).some((a) => !a.ok) && <p className="msg err" style={{ marginTop: 0 }}>❌ = compte introuvable ou pas en mode professionnel : vérifie le @ exact sur Instagram, retire-le et ajoute le bon.</p>}
+      {!web && (data?.accounts ?? []).some((a) => !a.ok) && <p className="msg err" style={{ marginTop: 0 }}>❌ = compte introuvable ou pas en mode professionnel : vérifie le @ exact sur Instagram, retire-le et ajoute le bon.</p>}
       <WatchAdd />
 
       <h2 className="val-sec">🔥 Posts qui ont explosé (90 derniers jours)</h2>
-      <p className="ugc-note" style={{ marginBottom: 12 }}>« ×5 » = 5 fois plus de likes et commentaires que la moyenne du compte. On reprend la mécanique de l&apos;accroche, jamais la phrase telle quelle.</p>
+      <p className="ugc-note" style={{ marginBottom: 12 }}>Contenus repérés comme très performants (chiffres quand ils sont publics). On reprend la mécanique de l&apos;accroche, jamais la phrase telle quelle.</p>
       {(!data || data.outliers.length === 0) && <p className="vis-empty">Aucun post marquant pour l&apos;instant.</p>}
       <div className="ig-list">
         {(data?.outliers ?? []).map((o) => (
           <article key={o.id} className="ig-post">
             <div className="watch-out">
-              <a className="wimg" href={o.permalink} target="_blank" rel="noopener noreferrer">{o.img ? <img src={o.img} alt="" loading="lazy" /> : null}</a>
+              <a className="wimg" href={o.permalink} target="_blank" rel="noopener noreferrer">{o.img ? <img src={o.img} alt="" loading="lazy" /> : <span style={{ display: "flex", height: "100%", alignItems: "center", justifyContent: "center", fontSize: 34 }}>🔥</span>}</a>
               <div>
                 <div className="ig-head">
-                  <b>@{o.username}</b><span className="watch-ratio">×{o.ratio}</span><span className="ref-pill signed_up">{o.type}</span>
-                  <span className="ref-date">{new Date(o.timestamp).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })} · ♥ {fmtN(o.likes)} · 💬 {fmtN(o.comments)}</span>
+                  <b>@{o.username}</b><span className="watch-ratio">{o.ratio ? `×${o.ratio}` : "🔥"}</span><span className="ref-pill signed_up">{o.type}</span>
+                  <span className="ref-date">{o.timestamp ? new Date(o.timestamp).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : ""}{o.likes != null ? ` · ♥ ${fmtN(o.likes)}` : ""}{o.comments != null ? ` · 💬 ${fmtN(o.comments)}` : ""}</span>
                 </div>
                 <dl>
+                  {o.why && <><dt>Pourquoi</dt><dd>{o.why}</dd></>}
                   {o.hook && <><dt>Accroche</dt><dd>{o.hook}</dd></>}
                   {o.structure && <><dt>Structure</dt><dd>{o.structure}</dd></>}
                   {o.cta && <><dt>Appel à l&apos;action</dt><dd>{o.cta}</dd></>}

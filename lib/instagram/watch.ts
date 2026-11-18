@@ -5,8 +5,8 @@ import { igToken, igAccount } from "@/lib/instagram/publish";
 
 export type WatchAccount = { username: string; market: "FR" | "US"; theme: string };
 export type WatchPost = { id: string; username: string; caption: string; likes: number; comments: number; type: string; permalink: string; timestamp: string; img?: string; ratio: number };
-export type Outlier = WatchPost & { hook?: string; structure?: string; cta?: string; idea?: string };
-export type WatchData = { at: string; accounts: { username: string; ok: boolean; name?: string; followers?: number; posts?: number; error?: string }[]; outliers: Outlier[] };
+export type Outlier = Omit<WatchPost, "likes" | "comments" | "ratio"> & { likes?: number; comments?: number; ratio?: number; why?: string; hook?: string; structure?: string; cta?: string; idea?: string };
+export type WatchData = { at: string; source?: "web" | "api"; accounts: { username: string; ok: boolean; name?: string; followers?: number; posts?: number; error?: string }[]; outliers: Outlier[] };
 
 const DEFAULT: WatchAccount[] = [
   { username: "danmartell", market: "US", theme: "Business IA" },
