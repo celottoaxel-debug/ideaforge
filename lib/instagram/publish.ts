@@ -590,3 +590,35 @@ export async function igMedia(limit = 60): Promise<IgMedia[]> {
   }
   return out.slice(0, limit);
 }
+
+// ───────── E-mail à l'admin quand un média est prêt à publier ─────────
+/** Repère les médias prêts (réels face caméra, carrousels en brouillon, réels animés montés) et envoie un e-mail pour les nouveaux. */
+export async function notifyReady(): Promise<number> {
+  const admin = createAdminClient();
+  let sent: string[] = [];
+  try { sent = JSON.parse((await setting("ig_notified")) || "[]"); } catch {}
+  const items: { key: string; label: string; detail?: string }[] = [];
+  const KINDS: Record<string, string> = { idea: "Idée chiffrée", top5: "Top 5", new: "Nouvelle idée IA" };
+  for (const { date, row } of await recentUgc(15)) {
+    if (row.status !== "ready") continue;
+    const auto = /^\d{4}-\d{2}-\d{2}$/.test(date);
+    items.push({ key: `ugc:${date}`, label: `Réel face caméra « ${row.title ?? "IdeaForge"} »`, detail: auto ? "publication automatique prévue, ou clique sur Publier" : "créé depuis ton studio" });
+  }
+  const { data: drafts } = await admin.from("ig_posts").select("id, kind, status").order("created_at", { ascending: false }).limit(20);
+  for (const d of drafts ?? []) {
+    if (d.status === "draft") items.push({ key: `post:${d.id}`, label: `Carrousel « ${KINDS[d.kind as string] ?? d.kind} »` });
+    if (d.status === "published") {
+      const r = await getReel(d.id as number);
+      if (r?.status === "draft" && r.url) items.push({ key: `reel:${d.id}`, label: `Réel animé du carrousel « ${KINDS[d.kind as string] ?? d.kind} »` });
+    }
+  }
+  const fresh = items.filter((i) => !sent.includes(i.key));
+  if (!fresh.length) return 0;
+  const { sendEmail } = await import("@/lib/email/resend");
+  const { ADMIN_EMAILS } = await import("@/lib/admin");
+  const { adminReadyEmail } = await import("@/lib/email/templates");
+  const m = adminReadyEmail(fresh, SITE);
+  await Promise.all(ADMIN_EMAILS.map((to) => sendEmail({ to, ...m, tag: "admin_instagram_ready" })));
+  await saveSetting("ig_notified", JSON.stringify([...fresh.map((i) => i.key), ...sent].slice(0, 300)));
+  return fresh.length;
+}

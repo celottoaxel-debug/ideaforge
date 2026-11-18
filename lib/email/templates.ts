@@ -303,3 +303,11 @@ export function adminInstagramEmail(state: "published" | "draft", error: string 
     button("Voir dans le panel", `${site}/admin/instagram`);
   return done(ok ? "📸 Carrousel Instagram publié" : "📝 Carrousel Instagram prêt à publier", layout({ body, lang: "fr", site }));
 }
+
+export function adminReadyEmail(items: { label: string; detail?: string }[], site: string): Rendered {
+  const body = eyebrow("Instagram") + h1(items.length > 1 ? `🎬 ${items.length} médias prêts à publier` : "🎬 Un média est prêt à publier") +
+    p("Ils t'attendent dans ton panel, onglet <b>🛠️ À publier</b> : un clic sur « Publier » et c'est en ligne. Tu peux aussi les télécharger pour TikTok et YouTube Shorts.") +
+    list(items.map((i) => `<b>${esc(i.label)}</b>${i.detail ? ` · ${esc(i.detail)}` : ""}`)) +
+    button("Ouvrir le panel Instagram", `${site}/admin/instagram`);
+  return done(items.length > 1 ? `🎬 ${items.length} médias prêts à publier sur Instagram` : `🎬 ${items[0].label} prêt à publier`, layout({ body, lang: "fr", site }));
+}
