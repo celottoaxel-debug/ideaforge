@@ -14,6 +14,13 @@ type Post = { id: number; kind: string; slot: string | null; slides: unknown[]; 
 const KIND: Record<string, string> = { idea: "💡 Idée chiffrée", top5: "🏆 Top 5", new: "✨ Nouvelle idée IA" };
 const fmt = (d: string | null) => (d ? new Date(d).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" }) : "");
 
+/** Libellé honnête du lien : post précis, compte Instagram ou article source. */
+function linkLabel(url: string) {
+  if (/instagram\.com\/(p|reel|reels|tv)\/[\w-]+/.test(url)) return "Voir le post ↗";
+  if (/instagram\.com\/[\w.]+\/?(\?|$)/.test(url)) return "Voir le compte ↗";
+  return "Voir la source ↗";
+}
+
 export default async function AdminInstagram({ searchParams }: { searchParams?: { tab?: string } }) {
   const tab = searchParams?.tab === "archives" ? "archives" : searchParams?.tab === "veille" ? "veille" : "dash";
   const { data: { user } } = await createClient().auth.getUser();
@@ -368,7 +375,7 @@ async function Veille() {
                   <Reproduce oid={o.id} />
                   {o.idea && <UseHook hook={o.idea.includes("|") ? o.idea : o.idea} />}
                   {o.idea && <CopyCaption text={o.idea.replace("|", " ")} />}
-                  <a className="btn" href={o.permalink} target="_blank" rel="noopener noreferrer">Voir le post ↗</a>
+                  <a className="btn" href={o.permalink} target="_blank" rel="noopener noreferrer">{linkLabel(o.permalink)}</a>
                 </div>
               </div>
             </div>
