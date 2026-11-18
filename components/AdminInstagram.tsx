@@ -251,3 +251,16 @@ export function UseHook({ hook }: { hook: string }) {
     </button>
   );
 }
+
+export function Reproduce({ oid }: { oid: string }) {
+  const [state, setState] = useState<"" | "busy" | "ok">("");
+  const [err, setErr] = useState("");
+  return (
+    <>
+      <button type="button" className="btn primary" disabled={state !== ""} onClick={async () => { setState("busy"); setErr(""); try { await api({ action: "watch-reproduce", oid }); setState("ok"); } catch (e) { setErr(e instanceof Error ? e.message : "Erreur"); setState(""); } }}>
+        {state === "ok" ? "Demandé ✓ (prêt dans l'heure)" : state === "busy" ? "…" : "🎬 Reproduire ce format"}
+      </button>
+      {err && <span className="ugc-note">{err}</span>}
+    </>
+  );
+}

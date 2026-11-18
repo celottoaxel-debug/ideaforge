@@ -5,7 +5,7 @@ import { igAccount, recentStories, getReel, recentUgc, ugcFaces, ugcEndings, rec
 import { allIdeas } from "@/lib/seo";
 import { watchAccounts, watchData, customHooks } from "@/lib/instagram/watch";
 import { scoreIdea } from "@/lib/score";
-import { GenerateCarousel, PublishButton, CopyCaption, StoryButtons, ReelButtons, UgcPublish, UgcStudio, WatchAdd, WatchRemove, UseHook } from "@/components/AdminInstagram";
+import { GenerateCarousel, PublishButton, CopyCaption, StoryButtons, ReelButtons, UgcPublish, UgcStudio, WatchAdd, WatchRemove, UseHook, Reproduce } from "@/components/AdminInstagram";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Instagram · Admin", robots: { index: false, follow: false } };
@@ -365,6 +365,7 @@ async function Veille() {
                 </dl>
                 {!o.hook && <p className="ugc-note">{o.caption.split("\n")[0].slice(0, 160)}</p>}
                 <div className="ig-actions" style={{ marginTop: 10 }}>
+                  <Reproduce oid={o.id} />
                   {o.idea && <UseHook hook={o.idea.includes("|") ? o.idea : o.idea} />}
                   {o.idea && <CopyCaption text={o.idea.replace("|", " ")} />}
                   <a className="btn" href={o.permalink} target="_blank" rel="noopener noreferrer">Voir le post ↗</a>

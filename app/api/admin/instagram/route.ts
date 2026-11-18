@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/admin";
-import { createPost, publishPost, prepareStory, publishStory, prepareReel, publishReel, publishUgc, addUgcMedia, removeUgcMedia, requestUgc, ugcUploadUrl, UGC_HOOKS } from "@/lib/instagram/publish";
+import { createPost, publishPost, prepareStory, publishStory, prepareReel, publishReel, publishUgc, addUgcMedia, removeUgcMedia, requestUgc, ugcUploadUrl, ugcFaces, ugcEndings, UGC_HOOKS } from "@/lib/instagram/publish";
 import type { Kind } from "@/lib/instagram/content";
-import { runWatch, watchAccounts, setWatchAccounts, addCustomHook, customHooks } from "@/lib/instagram/watch";
+import { runWatch, watchAccounts, watchData, setWatchAccounts, addCustomHook, customHooks } from "@/lib/instagram/watch";
 
 export const maxDuration = 300;
 
@@ -11,7 +11,7 @@ export const maxDuration = 300;
 export async function POST(request: Request) {
   const { data: { user } } = await createClient().auth.getUser();
   if (!user || !isAdminEmail(user.email)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
-  let body: { action?: string; kind?: string; id?: number; date?: string; username?: string; market?: string; theme?: string; filename?: string; url?: string; label?: string; duration?: number; path?: string; face?: string; end?: string; idea?: string; hook?: string } = {};
+  let body: { action?: string; kind?: string; id?: number; date?: string; username?: string; market?: string; theme?: string; filename?: string; url?: string; label?: string; duration?: number; path?: string; face?: string; end?: string; idea?: string; hook?: string; oid?: string } = {};
   try { body = await request.json(); } catch {}
   try {
     if (body.action === "generate") {
@@ -44,6 +44,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true });
     }
     if (body.action === "hook-add" && body.hook) { await addCustomHook(String(body.hook).slice(0, 120)); return NextResponse.json({ ok: true }); }
+    if (body.action === "watch-reproduce" && body.oid) {
+      const o = (await watchData())?.outliers.find((x) => x.id === body.oid);
+      if (!o) return NextResponse.json({ error: "Post introuvable dans la veille" }, { status: 404 });
+      const [faces, ends] = await Promise.all([ugcFaces(), ugcEndings()]);
+      if (!faces.length) return NextResponse.json({ error: "Ajoute d'abord une vidéo face caméra dans le studio" }, { status: 400 });
+      const hook = o.idea || UGC_HOOKS[0];
+      await requestUgc({ face: faces[Math.floor(Math.random() * faces.length)].url, end: ends[0]?.url, hook, format: { from: o.username, permalink: o.permalink, type: o.type, hook: o.hook, structure: o.structure, cta: o.cta, why: o.why } });
+      return NextResponse.json({ ok: true });
+    }
     if (body.action === "ugc-request" && body.face) {
       const allHooks = [...UGC_HOOKS, ...(await customHooks())];
       const hook = allHooks.includes(String(body.hook)) ? String(body.hook) : allHooks[Math.floor(Math.random() * allHooks.length)];

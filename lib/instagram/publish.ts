@@ -428,7 +428,8 @@ export async function recentUgc(n = 8): Promise<{ date: string; row: UgcRow }[]>
 
 // ───────── Studio « face caméra » du panel ─────────
 export type UgcMedia = { url: string; label: string; duration?: number; path?: string; at?: string };
-export type UgcRequest = { status: "pending" | "working" | "done" | "error"; face: string; end?: string; idea?: string; hook: string; at: string; result?: string; error?: string };
+export type UgcFormat = { from: string; permalink?: string; type?: string; hook?: string; structure?: string; cta?: string; why?: string };
+export type UgcRequest = { status: "pending" | "working" | "done" | "error"; face: string; end?: string; idea?: string; hook: string; at: string; result?: string; error?: string; format?: UgcFormat };
 const HOOKS = [
   "POV : tu trouves une idée|de business rentable en {s} sec",
   "POV : tu cherches quoi lancer|et tu trouves en {s} sec",
