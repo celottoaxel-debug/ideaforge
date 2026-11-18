@@ -110,22 +110,26 @@ async function withFreshHashtags(caption: string): Promise<string> {
 }
 
 // ───────── Conteneurs qu'Instagram n'a pas fini de traiter : publiés plus tard par /api/cron/instagram-finish ─────────
-type Pending = { container: string; kind: "ugc" | "poll" | "story" | "reel" | "post"; key: string; at: string };
+type Pending = { container: string; kind: "ugc" | "poll" | "story" | "reel" | "post"; key: string; at: string; image?: string; tries?: number };
 async function addPending(p: Omit<Pending, "at">) {
   let list: Pending[] = [];
   try { list = JSON.parse((await setting("ig_pending")) || "[]"); } catch {}
   await saveSetting("ig_pending", JSON.stringify([...list.filter((x) => x.container !== p.container), { ...p, at: new Date().toISOString() }]));
 }
 /** Attend un conteneur ; s'il n'est pas prêt à temps, il est mis en file et l'erreur « PENDING » est levée. */
-async function readyOrQueue(container: string, token: string, kind: Pending["kind"], key: string, tries = 20) {
+async function readyOrQueue(container: string, token: string, kind: Pending["kind"], key: string, tries = 20, image?: string) {
   try { await waitReady(container, token, tries); }
   catch (e) {
-    if (e instanceof Error && /trop de temps/.test(e.message)) { await addPending({ container, kind, key }); throw new Error("PENDING"); }
+    if (e instanceof Error && /trop de temps/.test(e.message)) { await addPending({ container, kind, key, image }); throw new Error("PENDING"); }
     throw e;
   }
 }
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/** Fabrique l'image une première fois (et la met en cache) pour qu'Instagram la récupère tout de suite. */
+async function warm(url: string) {
+  for (let i = 0; i < 2; i++) { try { const r = await fetch(url, { cache: "no-store" }); if (r.ok) { await r.arrayBuffer(); return; } } catch {} }
+}
 async function waitReady(id: string, token: string, tries = 20) {
   for (let i = 0; i < tries; i++) {
     const s = await ig(id, { fields: "status_code,status", access_token: token }, "GET");
@@ -269,8 +273,10 @@ export async function publishStory(date = todayKey(), given?: StoryRow): Promise
   try {
     const acc = await igAccount();
     if (!acc.ok || !acc.id) throw new Error(acc.error || "Compte Instagram introuvable");
-    const c = await ig(`${acc.id}/media`, { image_url: `${SITE}/api/ig/story/${date}.jpg`, media_type: "STORIES", access_token: token });
-    await readyOrQueue(c.id, token, "story", date);
+    const image = `${SITE}/api/ig/story/${date}.jpg`;
+    await warm(image);
+    const c = await ig(`${acc.id}/media`, { image_url: image, media_type: "STORIES", access_token: token });
+    await readyOrQueue(c.id, token, "story", date, 20, image);
     const pub = await ig(`${acc.id}/media_publish`, { creation_id: c.id, access_token: token });
     await putStory(date, { ...row, status: "published", media_id: pub.id, error: undefined, at: new Date().toISOString() });
     if (row.idea) {
@@ -523,8 +529,10 @@ export async function runPoll(): Promise<{ ok: boolean; key: string; error?: str
     if (!token) throw new Error("Instagram non connecté");
     const acc = await igAccount();
     if (!acc.ok || !acc.id) throw new Error(acc.error || "Compte Instagram introuvable");
-    const c = await ig(`${acc.id}/media`, { image_url: `${SITE}/api/ig/poll/${key}.jpg`, media_type: "STORIES", access_token: token });
-    await readyOrQueue(c.id, token, "poll", key);
+    const image = `${SITE}/api/ig/poll/${key}.jpg`;
+    await warm(image);
+    const c = await ig(`${acc.id}/media`, { image_url: image, media_type: "STORIES", access_token: token });
+    await readyOrQueue(c.id, token, "poll", key, 20, image);
     const pub = await ig(`${acc.id}/media_publish`, { creation_id: c.id, access_token: token });
     await saveSetting(`ig_poll:${key}`, JSON.stringify({ ...row, status: "published", media_id: pub.id, error: undefined, at: new Date().toISOString() }));
     return { ok: true, key };
@@ -549,10 +557,20 @@ export async function finishPending(): Promise<{ done: number; left: number }> {
   const acc = await igAccount();
   if (!token || !acc.ok || !acc.id) return { done: 0, left: list.length };
   const keep: Pending[] = []; let done = 0;
+  const handled = new Set<string>();
   for (const p of list) {
+    handled.add(p.container);
     try {
       const st = await ig(p.container, { fields: "status_code", access_token: token }, "GET");
-      if (st.status_code === "IN_PROGRESS" && Date.now() - new Date(p.at).getTime() < 3 * 3600_000) { keep.push(p); continue; }
+      const age = Date.now() - new Date(p.at).getTime();
+      // Une story bloquée plus de 15 min : on recrée le média (jusqu'à 4 fois) au lieu d'abandonner
+      if (p.image && (st.status_code === "IN_PROGRESS" || st.status_code === "ERROR" || st.status_code === "EXPIRED") && (st.status_code !== "IN_PROGRESS" || age > 15 * 60_000) && (p.tries ?? 0) < 4) {
+        await warm(p.image);
+        const c = await ig(`${acc.id}/media`, { image_url: p.image, media_type: "STORIES", access_token: token });
+        keep.push({ ...p, container: c.id, at: new Date().toISOString(), tries: (p.tries ?? 0) + 1 });
+        continue;
+      }
+      if (st.status_code === "IN_PROGRESS" && age < 3 * 3600_000) { keep.push(p); continue; }
       if (st.status_code !== "FINISHED") throw new Error(`Instagram a refusé le média (${st.status_code})`);
       const pub = await ig(`${acc.id}/media_publish`, { creation_id: p.container, access_token: token });
       let permalink: string | undefined;
@@ -569,8 +587,12 @@ export async function finishPending(): Promise<{ done: number; left: number }> {
       if (p.kind === "story") { const r = await getStory(p.key); if (r) await putStory(p.key, { ...r, status: "error", error: msg }); }
     }
   }
-  await saveSetting("ig_pending", JSON.stringify(keep));
-  return { done, left: keep.length };
+  // On relit la file : un média ajouté pendant ce passage ne doit pas être effacé
+  let now: Pending[] = [];
+  try { now = JSON.parse((await setting("ig_pending")) || "[]"); } catch {}
+  const merged = [...keep, ...now.filter((x) => !handled.has(x.container))];
+  await saveSetting("ig_pending", JSON.stringify(merged));
+  return { done, left: merged.length };
 }
 
 // ───────── Archives : tout ce qui est en ligne sur le compte Instagram ─────────
