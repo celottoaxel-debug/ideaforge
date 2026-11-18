@@ -159,7 +159,7 @@ export default async function AdminInstagram({ searchParams }: { searchParams?: 
       <p className="ugc-note" style={{ marginBottom: 10 }}>Dès qu&apos;un carrousel, un réel, une story ou un sondage est publié, il passe dans 🗂️ Archives.</p>
       {posts.length === 0 && <p className="vis-empty">Aucun carrousel pour l&apos;instant. Le premier sera créé automatiquement lundi, mercredi ou vendredi, ou tout de suite avec un bouton ci-dessus.</p>}
       <div className="ig-list">
-        {posts.filter((p) => p.status !== "published").map((p) => (
+        {posts.filter((p) => p.status !== "published" || (reels.get(p.id) && reels.get(p.id)?.status !== "published")).map((p) => (
           <article key={p.id} className="ig-post">
             <div className="ig-head">
               <b>{KIND[p.kind] ?? p.kind}</b>
