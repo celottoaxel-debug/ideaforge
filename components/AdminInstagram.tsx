@@ -264,3 +264,46 @@ export function Reproduce({ oid }: { oid: string }) {
     </>
   );
 }
+
+/** Ouvre Instagram sur l'iPhone avec les slides prêtes ; la légende + hashtags est copiée pour être collée. */
+export function ShareToInstagram({ id }: { id: number }) {
+  const [state, setState] = useState<"idle" | "busy" | "ready" | "shared" | "done">("idle");
+  const [err, setErr] = useState("");
+  const [data, setData] = useState<{ caption: string; files: File[] } | null>(null);
+  async function prepare() {
+    setState("busy"); setErr("");
+    try {
+      const j = await api({ action: "manual-caption", id });
+      const files: File[] = [];
+      for (let n = 1; n <= j.slides; n++) {
+        const r = await fetch(`/api/ig/jpg/${id}/${n}.jpg`);
+        if (!r.ok) throw new Error(`Slide ${n} introuvable`);
+        files.push(new File([await r.blob()], `ideaforge-${id}-${n}.jpg`, { type: "image/jpeg" }));
+      }
+      if (!navigator.canShare || !navigator.canShare({ files })) throw new Error("Ouvre ce panel sur ton iPhone (Safari) pour utiliser ce bouton.");
+      setData({ caption: j.caption, files }); setState("ready");
+    } catch (e) { setErr(e instanceof Error ? e.message : "Erreur"); setState("idle"); }
+  }
+  async function open() {
+    if (!data) return;
+    navigator.clipboard.writeText(data.caption).catch(() => {});
+    try { await navigator.share({ files: data.files }); setState("shared"); }
+    catch (e) { if (!(e instanceof Error && e.name === "AbortError")) setErr("Le partage n'a pas marché, réessaie."); }
+  }
+  async function done() {
+    try { await api({ action: "manual-done", id }); setState("done"); window.location.reload(); } catch (e) { setErr(e instanceof Error ? e.message : "Erreur"); }
+  }
+  return (
+    <>
+      {state === "idle" && <button type="button" className="btn primary" onClick={prepare}>🎵 Poster moi-même (avec musique)</button>}
+      {state === "busy" && <button type="button" className="btn primary" disabled>Préparation des slides…</button>}
+      {state === "ready" && <button type="button" className="btn primary" onClick={open}>📲 Ouvrir Instagram</button>}
+      {state === "shared" && <>
+        <button type="button" className="btn" onClick={open}>📲 Rouvrir Instagram</button>
+        <button type="button" className="btn primary" onClick={done}>✅ J&apos;ai publié</button>
+      </>}
+      {(state === "ready" || state === "shared") && <p className="ugc-note" style={{ width: "100%" }}>Dans le menu, choisis <b>Instagram</b> puis <b>Publication</b>. Ajoute ta musique, puis dans la légende fais un appui long → <b>Coller</b> : la description et les hashtags sont déjà copiés.</p>}
+      {err && <p className="msg err">{err}</p>}
+    </>
+  );
+}

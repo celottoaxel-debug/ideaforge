@@ -5,7 +5,7 @@ import { igAccount, recentStories, getReel, recentUgc, ugcFaces, ugcEndings, rec
 import { allIdeas } from "@/lib/seo";
 import { watchAccounts, watchData, customHooks } from "@/lib/instagram/watch";
 import { scoreIdea } from "@/lib/score";
-import { GenerateCarousel, PublishButton, CopyCaption, StoryButtons, ReelButtons, UgcPublish, UgcStudio, WatchAdd, WatchRemove, UseHook, Reproduce } from "@/components/AdminInstagram";
+import { GenerateCarousel, PublishButton, CopyCaption, StoryButtons, ReelButtons, UgcPublish, UgcStudio, WatchAdd, WatchRemove, UseHook, Reproduce, ShareToInstagram } from "@/components/AdminInstagram";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Instagram · Admin", robots: { index: false, follow: false } };
@@ -184,6 +184,7 @@ export default async function AdminInstagram({ searchParams }: { searchParams?: 
                 </div>
               </div>) : null; })()}
             <div className="ig-actions">
+              {p.status !== "published" && <ShareToInstagram id={p.id} />}
               {p.status !== "published" && <PublishButton id={p.id} disabled={!acc.ok} />}
               {reels.get(p.id)?.status !== "published" && <ReelButtons id={p.id} canPublish={acc.ok} hasVideo={!!reels.get(p.id)?.url} />}
               {p.permalink && <a className="btn" href={p.permalink} target="_blank" rel="noopener noreferrer">Voir sur Instagram ↗</a>}

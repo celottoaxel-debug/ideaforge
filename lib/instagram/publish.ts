@@ -154,6 +154,21 @@ export async function createPost(kind: Kind, slot?: string) {
 }
 
 /** Publie un brouillon sur Instagram. */
+/** Publication à la main depuis l'iPhone : légende finale (avec 5 hashtags frais), calculée une seule fois. */
+export async function manualCaption(id: number): Promise<{ ok: boolean; caption?: string; slides?: number; error?: string }> {
+  const { data: post } = await createAdminClient().from("ig_posts").select("caption, slides").eq("id", id).maybeSingle();
+  if (!post) return { ok: false, error: "Carrousel introuvable" };
+  let caption = await setting(`ig_manual:${id}`);
+  if (!caption) { caption = await withFreshHashtags(post.caption as string); await saveSetting(`ig_manual:${id}`, caption); }
+  return { ok: true, caption, slides: Math.min((post.slides as unknown[]).length, 10) };
+}
+/** Marque un carrousel comme publié à la main (il part dans les archives). */
+export async function manualDone(id: number) {
+  const caption = await setting(`ig_manual:${id}`);
+  await createAdminClient().from("ig_posts").update({ status: "published", ...(caption ? { caption } : {}), published_at: new Date().toISOString(), error: null }).eq("id", id);
+  return { ok: true };
+}
+
 export async function publishPost(id: number): Promise<{ ok: boolean; permalink?: string; error?: string }> {
   const admin = createAdminClient();
   const { data: post } = await admin.from("ig_posts").select("*").eq("id", id).maybeSingle();
