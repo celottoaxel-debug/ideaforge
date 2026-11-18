@@ -162,6 +162,19 @@ export async function manualCaption(id: number): Promise<{ ok: boolean; caption?
   if (!caption) { caption = await withFreshHashtags(post.caption as string); await saveSetting(`ig_manual:${id}`, caption); }
   return { ok: true, caption, slides: Math.min((post.slides as unknown[]).length, 10) };
 }
+/** Réel animé ou face caméra posté à la main : il part dans les archives. */
+export async function reelDone(postId: number) {
+  const r = await getReel(postId);
+  if (!r) return { ok: false, error: "Réel introuvable" };
+  await putReel(postId, { ...r, status: "published", error: undefined, at: new Date().toISOString(), manual: true } as ReelRow);
+  return { ok: true };
+}
+export async function ugcDone(date: string) {
+  const r = await getUgc(date);
+  if (!r) return { ok: false, error: "Réel introuvable" };
+  await putUgc(date, { ...r, status: "published", error: undefined, at: new Date().toISOString(), manual: true } as UgcRow);
+  return { ok: true };
+}
 /** Marque un carrousel comme publié à la main (il part dans les archives). */
 export async function manualDone(id: number) {
   const caption = await setting(`ig_manual:${id}`);

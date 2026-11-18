@@ -90,6 +90,7 @@ export function ReelButtons({ id, canPublish, hasVideo }: { id: number; canPubli
     <>
       <button type="button" className="btn" disabled={!!busy} onClick={() => go("reel-prepare")}>{busy === "reel-prepare" ? "Montage… (1 min)" : hasVideo ? "🎬 Refaire la vidéo" : "🎬 Créer le réel"}</button>
       {hasVideo && <button type="button" className="btn primary" disabled={!canPublish || !!busy} onClick={() => go("reel-publish")}>{busy === "reel-publish" ? "Publication… (1-2 min)" : "🎬 Publier le réel"}</button>}
+      {hasVideo && <button type="button" className="btn" disabled={!!busy} onClick={() => go("reel-done")}>{busy === "reel-done" ? "…" : "✅ Je l'ai posté moi-même"}</button>}
       {err && <p className="msg err">{err}</p>}
     </>
   );
@@ -98,10 +99,10 @@ export function ReelButtons({ id, canPublish, hasVideo }: { id: number; canPubli
 export function UgcPublish({ date, disabled }: { date: string; disabled?: boolean }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
-  async function go() {
+  async function go(action = "ugc-publish") {
     setBusy(true); setErr("");
     try {
-      const r = await fetch("/api/admin/instagram", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "ugc-publish", date }) });
+      const r = await fetch("/api/admin/instagram", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, date }) });
       const j = await r.json();
       if (j.ok) { window.location.reload(); return; }
       setErr(j.error || "Erreur");
@@ -110,7 +111,8 @@ export function UgcPublish({ date, disabled }: { date: string; disabled?: boolea
   }
   return (
     <>
-      <button type="button" className="btn primary" disabled={disabled || busy} onClick={go}>{busy ? "Publication… (1-2 min)" : "🎥 Publier sur Instagram"}</button>
+      <button type="button" className="btn primary" disabled={disabled || busy} onClick={() => go()}>{busy ? "Publication… (1-2 min)" : "🎥 Publier sur Instagram"}</button>
+      <button type="button" className="btn" disabled={busy} onClick={() => go("ugc-done")}>✅ Je l&apos;ai posté moi-même</button>
       {err && <p className="msg err">{err}</p>}
     </>
   );

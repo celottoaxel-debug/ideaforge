@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/admin";
-import { createPost, publishPost, prepareStory, publishStory, prepareReel, publishReel, publishUgc, addUgcMedia, removeUgcMedia, requestUgc, ugcUploadUrl, ugcFaces, ugcEndings, manualCaption, manualDone, UGC_HOOKS } from "@/lib/instagram/publish";
+import { createPost, publishPost, prepareStory, publishStory, prepareReel, publishReel, publishUgc, addUgcMedia, removeUgcMedia, requestUgc, ugcUploadUrl, ugcFaces, ugcEndings, manualCaption, manualDone, reelDone, ugcDone, UGC_HOOKS } from "@/lib/instagram/publish";
 import type { Kind } from "@/lib/instagram/content";
 import { runWatch, watchAccounts, watchData, setWatchAccounts, addCustomHook, customHooks } from "@/lib/instagram/watch";
 
@@ -18,6 +18,8 @@ export async function POST(request: Request) {
       const kind = (["idea", "top5", "new"].includes(String(body.kind)) ? body.kind : "idea") as Kind;
       return NextResponse.json({ ok: true, id: await createPost(kind) });
     }
+    if (body.action === "reel-done" && Number.isInteger(body.id)) return NextResponse.json(await reelDone(body.id as number));
+    if (body.action === "ugc-done" && /^[\w-]{10,40}$/.test(String(body.date))) return NextResponse.json(await ugcDone(String(body.date)));
     if (body.action === "manual-caption" && Number.isInteger(body.id)) return NextResponse.json(await manualCaption(body.id as number));
     if (body.action === "manual-done" && Number.isInteger(body.id)) return NextResponse.json(await manualDone(body.id as number));
     if (body.action === "publish" && Number.isInteger(body.id)) return NextResponse.json(await publishPost(body.id as number));
