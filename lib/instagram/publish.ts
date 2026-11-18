@@ -260,8 +260,8 @@ export async function buildStory(date = todayKey()): Promise<StoryRow> {
 }
 
 /** Publie la story d'une date (déjà préparée). */
-export async function publishStory(date = todayKey()): Promise<{ ok: boolean; error?: string }> {
-  const row = await getStory(date);
+export async function publishStory(date = todayKey(), given?: StoryRow): Promise<{ ok: boolean; error?: string }> {
+  const row = given ?? (await getStory(date));
   if (!row) return { ok: false, error: "Story introuvable" };
   if (row.status === "published") return { ok: true };
   const token = (await igToken())?.trim();
@@ -292,7 +292,7 @@ export async function runStory(date = todayKey()): Promise<{ ok: boolean; error?
   let row = await getStory(date);
   if (row?.status === "published") return { ok: true };
   if (!row) { row = await buildStory(date); await putStory(date, row); }
-  return publishStory(date);
+  return publishStory(date, row);
 }
 
 /** (Re)prépare la story du jour sans la publier, tant qu'elle n'est pas en ligne. */

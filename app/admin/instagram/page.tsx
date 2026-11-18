@@ -114,6 +114,11 @@ export default async function AdminInstagram({ searchParams }: { searchParams?: 
             </a>
           ))}
         </div>
+        <div className="ig-actions">
+          {polls.filter(({ row }) => row.status !== "published").map(({ key }) => (
+            <a key={`dl${key}`} className="btn" href={`/api/ig/save/poll/${key}`} download>📥 Sondage {key.endsWith("am") ? "de midi" : "du soir"} (je le poste moi-même)</a>
+          ))}
+        </div>
         {polls.filter((p) => p.row.status === "error").slice(0, 1).map((p) => <p key={p.key} className="msg err">{p.row.error}</p>)}
       </div>
 
@@ -132,6 +137,12 @@ export default async function AdminInstagram({ searchParams }: { searchParams?: 
         </div>
         {todayStory?.row.error && <p className="msg err">{todayStory.row.error}</p>}
         <StoryButtons canPublish={acc.ok && !!todayStory} published={todayStory?.row.status === "published"} />
+        {todayStory && todayStory.row.status !== "published" && (
+          <div className="ig-actions">
+            <a className="btn" href={`/api/ig/save/story/${todayStory.date}`} download>📥 Télécharger (je la poste avec une musique)</a>
+          </div>
+        )}
+        <p className="ugc-note">« Télécharger » enregistre l&apos;image et range la story dans 🗂️ Archives comme si elle était publiée : le site ne la postera pas une 2e fois.</p>
       </div>
 
       <h2 className="val-sec">Créer un carrousel maintenant</h2>
