@@ -35,6 +35,14 @@ export default function LoginPage() {
   }
   async function magicLink(e: React.FormEvent) {
     e.preventDefault();
+    setMsg("");
+    // E-mail IdeaForge (dans la langue du visiteur) ; sinon, e-mail standard de Supabase
+    try {
+      const r = await fetch("/api/auth/login-link", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, locale: readLocale() }) });
+      const j = await r.json().catch(() => ({}));
+      if (j.ok) { setSent(true); return; }
+      if (j.error) { setMsg(j.error); return; }
+    } catch {}
     const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: `${siteUrl}/auth/callback` } });
     if (error) setMsg(error.message); else setSent(true);
   }

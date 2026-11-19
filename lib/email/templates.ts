@@ -223,6 +223,20 @@ export function magicLinkTemplate(site: string): Rendered {
   return done("Ton lien de connexion IdeaForge", layout({ body, preheader: "Ton lien pour te connecter à IdeaForge.", lang: "fr", site }));
 }
 
+// Lien de connexion envoyé par le site lui-même (via Resend), dans la langue du visiteur.
+const LOGIN = {
+  fr: { s: "Ton lien de connexion IdeaForge 🔑", pre: "Un clic et tu es connecté à IdeaForge.", eb: "Connexion", h: "Ton lien de connexion", intro: "Clique sur le bouton pour te connecter à IdeaForge. Pas de mot de passe à retenir : ce lien suffit.", cta: "Me connecter à IdeaForge", note: "Ce lien ne marche qu'une fois et expire dans 1 heure. Si tu n'as rien demandé, ignore simplement cet e-mail : personne ne pourra se connecter sans lui.", alt: "Le bouton ne marche pas ? Copie ce lien dans ton navigateur :" },
+  en: { s: "Your IdeaForge login link 🔑", pre: "One click and you're signed in to IdeaForge.", eb: "Sign in", h: "Your login link", intro: "Click the button to sign in to IdeaForge. No password to remember: this link is all you need.", cta: "Sign in to IdeaForge", note: "This link works once and expires in 1 hour. If you didn't ask for it, just ignore this email: nobody can sign in without it.", alt: "Button not working? Copy this link into your browser:" },
+  es: { s: "Tu enlace de acceso a IdeaForge 🔑", pre: "Un clic y ya estás dentro de IdeaForge.", eb: "Acceso", h: "Tu enlace de acceso", intro: "Haz clic en el botón para entrar en IdeaForge. Sin contraseña que recordar: este enlace basta.", cta: "Entrar en IdeaForge", note: "Este enlace funciona una sola vez y caduca en 1 hora. Si no lo has pedido, ignora este correo: nadie podrá entrar sin él.", alt: "¿El botón no funciona? Copia este enlace en tu navegador:" },
+};
+export function loginLinkEmail(l: Lang, link: string, site: string): Rendered {
+  const t = LOGIN[l];
+  const body = eyebrow(t.eb) + h1(t.h) + p(t.intro) + button(t.cta, esc(link)) +
+    p(`<span style="font-size:13px;color:${C.ink3}">${t.note}</span>`) +
+    p(`<span style="font-size:12px;color:${C.ink3}">${t.alt}<br><a href="${esc(link)}" style="color:${C.greenDeep};word-break:break-all">${esc(link)}</a></span>`);
+  return done(t.s, layout({ body, preheader: t.pre, lang: l, site }));
+}
+
 export function confirmSignupTemplate(site: string): Rendered {
   const body =
     eyebrow("Inscription") +
