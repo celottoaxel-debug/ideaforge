@@ -1,5 +1,5 @@
 """Monte le réel « face caméra » : accroche (3 s) → toi en haut + chrono + étape + écran IdeaForge en bas → fin « Commente ».
-Usage : python3 build.py face.mp4 <debut_plan_principal_en_s> [mirror] [music]
+Usage : [HOOK_LEN=5] python3 build.py face.mp4 <debut_plan_principal_en_s> [mirror] [music]
 Entrées attendues dans le dossier : screen.webm, marks.json, hook.png, cta1.png, cta2.png, pill1..7.png, Geist-SemiBold.ttf, yunet.onnx, beat.wav (si music)."""
 import json, subprocess, sys, glob, os
 import cv2
@@ -9,7 +9,8 @@ END_CLIP = os.environ.get('END_CLIP', '')  # vidéo d'écran de téléphone pour
 END_START = float(os.environ.get('END_START', '4.5'))
 mirror = 'mirror' in flags; music = 'music' in flags
 m = dict(json.load(open('marks.json')))
-S0 = m['s1']; HOOK = 3.0; main_len = m['end'] - S0; END_LEN = 6.5; TOTAL = HOOK + main_len + END_LEN
+# HOOK_LEN : durée de l'accroche (laisse finir le geste d'intro : casque, compte 1-2-3...). Le plan principal devrait commencer à HOOK_LEN pour un montage continu.
+S0 = m['s1']; HOOK = float(os.environ.get('HOOK_LEN', '3.0')); main_len = m['end'] - S0; END_LEN = 6.5; TOTAL = HOOK + main_len + END_LEN
 keys = ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 'end']
 win = [(m[keys[i]] - S0, m[keys[i + 1]] - S0) for i in range(7)]
 

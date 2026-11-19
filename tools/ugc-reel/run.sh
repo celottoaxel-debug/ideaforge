@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Fabrique un réel « face caméra » IdeaForge de bout en bout (dans le bac à sable Higgsfield).
-# Variables facultatives : END_URL (écran de téléphone pour la fin), END_START (seconde de départ dans cette vidéo), USED (idées déjà filmées)
+# Variables facultatives : HOOK_LEN (durée de l'accroche, 3 s par défaut ; mets-la à la fin du geste d'intro et <debut_plan_s> à la même valeur), END_URL (écran de téléphone pour la fin), END_START (seconde de départ dans cette vidéo), USED (idées déjà filmées)
 # Usage : bash run.sh <url_video_face_camera> </idea/chemin> "<accroche ligne1|ligne2>" <debut_plan_s> <seed> [mirror]
 set -euo pipefail
 FACE_URL="$1"; IDEA="$2"; HOOK="$3"; START="$4"; SEED="$5"; MIRROR="${6:-}"
