@@ -513,28 +513,89 @@ const POLL_BANK: { theme: string; question: string; a: string; b: string }[] = [
   { theme: "Motivation", question: "Ce qui te bloque|le plus pour te lancer ?", a: "Pas d'idée", b: "Peur d'échouer" },
   { theme: "Tech", question: "iPhone|ou Android ?", a: "iPhone", b: "Android" },
   { theme: "Habitudes", question: "Tu planifies ta semaine|ou tu improvises ?", a: "Je planifie", b: "J'improvise" },
+  { theme: "Business", question: "Ton premier business,|plutôt ?", a: "Un produit", b: "Un service" },
+  { theme: "Business", question: "Tu préfères vendre|à des pros ou des particuliers ?", a: "Aux pros", b: "Aux particuliers" },
+  { theme: "Business", question: "Lancer vite et corriger|ou tout préparer avant ?", a: "Lancer vite", b: "Tout préparer" },
+  { theme: "IA", question: "Tu utilises l'IA|tous les jours ?", a: "Oui, tout le temps", b: "Pas encore" },
+  { theme: "IA", question: "Ton assistant IA|préféré ?", a: "ChatGPT", b: "Claude" },
+  { theme: "IA", question: "Une IA qui gère tes mails,|tu dis oui ?", a: "Carrément", b: "Jamais de la vie" },
+  { theme: "IA", question: "Créer une app sans coder|avec l'IA, tu y crois ?", a: "J'y crois", b: "Pas convaincu" },
+  { theme: "Productivité", question: "Ta to-do list,|plutôt ?", a: "Sur papier", b: "Sur une appli" },
+  { theme: "Productivité", question: "Notifications|activées ou coupées ?", a: "Activées", b: "Coupées" },
+  { theme: "Productivité", question: "Tu bosses mieux|en musique ou en silence ?", a: "En musique", b: "En silence" },
+  { theme: "Argent", question: "Revenu stable|ou revenu illimité ?", a: "Stable", b: "Illimité" },
+  { theme: "Argent", question: "Abonnement mensuel|ou paiement unique ?", a: "Abonnement", b: "Paiement unique" },
+  { theme: "Argent", question: "Tu investirais|dans un business ou en bourse ?", a: "Un business", b: "La bourse" },
+  { theme: "Vie d'entrepreneur", question: "Tu travailles mieux|le week-end ou la semaine ?", a: "Le week-end", b: "La semaine" },
+  { theme: "Vie d'entrepreneur", question: "Side project le soir|ou tout plaquer ?", a: "Side project", b: "Tout plaquer" },
+  { theme: "Vie d'entrepreneur", question: "Mieux vaut un échec|ou un regret ?", a: "Un échec", b: "Un regret" },
+  { theme: "Marketing", question: "Montrer ton visage|en vidéo, ça te va ?", a: "Aucun souci", b: "Plutôt pas" },
+  { theme: "Marketing", question: "Une pub qui te fait acheter :|plutôt ?", a: "Une vidéo", b: "Un avis client" },
+  { theme: "Réseaux sociaux", question: "TikTok|ou Instagram ?", a: "TikTok", b: "Instagram" },
+  { theme: "Réseaux sociaux", question: "Tu postes|ou tu regardes ?", a: "Je poste", b: "Je regarde" },
+  { theme: "Réseaux sociaux", question: "Réels|ou carrousels ?", a: "Réels", b: "Carrousels" },
+  { theme: "Quotidien", question: "Lève-tôt|ou couche-tard ?", a: "Lève-tôt", b: "Couche-tard" },
+  { theme: "Quotidien", question: "Ville|ou campagne ?", a: "Ville", b: "Campagne" },
+  { theme: "Cuisine", question: "Sucré|ou salé ?", a: "Sucré", b: "Salé" },
+  { theme: "Cuisine", question: "Pizza|ou burger ?", a: "Pizza", b: "Burger" },
+  { theme: "Cuisine", question: "Ouvrir un resto un jour,|tu y as déjà pensé ?", a: "Oui !", b: "Jamais" },
+  { theme: "Voyage", question: "Bosser depuis la plage,|rêve ou cauchemar ?", a: "Le rêve", b: "Le cauchemar" },
+  { theme: "Voyage", question: "Mer|ou montagne ?", a: "Mer", b: "Montagne" },
+  { theme: "Sport", question: "Sport le matin|ou le soir ?", a: "Le matin", b: "Le soir" },
+  { theme: "Sport", question: "Salle de sport|ou dehors ?", a: "La salle", b: "Dehors" },
+  { theme: "Culture", question: "Livre|ou podcast ?", a: "Livre", b: "Podcast" },
+  { theme: "Culture", question: "Série|ou film ?", a: "Série", b: "Film" },
+  { theme: "Habitudes", question: "Tu lis les conditions|avant d'accepter ?", a: "Toujours", b: "Jamais" },
+  { theme: "Habitudes", question: "Ton téléphone|le matin, tout de suite ?", a: "Direct", b: "Après le café" },
+  { theme: "Tech", question: "Mac|ou PC ?", a: "Mac", b: "PC" },
+  { theme: "Tech", question: "Mode sombre|ou mode clair ?", a: "Sombre", b: "Clair" },
+  { theme: "Motivation", question: "Ce qui te motive le plus :|l'argent ou la liberté ?", a: "L'argent", b: "La liberté" },
+  { theme: "Motivation", question: "Objectif 2027 :|lancer ou apprendre ?", a: "Lancer", b: "Apprendre" },
+  { theme: "Travail", question: "Patron un jour,|ça te tente ?", a: "Grave", b: "Pas du tout" },
+  { theme: "Travail", question: "Semaine de 4 jours|ou salaire plus haut ?", a: "4 jours", b: "Salaire plus haut" },
 ];
 
 export type PollRow = { theme: string; question: string; a: string; b: string; status: "draft" | "published" | "error"; media_id?: string; error?: string; at?: string };
 
-async function makePoll(recent: string[]): Promise<{ theme: string; question: string; a: string; b: string }> {
-  const theme = POLL_THEMES[Math.floor(Math.random() * POLL_THEMES.length)];
+/** Texte simplifié pour comparer deux sondages (sans accents, ponctuation ni « | »). */
+const normPoll = (q: string) => q.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+/** Deux sondages trop proches : même question, ou mêmes deux réponses. */
+function samePoll(x: { question: string; a: string; b: string }, y: { question: string; a: string; b: string }) {
+  if (normPoll(x.question) === normPoll(y.question)) return true;
+  const ax = [normPoll(x.a), normPoll(x.b)].sort().join("/"), ay = [normPoll(y.a), normPoll(y.b)].sort().join("/");
+  return ax === ay;
+}
+/** Tous les sondages déjà faits (lus directement dans les sondages enregistrés, du plus récent au plus ancien). */
+async function pastPolls(): Promise<{ question: string; a: string; b: string; key: string }[]> {
+  const { data } = await createAdminClient().from("app_settings").select("key, value").like("key", "ig_poll:%").order("key", { ascending: false }).limit(300);
+  return (data ?? []).flatMap((d) => { try { const r = JSON.parse(d.value as string) as PollRow; return [{ question: r.question, a: r.a, b: r.b, key: d.key as string }]; } catch { return []; } });
+}
+
+async function makePoll(past: { question: string; a: string; b: string; key: string }[]): Promise<{ theme: string; question: string; a: string; b: string }> {
+  const fresh = (c: { question: string; a: string; b: string }) => !past.some((p) => samePoll(c, p));
   if (process.env.ANTHROPIC_API_KEY) {
-    try {
-      const { askClaude } = await import("@/lib/anthropic");
-      const out = await askClaude(
-        `Invente un sondage Instagram en story pour le compte @ideasforge.io (audience : jeunes entrepreneurs francophones intéressés par l'IA et les idées de business), sur le thème « ${theme} ».
+    const { askClaude } = await import("@/lib/anthropic");
+    for (let tries = 0; tries < 3; tries++) {
+      const theme = POLL_THEMES[Math.floor(Math.random() * POLL_THEMES.length)];
+      try {
+        const out = await askClaude(
+          `Invente un sondage Instagram en story pour le compte @ideasforge.io (audience : jeunes entrepreneurs francophones intéressés par l'IA et les idées de business), sur le thème « ${theme} ».
 Une question courte et engageante (8 à 12 mots, tutoiement), deux réponses opposées très courtes (2 à 5 mots chacune), fun ou qui fait réfléchir, sans sujet sensible (politique, religion, santé).
-Ne reprends pas ces questions déjà posées : ${recent.slice(0, 20).join(" / ") || "aucune"}.
+Le sondage doit être NOUVEAU : ni la même question, ni la même idée, ni les mêmes réponses que ceux-ci, déjà posés : ${past.slice(0, 40).map((p) => `${p.question.replace("|", " ")} (${p.a} / ${p.b})`).join(" ; ") || "aucun"}.
 Réponds UNIQUEMENT en JSON : {"question":"...","a":"...","b":"..."}. Coupe la question en deux avec un « | » à l'endroit où la 2e partie doit passer en vert. Pas de tiret cadratin, pas d'emoji.`,
-        200,
-      );
-      const j = JSON.parse(out.slice(out.indexOf("{"), out.lastIndexOf("}") + 1));
-      if (j.question && j.a && j.b && String(j.question).length < 110) return { theme, question: String(j.question), a: String(j.a).slice(0, 32), b: String(j.b).slice(0, 32) };
-    } catch {}
+          200,
+        );
+        const j = JSON.parse(out.slice(out.indexOf("{"), out.lastIndexOf("}") + 1));
+        const c = { theme, question: String(j.question ?? ""), a: String(j.a ?? "").slice(0, 32), b: String(j.b ?? "").slice(0, 32) };
+        if (c.question && c.a && c.b && c.question.length < 110 && fresh(c)) return c;
+      } catch {}
+    }
   }
-  const left = POLL_BANK.filter((p) => !recent.includes(p.question));
-  return (left.length ? left : POLL_BANK)[Math.floor(Math.random() * (left.length || POLL_BANK.length))];
+  // Réserve : jamais un sondage déjà posé ; si tout a servi, celui posé il y a le plus longtemps
+  const left = POLL_BANK.filter(fresh);
+  if (left.length) return left[Math.floor(Math.random() * left.length)];
+  const lastUse = (c: { question: string; a: string; b: string }) => past.find((p) => samePoll(c, p))?.key ?? "";
+  return [...POLL_BANK].sort((x, y) => lastUse(x).localeCompare(lastUse(y)))[0];
 }
 
 /** Sondage du créneau en cours (am / pm) : préparé puis publié en story. */
@@ -546,12 +607,9 @@ export async function runPoll(): Promise<{ ok: boolean; key: string; error?: str
   try { row = cur ? (JSON.parse(cur) as PollRow) : null; } catch {}
   if (row?.status === "published") return { ok: true, key };
   if (!row) {
-    let recent: string[] = [];
-    try { recent = JSON.parse((await setting("ig_poll_recent")) || "[]"); } catch {}
-    const p = await makePoll(recent);
+    const p = await makePoll(await pastPolls());
     row = { ...p, status: "draft" };
     await saveSetting(`ig_poll:${key}`, JSON.stringify(row));
-    await saveSetting("ig_poll_recent", JSON.stringify([p.question, ...recent].slice(0, 40)));
   }
   try {
     const token = (await igToken())?.trim();
