@@ -141,11 +141,24 @@ async function waitReady(id: string, token: string, tries = 20) {
   throw new Error(`Instagram met trop de temps à traiter (${last.status_code ?? "?"} ${last.status ?? ""})`.trim());
 }
 
+/** Toutes les idées déjà montrées sur Instagram, tous formats confondus (carrousels, stories, réels face caméra). */
+export async function usedIdeas(): Promise<Set<string>> {
+  const admin = createAdminClient();
+  const used = new Set<string>();
+  const [{ data: posts }, { data: rows }] = await Promise.all([
+    admin.from("ig_posts").select("ideas").limit(500),
+    admin.from("app_settings").select("key, value").or("key.like.ig_story:%,key.like.ig_ugc:%").limit(1000),
+  ]);
+  (posts ?? []).forEach((p) => ((p.ideas as string[]) ?? []).forEach((i) => used.add(i)));
+  (rows ?? []).forEach((r) => { try { const id = String(JSON.parse(r.value as string).idea ?? "").replace(/^\/idea\//, ""); if (id) used.add(id); } catch {} });
+  return used;
+}
+
 /** Crée un brouillon de carrousel (sans publier). */
 export async function createPost(kind: Kind, slot?: string) {
   const admin = createAdminClient();
   const { data: prev } = await admin.from("ig_posts").select("ideas, kind").order("created_at", { ascending: false }).limit(200);
-  const used = new Set<string>((prev ?? []).flatMap((p) => (p.ideas as string[]) ?? []));
+  const used = await usedIdeas();
   const themeIndex = (prev ?? []).filter((p) => p.kind === "top5").length;
   const d = await buildDraft(kind, used, themeIndex);
   const { data, error } = await admin.from("ig_posts").insert({ kind: d.kind, slot: slot ?? null, ideas: d.ideas, slides: d.slides, caption: d.caption, theme: d.theme ?? null, status: "draft" }).select("id").single();
@@ -270,12 +283,15 @@ export async function buildStory(date = todayKey()): Promise<StoryRow> {
     }
     return { status: "draft", story: { badge: "Nouveau post", kicker: cover.kicker, title: cover.title, sub: cover.sub, items, cta: "Le carrousel est sur le profil" } };
   }
-  const usedRaw = await setting("ig_story_used");
-  const used = new Set<string>(usedRaw ? (JSON.parse(usedRaw) as string[]) : []);
-  const { data: prev } = await admin.from("ig_posts").select("ideas").limit(300);
-  (prev ?? []).forEach((p) => ((p.ideas as string[]) ?? []).forEach((i) => used.add(i)));
+  // Jamais une idée déjà montrée (story, carrousel ou réel) ; si tout a servi, la moins récemment montrée
+  const used = await usedIdeas();
   const ideas = (await allIdeas()).sort((a, b) => scoreIdea(b).score - scoreIdea(a).score);
-  const it = ideas.find((i) => !used.has(i.id)) ?? ideas[Math.floor(Math.random() * Math.min(30, ideas.length))];
+  let it = ideas.find((i) => !used.has(i.id));
+  if (!it) {
+    const { data: last } = await admin.from("app_settings").select("value").like("key", "ig_story:%").order("key", { ascending: false }).limit(60);
+    const recent = new Set((last ?? []).map((r) => { try { return JSON.parse(r.value as string).idea as string; } catch { return ""; } }));
+    it = ideas.find((i) => !recent.has(i.id)) ?? ideas[0];
+  }
   const f = ideaFacts(it);
   return {
     status: "draft", idea: it.id,
