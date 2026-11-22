@@ -42,15 +42,20 @@ await smooth(await p.evaluate(() => scrollY + 220), 900);
 await p.waitForTimeout(800);
 mark('s4');
 let card = IDEA ? await p.$(`a[href="${IDEA}"]`) : null;
-if (!card) {
-  // Première idée du filtre « Meilleur score » jamais utilisée dans un réel
-  for (const a of await p.$$('a[href^="/idea/"]')) { if (!USED.includes(await a.getAttribute('href'))) { card = a; break; } }
-  card = card || (await p.$('a[href^="/idea/"]'));
+let pick = IDEA;
+if (!card && !IDEA) {
+  // Première idée du filtre « Meilleur score » jamais montrée sur Instagram (stories, carrousels, réels)
+  for (const a of await p.$$('a[href^="/idea/"]')) { const h = await a.getAttribute('href'); if (!USED.includes(h)) { card = a; pick = h; break; } }
+  if (!card) {
+    // Toutes les idées visibles ont déjà servi : on prend une idée jamais montrée dans le plan du site
+    const xml = await (await fetch(SITE + '/sitemap.xml')).text().catch(() => '');
+    const paths = [...xml.matchAll(/<loc>[^<]*?(\/idea\/[^<]+)<\/loc>/g)].map((m) => m[1]);
+    pick = paths.find((x) => !USED.includes(x));
+    if (!pick) { console.error('NO_FRESH_IDEA'); process.exit(3); }
+  }
 }
-await card.scrollIntoViewIfNeeded(); await p.waitForTimeout(400);
-await pointEl(card);
-await p.waitForTimeout(300);
-const href = IDEA || (await card.getAttribute('href'));
+if (card) { await card.scrollIntoViewIfNeeded(); await p.waitForTimeout(400); await pointEl(card); await p.waitForTimeout(300); }
+const href = pick || (await card.getAttribute('href'));
 await p.goto(SITE + href, { waitUntil: 'load' });
 await p.evaluate(cursor);
 fs.writeFileSync('chosen.json', JSON.stringify({ path: href, title: (await p.$eval('h1', (h) => h.innerText.trim()).catch(() => '')) }));
