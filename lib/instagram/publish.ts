@@ -154,6 +154,19 @@ export async function usedIdeas(): Promise<Set<string>> {
   return used;
 }
 
+/** Idées déjà montrées, sans compter le carrousel `postId` lui-même. */
+async function usedIdeasExcept(postId: number): Promise<Set<string>> {
+  const admin = createAdminClient();
+  const used = new Set<string>();
+  const [{ data: posts }, { data: rows }] = await Promise.all([
+    admin.from("ig_posts").select("id, ideas").neq("id", postId).limit(500),
+    admin.from("app_settings").select("key, value").or("key.like.ig_story:%,key.like.ig_ugc:%").limit(1000),
+  ]);
+  (posts ?? []).forEach((p) => ((p.ideas as string[]) ?? []).forEach((i) => used.add(i)));
+  (rows ?? []).forEach((r) => { try { const id = String(JSON.parse(r.value as string).idea ?? "").replace(/^\/idea\//, ""); if (id) used.add(id); } catch {} });
+  return used;
+}
+
 /** Crée un brouillon de carrousel (sans publier). */
 export async function createPost(kind: Kind, slot?: string) {
   const admin = createAdminClient();
@@ -169,8 +182,15 @@ export async function createPost(kind: Kind, slot?: string) {
 /** Publie un brouillon sur Instagram. */
 /** Publication à la main depuis l'iPhone : légende finale (avec 5 hashtags frais), calculée une seule fois. */
 export async function manualCaption(id: number): Promise<{ ok: boolean; caption?: string; slides?: number; error?: string }> {
-  const { data: post } = await createAdminClient().from("ig_posts").select("caption, slides").eq("id", id).maybeSingle();
+  const { data: post } = await createAdminClient().from("ig_posts").select("caption, slides, kind, ideas, status").eq("id", id).maybeSingle();
   if (!post) return { ok: false, error: "Carrousel introuvable" };
+  if (post.status !== "published" && post.kind !== "top5") {
+    const others = await usedIdeasExcept(id);
+    if (((post.ideas as string[]) ?? []).some((i) => others.has(i))) {
+      await createAdminClient().from("ig_posts").delete().eq("id", id).eq("status", "draft");
+      return { ok: false, error: "Ce carrousel montrait une idée déjà publiée sur Instagram : il a été supprimé pour éviter un doublon." };
+    }
+  }
   let caption = await setting(`ig_manual:${id}`);
   if (!caption) { caption = await withFreshHashtags(post.caption as string); await saveSetting(`ig_manual:${id}`, caption); }
   return { ok: true, caption, slides: Math.min((post.slides as unknown[]).length, 10) };
@@ -200,6 +220,15 @@ export async function publishPost(id: number): Promise<{ ok: boolean; permalink?
   const { data: post } = await admin.from("ig_posts").select("*").eq("id", id).maybeSingle();
   if (!post) return { ok: false, error: "Carrousel introuvable" };
   if (post.status === "published") return { ok: true, permalink: post.permalink };
+  // Anti-doublon : un brouillon dont l'idée a déjà été montrée ailleurs (story, réel, autre carrousel) n'est jamais publié
+  if (post.kind !== "top5") {
+    const others = await usedIdeasExcept(id);
+    const dup = ((post.ideas as string[]) ?? []).find((i) => others.has(i));
+    if (dup) {
+      await admin.from("ig_posts").delete().eq("id", id).eq("status", "draft");
+      return { ok: false, error: "Ce carrousel montrait une idée déjà publiée sur Instagram : il a été supprimé pour éviter un doublon." };
+    }
+  }
   const token = (await igToken())?.trim();
   if (!token) return { ok: false, error: "Instagram n'est pas encore connecté (INSTAGRAM_TOKEN)" };
   try {
