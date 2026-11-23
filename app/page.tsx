@@ -11,10 +11,9 @@ import MobileMenuCloser from "@/components/MobileMenuCloser";
 import { COLLECTIONS } from "@/lib/collections";
 import { SITE, ldJson, organizationLd, faqLd, dedupeIdeas } from "@/lib/seo";
 import { PRICE_LIFETIME, PRICE_MONTHLY } from "@/lib/admin";
-import ForgeHero from "@/components/ForgeHero";
+import LightHero from "@/components/LightHero";
 import ForgeHold from "@/components/ForgeHold";
 import { homeCopy } from "@/lib/home-copy";
-import { HERO } from "@/lib/hero-assets";
 import { LeadMagnet, ExitOffer } from "@/components/LeadMagnet";
 import { launchStatus, withLaunch } from "@/lib/launch";
 
@@ -136,12 +135,10 @@ export default async function Home() {
         );
       })()}
 
-      <ForgeHero
-        video={HERO.video} poster={HERO.poster} ending={HERO.ending} bytes={HERO.bytes}
-        bands={c.bands}
+      <LightHero
+        locale={locale} count={ideas.length} title={c.bands[0].h} text={c.staticP} idea={extra[0] ?? ideas[0]}
         primary={member ? { href: "#catalogue", label: c.ctaIdeas } : { href: "#pricing", label: `${c.ctaLife} · ${launch.price} €` }}
         secondary={member ? undefined : { href: "#catalogue", label: c.ctaIdeas }}
-        staticKicker={c.staticKicker} staticH={c.staticH} staticP={c.staticP}
       />
 
       {/* dégradé partagé par les lignes de circuit */}
@@ -214,7 +211,7 @@ export default async function Home() {
           <Trace d="M190 45 H570 M570 45 H950" nodes={[[190, 45], [570, 45], [950, 45]]} />
           <div className="how3" data-reveal="stagger">
             {c.how.map((h, i) => (
-              <div className="step" key={i}><div className="step-img"><img src={HERO.steps[i]} alt="" loading="lazy" decoding="async" width={800} height={600} /></div><span className="n mono">0{i + 1}</span><h3>{h.h}</h3><p>{h.p}</p></div>
+              <div className="step" key={i}><span className="n mono">0{i + 1}</span><h3>{h.h}</h3><p>{h.p}</p></div>
             ))}
           </div>
         </div>

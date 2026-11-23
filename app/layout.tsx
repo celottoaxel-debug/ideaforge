@@ -7,7 +7,7 @@ import { getLocale } from "@/lib/i18n";
 import Tracker from "@/components/Tracker";
 import "./globals.css";
 
-export const viewport: Viewport = { themeColor: "#07130f", colorScheme: "dark" };
+export const viewport: Viewport = { themeColor: "#f2f3ef", colorScheme: "light" };
 
 const site = process.env.NEXT_PUBLIC_SITE_URL || "https://ideaforges.io";
 

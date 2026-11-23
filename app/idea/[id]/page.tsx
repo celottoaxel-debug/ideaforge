@@ -127,7 +127,7 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
 
         {it.benchmark && (
           <div className="card" style={{ background: "var(--forest)", color: "#fff", marginBottom: 20 }}>
-            <span className="k" style={{ color: "rgba(255,255,255,.6)" }}>{t.d_bench}</span>
+            <span className="k" style={{ color: "rgba(255,255,255,.75)" }}>{t.d_bench}</span>
             <div style={{ fontFamily: "var(--mono)", fontWeight: 600 }}>📈 {it.benchmark}</div>
           </div>
         )}
