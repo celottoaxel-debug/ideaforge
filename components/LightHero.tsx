@@ -41,7 +41,7 @@ export default function LightHero(props: {
                 <span className="lh-new">{t.nouveau}</span>
               </div>
               <h3>{name}</h3>
-              {sub && <p>{sub.length > 110 ? sub.slice(0, 108) + "…" : sub}</p>}
+              {sub && <p>{(sub.charAt(0).toUpperCase() + sub.slice(1)).slice(0, 110)}{sub.length > 110 ? "…" : ""}</p>}
               <div className="lh-stats">
                 <div><span className="k">{t.budget}</span><b>{it.budget}</b></div>
                 <div className="g"><span className="k">{t.revenue}</span><b>{it.revenue}</b></div>
