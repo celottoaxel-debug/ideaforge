@@ -172,7 +172,7 @@ export async function createPost(kind: Kind, slot?: string) {
   const admin = createAdminClient();
   const { data: prev } = await admin.from("ig_posts").select("ideas, kind").order("created_at", { ascending: false }).limit(200);
   const used = await usedIdeas();
-  const themeIndex = (prev ?? []).filter((p) => p.kind === "top5").length;
+  const themeIndex = (prev ?? []).filter((p) => p.kind === kind).length;
   const d = await buildDraft(kind, used, themeIndex);
   const { data, error } = await admin.from("ig_posts").insert({ kind: d.kind, slot: slot ?? null, ideas: d.ideas, slides: d.slides, caption: d.caption, theme: d.theme ?? null, status: "draft" }).select("id").single();
   if (error) throw new Error(error.message);
@@ -305,7 +305,7 @@ export async function buildStory(date = todayKey()): Promise<StoryRow> {
   const cover = slides[0];
   if (post && cover?.t === "cover") {
     const items: StoryData["items"] = [];
-    if (post.kind === "top5") slides.filter((x) => x.t === "rank").slice(0, 3).forEach((x) => x.t === "rank" && items.push({ num: x.rank, v: clip(x.title, 48) }));
+    if (slides.some((x) => x.t === "rank")) slides.filter((x) => x.t === "rank").slice(0, 3).forEach((x) => x.t === "rank" && items.push({ num: x.rank, v: clip(x.title, 48) }));
     else {
       const st = slides.find((x) => x.t === "stats");
       if (st?.t === "stats") st.tiles.slice(0, 3).forEach((t, i) => items.push({ k: t.k, v: t.v, icon: ["coin", "chart", "clock"][i], amber: i === 2 }));

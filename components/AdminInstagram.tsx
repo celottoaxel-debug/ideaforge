@@ -17,7 +17,7 @@ export function GenerateCarousel() {
   }
   return (
     <div className="ig-gen">
-      {[["idea", "💡 1 idée chiffrée"], ["top5", "🏆 Top 5 d'un thème"], ["new", "✨ Nouvelle idée IA"]].map(([k, l]) => (
+      {[["tofu", "🧲 TOFU : attirer"], ["mofu", "🤝 MOFU : convaincre"], ["bofu", "🎯 BOFU : convertir"], ["idea", "💡 1 idée chiffrée"], ["top5", "🏆 Top 5"], ["new", "✨ Nouvelle idée IA"]].map(([k, l]) => (
         <button key={k} type="button" className="btn" disabled={!!busy} onClick={() => go(k)}>{busy === k ? "Création…" : l}</button>
       ))}
       {err && <p className="msg err">{err}</p>}

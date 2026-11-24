@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Instagram · Admin", robots: { index: false, follow: false } };
 
 type Post = { id: number; kind: string; slot: string | null; slides: unknown[]; caption: string; status: string; permalink: string | null; error: string | null; created_at: string; published_at: string | null; theme: string | null };
-const KIND: Record<string, string> = { idea: "💡 Idée chiffrée", top5: "🏆 Top 5", new: "✨ Nouvelle idée IA" };
+const KIND: Record<string, string> = { idea: "💡 Idée chiffrée", top5: "🏆 Top 5", new: "✨ Nouvelle idée IA", tofu: "🧲 TOFU · attirer", mofu: "🤝 MOFU · convaincre", bofu: "🎯 BOFU · convertir" };
 const fmt = (d: string | null) => (d ? new Date(d).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" }) : "");
 
 /** Libellé honnête du lien : post précis, compte Instagram ou article source. */

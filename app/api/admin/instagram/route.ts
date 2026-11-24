@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   try { body = await request.json(); } catch {}
   try {
     if (body.action === "generate") {
-      const kind = (["idea", "top5", "new"].includes(String(body.kind)) ? body.kind : "idea") as Kind;
+      const kind = (["idea", "top5", "new", "tofu", "mofu", "bofu"].includes(String(body.kind)) ? body.kind : "idea") as Kind;
       return NextResponse.json({ ok: true, id: await createPost(kind) });
     }
     if (body.action === "reel-done" && Number.isInteger(body.id)) return NextResponse.json(await reelDone(body.id as number));
