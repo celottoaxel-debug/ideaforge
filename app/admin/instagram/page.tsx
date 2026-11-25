@@ -5,7 +5,7 @@ import { igAccount, recentStories, getReel, recentUgc, ugcFaces, ugcEndings, rec
 import { allIdeas } from "@/lib/seo";
 import { watchAccounts, watchData, customHooks } from "@/lib/instagram/watch";
 import { scoreIdea } from "@/lib/score";
-import { GenerateCarousel, PublishButton, CopyCaption, StoryButtons, ReelButtons, UgcPublish, UgcStudio, WatchAdd, WatchRemove, UseHook, Reproduce, ShareToInstagram } from "@/components/AdminInstagram";
+import { GenerateCarousel, PublishButton, CopyCaption, StoryButtons, ReelButtons, UgcPublish, UgcStudio, WatchAdd, WatchRemove, UseHook, Reproduce, ShareToInstagram, ArchiveButton } from "@/components/AdminInstagram";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Instagram · Admin", robots: { index: false, follow: false } };
@@ -84,6 +84,7 @@ export default async function AdminInstagram({ searchParams }: { searchParams?: 
               <a className="btn" href={`/api/ig/download?u=${encodeURIComponent(row.url)}&name=reel-${date}`} download>⬇️ Sans musique (TikTok, Shorts)</a>
               {row.url_music && <a className="btn" href={`/api/ig/download?u=${encodeURIComponent(row.url_music)}&name=reel-${date}-beat`} download>⬇️ Avec beat</a>}
               {row.status !== "published" && <UgcPublish date={date} disabled={!acc.ok} />}
+              {row.status !== "published" && <ArchiveButton type="ugc" id={date} />}
               {row.permalink && <a className="btn" href={row.permalink} target="_blank" rel="noopener noreferrer">Voir sur Instagram ↗</a>}
               <CopyCaption text={row.caption} />
             </div>
@@ -123,7 +124,10 @@ export default async function AdminInstagram({ searchParams }: { searchParams?: 
         </div>
         <div className="ig-actions">
           {polls.filter(({ row }) => row.status !== "published").map(({ key }) => (
-            <a key={`dl${key}`} className="btn" href={`/api/ig/save/poll/${key}`} download>📥 Sondage {key.endsWith("am") ? "de midi" : "du soir"} (je le poste moi-même)</a>
+            <span key={`dl${key}`} style={{ display: "contents" }}>
+              <a className="btn" href={`/api/ig/save/poll/${key}`} download>📥 Sondage {key.endsWith("am") ? "de midi" : "du soir"} (je le poste moi-même)</a>
+              <ArchiveButton type="poll" id={key} label={`🗂️ Archiver le sondage ${key.endsWith("am") ? "de midi" : "du soir"}`} />
+            </span>
           ))}
         </div>
         {polls.filter((p) => p.row.status === "error").slice(0, 1).map((p) => <p key={p.key} className="msg err">{p.row.error}</p>)}
@@ -147,6 +151,7 @@ export default async function AdminInstagram({ searchParams }: { searchParams?: 
         {todayStory && todayStory.row.status !== "published" && (
           <div className="ig-actions">
             <a className="btn" href={`/api/ig/save/story/${todayStory.date}`} download>📥 Télécharger (je la poste avec une musique)</a>
+            <ArchiveButton type="story" id={todayStory.date} />
           </div>
         )}
         <p className="ugc-note">« Télécharger » enregistre l&apos;image et range la story dans 🗂️ Archives comme si elle était publiée : le site ne la postera pas une 2e fois.</p>
@@ -156,7 +161,7 @@ export default async function AdminInstagram({ searchParams }: { searchParams?: 
       <GenerateCarousel />
 
       <h2 className="val-sec" style={{ marginTop: 30 }}>Carrousels à publier</h2>
-      <p className="ugc-note" style={{ marginBottom: 10 }}>Dès qu&apos;un carrousel, un réel, une story ou un sondage est publié, il passe dans 🗂️ Archives.</p>
+      <p className="ugc-note" style={{ marginBottom: 10 }}>Dès qu&apos;un carrousel, un réel, une story ou un sondage est publié, il passe dans 🗂️ Archives. Tu l&apos;as posté toi-même ? Appuie sur « 🗂️ Archiver ».</p>
       {posts.length === 0 && <p className="vis-empty">Aucun carrousel pour l&apos;instant. Le premier sera créé automatiquement lundi, mercredi ou vendredi, ou tout de suite avec un bouton ci-dessus.</p>}
       <div className="ig-list">
         {posts.filter((p) => p.status !== "published" || (reels.get(p.id) && reels.get(p.id)?.status !== "published")).map((p) => (
@@ -181,11 +186,13 @@ export default async function AdminInstagram({ searchParams }: { searchParams?: 
                 <div className="ig-actions" style={{ marginTop: 8 }}>
                   {r.url && <a className="btn" href={`/api/ig/download?u=${encodeURIComponent(r.url)}&name=reel-anime-${p.id}`} download>⬇️ Télécharger (TikTok, Shorts)</a>}
                   {r.permalink && <a className="btn" href={r.permalink} target="_blank" rel="noopener noreferrer">Voir le réel ↗</a>}
+                  {r.status !== "published" && r.url && <ArchiveButton type="reel" id={p.id} label="🗂️ Archiver le réel" />}
                 </div>
               </div>) : null; })()}
             <div className="ig-actions">
               {p.status !== "published" && <ShareToInstagram id={p.id} />}
               {p.status !== "published" && <PublishButton id={p.id} disabled={!acc.ok} />}
+              {p.status !== "published" && <ArchiveButton type="post" id={p.id} label="🗂️ Archiver le carrousel" />}
               {reels.get(p.id)?.status !== "published" && <ReelButtons id={p.id} canPublish={acc.ok} hasVideo={!!reels.get(p.id)?.url} />}
               {p.permalink && <a className="btn" href={p.permalink} target="_blank" rel="noopener noreferrer">Voir sur Instagram ↗</a>}
               <CopyCaption text={p.caption} />
@@ -273,6 +280,7 @@ async function Archives({ canPublish }: { canPublish: boolean }) {
               <div className="ig-actions">
                 {r?.url && <a className="btn" href={dl(r.url, `reel-anime-${p.id}`)} download>⬇️ Réel animé</a>}
                 {r?.status !== "published" && <ReelButtons id={p.id} canPublish={canPublish} hasVideo={!!r?.url} />}
+                {r && r.status !== "published" && r.url && <ArchiveButton type="reel" id={p.id} label="🗂️ Archiver le réel" />}
                 {p.permalink && <a className="btn" href={p.permalink} target="_blank" rel="noopener noreferrer">Voir le carrousel ↗</a>}
                 {r?.permalink && <a className="btn" href={r.permalink} target="_blank" rel="noopener noreferrer">Voir le réel ↗</a>}
                 <CopyCaption text={p.caption} />

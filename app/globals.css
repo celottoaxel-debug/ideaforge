@@ -1207,3 +1207,7 @@ footer .brand { color: var(--ink); }
   .lh-stats > div:last-child { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .lh-trail, .lh-bar i, .lh-up { animation: none; } }
+
+/* Bouton « Archiver la publication » (panel Instagram) */
+.btn.ig-archive{background:var(--green-wash,#e1f1e7);color:#127a4b;border-color:#c6e4d2;font-weight:700}
+.btn.ig-archive:hover{background:#d3ebdc}

@@ -215,6 +215,25 @@ export async function manualDone(id: number) {
   return { ok: true };
 }
 
+/** Bouton « Archiver la publication » : range n'importe quel média posté à la main dans les Archives. */
+export type ArchiveType = "post" | "reel" | "ugc" | "story" | "poll";
+export async function archiveMedia(type: ArchiveType, key: string): Promise<{ ok: boolean; error?: string }> {
+  if (type === "post" || type === "reel") {
+    const id = Number(key);
+    if (!Number.isInteger(id)) return { ok: false, error: "Publication introuvable" };
+    return type === "post" ? manualDone(id) : reelDone(id);
+  }
+  if (type === "ugc") return ugcDone(key);
+  const k = `ig_${type}:${key}`;
+  const v = await setting(k);
+  if (!v) return { ok: false, error: "Publication introuvable" };
+  try {
+    const row = JSON.parse(v);
+    if (row.status !== "published") await saveSetting(k, JSON.stringify({ ...row, status: "published", manual: true, error: undefined, at: new Date().toISOString() }));
+  } catch { return { ok: false, error: "Publication illisible" }; }
+  return { ok: true };
+}
+
 export async function publishPost(id: number): Promise<{ ok: boolean; permalink?: string; error?: string }> {
   const admin = createAdminClient();
   const { data: post } = await admin.from("ig_posts").select("*").eq("id", id).maybeSingle();

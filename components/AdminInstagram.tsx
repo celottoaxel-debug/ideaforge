@@ -90,7 +90,6 @@ export function ReelButtons({ id, canPublish, hasVideo }: { id: number; canPubli
     <>
       <button type="button" className="btn" disabled={!!busy} onClick={() => go("reel-prepare")}>{busy === "reel-prepare" ? "Montage… (1 min)" : hasVideo ? "🎬 Refaire la vidéo" : "🎬 Créer le réel"}</button>
       {hasVideo && <button type="button" className="btn primary" disabled={!canPublish || !!busy} onClick={() => go("reel-publish")}>{busy === "reel-publish" ? "Publication… (1-2 min)" : "🎬 Publier le réel"}</button>}
-      {hasVideo && <button type="button" className="btn" disabled={!!busy} onClick={() => go("reel-done")}>{busy === "reel-done" ? "…" : "✅ Je l'ai posté moi-même"}</button>}
       {err && <p className="msg err">{err}</p>}
     </>
   );
@@ -112,7 +111,6 @@ export function UgcPublish({ date, disabled }: { date: string; disabled?: boolea
   return (
     <>
       <button type="button" className="btn primary" disabled={disabled || busy} onClick={() => go()}>{busy ? "Publication… (1-2 min)" : "🎥 Publier sur Instagram"}</button>
-      <button type="button" className="btn" disabled={busy} onClick={() => go("ugc-done")}>✅ Je l&apos;ai posté moi-même</button>
       {err && <p className="msg err">{err}</p>}
     </>
   );
@@ -305,6 +303,24 @@ export function ShareToInstagram({ id }: { id: number }) {
         <button type="button" className="btn primary" onClick={done}>✅ J&apos;ai publié</button>
       </>}
       {(state === "ready" || state === "shared") && <p className="ugc-note" style={{ width: "100%" }}>Dans le menu, choisis <b>Instagram</b> puis <b>Publication</b>. Ajoute ta musique, puis dans la légende fais un appui long → <b>Coller</b> : la description et les hashtags sont déjà copiés.</p>}
+      {err && <p className="msg err">{err}</p>}
+    </>
+  );
+}
+
+/** « Archiver la publication » : un clic quand c'est posté, et ça part dans 🗂️ Archives. */
+export function ArchiveButton({ type, id, label = "🗂️ Archiver la publication" }: { type: "post" | "reel" | "ugc" | "story" | "poll"; id: string | number; label?: string }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  async function go() {
+    setBusy(true); setErr("");
+    try { await api({ action: "archive", type, key: String(id) }); window.location.reload(); return; }
+    catch (e) { setErr(e instanceof Error ? e.message : "Erreur"); }
+    setBusy(false);
+  }
+  return (
+    <>
+      <button type="button" className="btn ig-archive" disabled={busy} onClick={go}>{busy ? "Archivage…" : label}</button>
       {err && <p className="msg err">{err}</p>}
     </>
   );
