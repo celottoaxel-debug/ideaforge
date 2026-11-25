@@ -10,7 +10,7 @@ import { SITE } from "@/lib/seo";
 import type { Slide } from "@/lib/instagram/content";
 import { pickSoundtrack, renderSoundtrack } from "@/lib/instagram/sound";
 
-export type ReelRow = { status: "draft" | "published" | "error"; url?: string; media_id?: string; permalink?: string; error?: string; at?: string };
+export type ReelRow = { status: "draft" | "published" | "error"; url?: string; media_id?: string; permalink?: string; error?: string; at?: string; container?: string; manual?: boolean };
 
 async function ffmpegPath(): Promise<string> {
   const mod = (await import("ffmpeg-static")) as unknown as { default?: string } | string;

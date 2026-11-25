@@ -426,12 +426,27 @@ export async function publishReel(postId: number): Promise<{ ok: boolean; permal
     if (!token) throw new Error("Instagram non connecté");
     const acc = await igAccount();
     if (!acc.ok || !acc.id) throw new Error(acc.error || "Compte Instagram introuvable");
+    // Déjà en file d'attente chez Instagram : on ne crée pas un 2e média (pas de doublon)
+    if (row.container) {
+      let q: Pending[] = [];
+      try { q = JSON.parse((await setting("ig_pending")) || "[]"); } catch {}
+      if (q.some((x) => x.container === row.container)) return { ok: true, error: "Instagram traite déjà la vidéo : publication automatique dans quelques minutes" };
+    }
     const c = await ig(`${acc.id}/media`, { media_type: "REELS", video_url: row.url!, caption: await withFreshHashtags(post.caption as string), share_to_feed: "true", access_token: token });
-    await waitReady(c.id, token, 70);
+    // Instagram peut mettre plusieurs minutes à traiter une vidéo : au-delà d'1 min 30, la publication
+    // continue toute seule (tâche toutes les 5 min) au lieu de couper en silence.
+    try { await readyOrQueue(c.id, token, "reel", String(postId), 30); }
+    catch (e) {
+      if (e instanceof Error && e.message === "PENDING") {
+        await putReel(postId, { ...row, status: "draft", container: c.id, error: "Instagram traite la vidéo : publication automatique dans quelques minutes" });
+        return { ok: true, error: "Instagram traite la vidéo : publication automatique dans quelques minutes" };
+      }
+      throw e;
+    }
     const pub = await ig(`${acc.id}/media_publish`, { creation_id: c.id, access_token: token });
     let permalink: string | undefined;
     try { permalink = (await ig(pub.id, { fields: "permalink", access_token: token }, "GET")).permalink; } catch {}
-    await putReel(postId, { ...row, status: "published", media_id: pub.id, permalink, error: undefined, at: new Date().toISOString() });
+    await putReel(postId, { ...row, status: "published", media_id: pub.id, permalink, error: undefined, container: undefined, at: new Date().toISOString() });
     return { ok: true, permalink };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
@@ -730,12 +745,14 @@ export async function finishPending(): Promise<{ done: number; left: number }> {
       if (p.kind === "ugc") { const r = await getUgc(p.key); if (r) await putUgc(p.key, { ...r, caption: (r as UgcRow & { caption_final?: string }).caption_final || r.caption, status: "published", media_id: pub.id, permalink, error: undefined, at: now }); }
       if (p.kind === "poll") { const v = await setting(`ig_poll:${p.key}`); if (v) await saveSetting(`ig_poll:${p.key}`, JSON.stringify({ ...JSON.parse(v), status: "published", media_id: pub.id, error: undefined, at: now })); }
       if (p.kind === "story") { const r = await getStory(p.key); if (r) await putStory(p.key, { ...r, status: "published", media_id: pub.id, error: undefined, at: now }); }
+      if (p.kind === "reel") { const r = await getReel(Number(p.key)); if (r) await putReel(Number(p.key), { ...r, status: "published", media_id: pub.id, permalink, error: undefined, container: undefined, at: now }); }
       done++;
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       if (p.kind === "ugc") { const r = await getUgc(p.key); if (r) await putUgc(p.key, { ...r, status: "error", error: msg }); }
       if (p.kind === "poll") { const v = await setting(`ig_poll:${p.key}`); if (v) await saveSetting(`ig_poll:${p.key}`, JSON.stringify({ ...JSON.parse(v), status: "error", error: msg })); }
       if (p.kind === "story") { const r = await getStory(p.key); if (r) await putStory(p.key, { ...r, status: "error", error: msg }); }
+      if (p.kind === "reel") { const r = await getReel(Number(p.key)); if (r) await putReel(Number(p.key), { ...r, status: "error", error: msg, container: undefined }); }
     }
   }
   // On relit la file : un média ajouté pendant ce passage ne doit pas être effacé
