@@ -170,10 +170,11 @@ async function usedIdeasExcept(postId: number): Promise<Set<string>> {
 /** Crée un brouillon de carrousel (sans publier). */
 export async function createPost(kind: Kind, slot?: string) {
   const admin = createAdminClient();
-  const { data: prev } = await admin.from("ig_posts").select("ideas, kind").order("created_at", { ascending: false }).limit(200);
+  // Historique complet (brouillons compris) : sert à ne jamais refaire le même format, thème ou accroche
+  const { data: prev } = await admin.from("ig_posts").select("kind, theme, slides").order("created_at", { ascending: false }).limit(300);
   const used = await usedIdeas();
-  const themeIndex = (prev ?? []).filter((p) => p.kind === kind).length;
-  const d = await buildDraft(kind, used, themeIndex);
+  const hist = (prev ?? []).map((p) => ({ kind: p.kind as string, theme: (p.theme as string | null) ?? null, cover: String(((p.slides as { title?: string }[]) ?? [])[0]?.title ?? "") }));
+  const d = await buildDraft(kind, used, hist);
   const { data, error } = await admin.from("ig_posts").insert({ kind: d.kind, slot: slot ?? null, ideas: d.ideas, slides: d.slides, caption: d.caption, theme: d.theme ?? null, status: "draft" }).select("id").single();
   if (error) throw new Error(error.message);
   return data.id as number;
