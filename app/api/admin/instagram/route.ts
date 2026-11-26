@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/admin";
-import { createPost, publishPost, prepareStory, publishStory, prepareReel, publishReel, publishUgc, addUgcMedia, removeUgcMedia, requestUgc, ugcUploadUrl, ugcFaces, ugcEndings, manualCaption, manualDone, reelDone, ugcDone, archiveMedia, UGC_HOOKS } from "@/lib/instagram/publish";
+import { createPost, publishPost, prepareStory, publishStory, prepareReel, publishReel, publishUgc, addUgcMedia, removeUgcMedia, requestUgc, ugcUploadUrl, ugcFaces, ugcEndings, manualCaption, manualDone, reelDone, ugcDone, archiveMedia, markTikTok, UGC_HOOKS } from "@/lib/instagram/publish";
 import type { Kind } from "@/lib/instagram/content";
 import { runWatch, watchAccounts, watchData, setWatchAccounts, addCustomHook, customHooks } from "@/lib/instagram/watch";
 
@@ -18,6 +18,7 @@ export async function POST(request: Request) {
       const kind = (["idea", "top5", "new", "tofu", "mofu", "bofu"].includes(String(body.kind)) ? body.kind : "idea") as Kind;
       return NextResponse.json({ ok: true, id: await createPost(kind) });
     }
+    if (body.action === "tiktok-done" && /^(ugc|reel|post):[\w-]{1,40}$/.test(String(body.key))) return NextResponse.json(await markTikTok(String(body.key)));
     if (body.action === "archive" && ["post", "reel", "ugc", "story", "poll"].includes(String(body.type)) && /^[\w-]{1,40}$/.test(String(body.key))) {
       return NextResponse.json(await archiveMedia(body.type as "post" | "reel" | "ugc" | "story" | "poll", String(body.key)));
     }

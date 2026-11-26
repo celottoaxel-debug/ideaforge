@@ -1211,3 +1211,7 @@ footer .brand { color: var(--ink); }
 /* Bouton « Archiver la publication » (panel Instagram) */
 .btn.ig-archive{background:var(--green-wash,#e1f1e7);color:#127a4b;border-color:#c6e4d2;font-weight:700}
 .btn.ig-archive:hover{background:#d3ebdc}
+
+/* Bouton « Publier sur TikTok » */
+.btn.tt-btn{background:#0c1512;color:#fff;border-color:#0c1512;font-weight:700}
+.btn.tt-btn:hover{background:#1d2a25}

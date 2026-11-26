@@ -813,3 +813,14 @@ export async function notifyReady(): Promise<number> {
   await saveSetting("ig_notified", JSON.stringify([...fresh.map((i) => i.key), ...sent].slice(0, 300)));
   return fresh.length;
 }
+
+// ───────── TikTok : publié à la main depuis l'iPhone (bouton « Publier sur TikTok ») ─────────
+/** Clés déjà postées sur TikTok : « ugc:<date> », « reel:<id> », « post:<id> ». */
+export async function tiktokDone(): Promise<Set<string>> {
+  const { data } = await createAdminClient().from("app_settings").select("key").like("key", "tt_done:%").limit(1000);
+  return new Set((data ?? []).map((d: { key: string }) => d.key.slice(8)));
+}
+export async function markTikTok(key: string) {
+  await saveSetting(`tt_done:${key}`, JSON.stringify({ at: new Date().toISOString() }));
+  return { ok: true };
+}

@@ -325,3 +325,59 @@ export function ArchiveButton({ type, id, label = "🗂️ Archiver la publicati
     </>
   );
 }
+
+/** Légende TikTok : le texte de la légende Instagram, avec des hashtags adaptés à TikTok. */
+function tiktokCaption(c: string) {
+  const body = c.split("\n").filter((l) => !/^\s*(#\S+\s*)+$/.test(l)).join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  return `${body}\n\n#ideedebusiness #entrepreneur #business #ia #lancersonbusiness`.slice(0, 2200);
+}
+
+/** « Publier sur TikTok » : prépare la vidéo (ou les slides), copie la légende et ouvre le menu de partage de l'iPhone. */
+export function ShareToTikTok({ tkey, video, slides, caption, posted }: { tkey: string; video?: string; slides?: { id: number; count: number }; caption: string; posted?: boolean }) {
+  const [state, setState] = useState<"idle" | "busy" | "ready" | "shared">("idle");
+  const [err, setErr] = useState("");
+  const [files, setFiles] = useState<File[] | null>(null);
+  if (posted) return <span className="ref-pill paid" title="Déjà publié sur TikTok">✅ Sur TikTok</span>;
+  async function prepare() {
+    setState("busy"); setErr("");
+    try {
+      const out: File[] = [];
+      if (video) {
+        const r = await fetch(`/api/ig/download?u=${encodeURIComponent(video)}&name=tiktok-${tkey.replace(":", "-")}`);
+        if (!r.ok) throw new Error("Vidéo introuvable");
+        out.push(new File([await r.blob()], `ideaforge-${tkey.replace(":", "-")}.mp4`, { type: "video/mp4" }));
+      } else if (slides) {
+        for (let n = 1; n <= Math.min(slides.count, 35); n++) {
+          const r = await fetch(`/api/ig/jpg/${slides.id}/${n}.jpg`);
+          if (!r.ok) throw new Error(`Slide ${n} introuvable`);
+          out.push(new File([await r.blob()], `ideaforge-${slides.id}-${n}.jpg`, { type: "image/jpeg" }));
+        }
+      }
+      if (!out.length) throw new Error("Rien à publier");
+      if (!navigator.canShare || !navigator.canShare({ files: out })) throw new Error("Ouvre ce panel sur ton iPhone (Safari) pour publier sur TikTok.");
+      setFiles(out); setState("ready");
+    } catch (e) { setErr(e instanceof Error ? e.message : "Erreur"); setState("idle"); }
+  }
+  async function open() {
+    if (!files) return;
+    navigator.clipboard.writeText(tiktokCaption(caption)).catch(() => {});
+    try { await navigator.share({ files }); setState("shared"); }
+    catch (e) { if (!(e instanceof Error && e.name === "AbortError")) setErr("Le partage n'a pas marché, réessaie."); }
+  }
+  async function done() {
+    try { await api({ action: "tiktok-done", key: tkey }); window.location.reload(); } catch (e) { setErr(e instanceof Error ? e.message : "Erreur"); }
+  }
+  return (
+    <>
+      {state === "idle" && <button type="button" className="btn tt-btn" onClick={prepare}>🎵 Publier sur TikTok</button>}
+      {state === "busy" && <button type="button" className="btn tt-btn" disabled>{video ? "Préparation de la vidéo…" : "Préparation des slides…"}</button>}
+      {state === "ready" && <button type="button" className="btn tt-btn" onClick={open}>📲 Ouvrir TikTok</button>}
+      {state === "shared" && <>
+        <button type="button" className="btn" onClick={open}>📲 Rouvrir TikTok</button>
+        <button type="button" className="btn tt-btn" onClick={done}>✅ C&apos;est posté sur TikTok</button>
+      </>}
+      {(state === "ready" || state === "shared") && <p className="ugc-note" style={{ width: "100%" }}>Dans le menu, choisis <b>TikTok</b>. Ajoute un son si tu veux, puis dans la description fais un appui long → <b>Coller</b> : le texte et les hashtags TikTok sont déjà copiés.</p>}
+      {err && <p className="msg err">{err}</p>}
+    </>
+  );
+}

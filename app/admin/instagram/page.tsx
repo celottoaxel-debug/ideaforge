@@ -1,11 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin";
-import { igAccount, recentStories, getReel, recentUgc, ugcFaces, ugcEndings, recentUgcRequests, UGC_HOOKS, recentPolls, igMedia } from "@/lib/instagram/publish";
+import { igAccount, recentStories, getReel, recentUgc, ugcFaces, ugcEndings, recentUgcRequests, UGC_HOOKS, recentPolls, igMedia, tiktokDone } from "@/lib/instagram/publish";
 import { allIdeas } from "@/lib/seo";
 import { watchAccounts, watchData, customHooks } from "@/lib/instagram/watch";
 import { scoreIdea } from "@/lib/score";
-import { GenerateCarousel, PublishButton, CopyCaption, StoryButtons, ReelButtons, UgcPublish, UgcStudio, WatchAdd, WatchRemove, UseHook, Reproduce, ShareToInstagram, ArchiveButton } from "@/components/AdminInstagram";
+import { GenerateCarousel, PublishButton, CopyCaption, StoryButtons, ReelButtons, UgcPublish, UgcStudio, WatchAdd, WatchRemove, UseHook, Reproduce, ShareToInstagram, ArchiveButton, ShareToTikTok } from "@/components/AdminInstagram";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Instagram · Admin", robots: { index: false, follow: false } };
@@ -43,6 +43,7 @@ export default async function AdminInstagram({ searchParams }: { searchParams?: 
   let topIdeas: { path: string; title: string; score: number }[] = [];
   try { topIdeas = (await allIdeas()).map((i) => ({ path: `/idea/${i.id}`, title: i.title, score: scoreIdea(i).score })).sort((a, b) => b.score - a.score).slice(0, 40); } catch {}
   const polls = await recentPolls(6).catch(() => []);
+  const tt = await tiktokDone().catch(() => new Set<string>());
   const queued = requests.filter((r) => r.row.status === "pending" || r.row.status === "working" || r.row.status === "error");
   const today = new Date().toISOString().slice(0, 10);
   const todayStory = stories.find((x) => x.date === today);
@@ -85,6 +86,7 @@ export default async function AdminInstagram({ searchParams }: { searchParams?: 
               {row.url_music && <a className="btn" href={`/api/ig/download?u=${encodeURIComponent(row.url_music)}&name=reel-${date}-beat`} download>⬇️ Avec beat</a>}
               {row.status !== "published" && <UgcPublish date={date} disabled={!acc.ok} />}
               {row.status !== "published" && <ArchiveButton type="ugc" id={date} />}
+              <ShareToTikTok tkey={`ugc:${date}`} video={row.url} caption={row.caption} posted={tt.has(`ugc:${date}`)} />
               {row.permalink && <a className="btn" href={row.permalink} target="_blank" rel="noopener noreferrer">Voir sur Instagram ↗</a>}
               <CopyCaption text={row.caption} />
             </div>
@@ -187,12 +189,14 @@ export default async function AdminInstagram({ searchParams }: { searchParams?: 
                   {r.url && <a className="btn" href={`/api/ig/download?u=${encodeURIComponent(r.url)}&name=reel-anime-${p.id}`} download>⬇️ Télécharger (TikTok, Shorts)</a>}
                   {r.permalink && <a className="btn" href={r.permalink} target="_blank" rel="noopener noreferrer">Voir le réel ↗</a>}
                   {r.status !== "published" && r.url && <ArchiveButton type="reel" id={p.id} label="🗂️ Archiver le réel" />}
+                  {r.url && <ShareToTikTok tkey={`reel:${p.id}`} video={r.url} caption={p.caption} posted={tt.has(`reel:${p.id}`)} />}
                 </div>
               </div>) : null; })()}
             <div className="ig-actions">
               {p.status !== "published" && <ShareToInstagram id={p.id} />}
               {p.status !== "published" && <PublishButton id={p.id} disabled={!acc.ok} />}
               {p.status !== "published" && <ArchiveButton type="post" id={p.id} label="🗂️ Archiver le carrousel" />}
+              <ShareToTikTok tkey={`post:${p.id}`} slides={{ id: p.id, count: p.slides.length }} caption={p.caption} posted={tt.has(`post:${p.id}`)} />
               {reels.get(p.id)?.status !== "published" && <ReelButtons id={p.id} canPublish={acc.ok} hasVideo={!!reels.get(p.id)?.url} />}
               {p.permalink && <a className="btn" href={p.permalink} target="_blank" rel="noopener noreferrer">Voir sur Instagram ↗</a>}
               <CopyCaption text={p.caption} />
@@ -216,6 +220,7 @@ async function Archives({ canPublish }: { canPublish: boolean }) {
   const pubUgc = ugcList.filter(({ row }) => row.status === "published");
   const reelMap = new Map<number, Awaited<ReturnType<typeof getReel>>>();
   await Promise.all(pubPosts.map(async (p) => { try { reelMap.set(p.id, await getReel(p.id)); } catch {} }));
+  const tt = await tiktokDone().catch(() => new Set<string>());
   const dl = (u: string, name: string) => `/api/ig/download?u=${encodeURIComponent(u)}&name=${name}`;
   const [media, stories, polls] = await Promise.all([
     igMedia(90).catch(() => [] as Awaited<ReturnType<typeof igMedia>>),
@@ -252,6 +257,7 @@ async function Archives({ canPublish }: { canPublish: boolean }) {
               {row.url_music && <a className="btn" href={dl(row.url_music, `reel-${date}-beat`)} download>⬇️ Avec beat</a>}
               {row.permalink && <a className="btn" href={row.permalink} target="_blank" rel="noopener noreferrer">Voir sur Instagram ↗</a>}
               <CopyCaption text={row.caption} />
+              <ShareToTikTok tkey={`ugc:${date}`} video={row.url} caption={row.caption} posted={tt.has(`ugc:${date}`)} />
             </div>
           </article>
         ))}
@@ -284,6 +290,8 @@ async function Archives({ canPublish }: { canPublish: boolean }) {
                 {p.permalink && <a className="btn" href={p.permalink} target="_blank" rel="noopener noreferrer">Voir le carrousel ↗</a>}
                 {r?.permalink && <a className="btn" href={r.permalink} target="_blank" rel="noopener noreferrer">Voir le réel ↗</a>}
                 <CopyCaption text={p.caption} />
+                {r?.url && <ShareToTikTok tkey={`reel:${p.id}`} video={r.url} caption={p.caption} posted={tt.has(`reel:${p.id}`)} />}
+                <ShareToTikTok tkey={`post:${p.id}`} slides={{ id: p.id, count: p.slides.length }} caption={p.caption} posted={tt.has(`post:${p.id}`)} />
               </div>
             </article>
           );
