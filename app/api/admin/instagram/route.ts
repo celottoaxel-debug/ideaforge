@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/admin";
-import { createPost, publishPost, prepareStory, publishStory, prepareReel, publishReel, publishUgc, addUgcMedia, removeUgcMedia, requestUgc, ugcUploadUrl, ugcFaces, ugcEndings, manualCaption, manualDone, reelDone, ugcDone, archiveMedia, markTikTok, UGC_HOOKS } from "@/lib/instagram/publish";
+import { createPost, publishPost, prepareStory, publishStory, prepareReel, publishReel, publishUgc, addUgcMedia, removeUgcMedia, requestUgc, ugcUploadUrl, ugcFaces, ugcEndings, manualCaption, manualDone, reelDone, ugcDone, archiveMedia, markTikTok, saveIgToken, UGC_HOOKS } from "@/lib/instagram/publish";
 import type { Kind } from "@/lib/instagram/content";
 import { runWatch, watchAccounts, watchData, setWatchAccounts, addCustomHook, customHooks } from "@/lib/instagram/watch";
 
@@ -11,13 +11,14 @@ export const maxDuration = 300;
 export async function POST(request: Request) {
   const { data: { user } } = await createClient().auth.getUser();
   if (!user || !isAdminEmail(user.email)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
-  let body: { action?: string; kind?: string; id?: number; date?: string; username?: string; market?: string; theme?: string; filename?: string; url?: string; label?: string; duration?: number; path?: string; face?: string; end?: string; idea?: string; hook?: string; oid?: string; type?: string; key?: string } = {};
+  let body: { action?: string; kind?: string; id?: number; date?: string; username?: string; market?: string; theme?: string; filename?: string; url?: string; label?: string; duration?: number; path?: string; face?: string; end?: string; idea?: string; hook?: string; oid?: string; type?: string; key?: string; token?: string } = {};
   try { body = await request.json(); } catch {}
   try {
     if (body.action === "generate") {
       const kind = (["idea", "top5", "new", "tofu", "mofu", "bofu"].includes(String(body.kind)) ? body.kind : "idea") as Kind;
       return NextResponse.json({ ok: true, id: await createPost(kind) });
     }
+    if (body.action === "ig-token" && typeof body.token === "string" && body.token.length < 1000) return NextResponse.json(await saveIgToken(body.token));
     if (body.action === "tiktok-done" && /^(ugc|reel|post):[\w-]{1,40}$/.test(String(body.key))) return NextResponse.json(await markTikTok(String(body.key)));
     if (body.action === "archive" && ["post", "reel", "ugc", "story", "poll"].includes(String(body.type)) && /^[\w-]{1,40}$/.test(String(body.key))) {
       return NextResponse.json(await archiveMedia(body.type as "post" | "reel" | "ugc" | "story" | "poll", String(body.key)));

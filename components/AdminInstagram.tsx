@@ -381,3 +381,37 @@ export function ShareToTikTok({ tkey, video, slides, caption, posted }: { tkey: 
     </>
   );
 }
+
+/** Reconnecter Instagram : on colle le nouveau jeton ici, il est vérifié puis enregistré (pas besoin de Vercel). */
+export function IgReconnect({ reason }: { reason: string }) {
+  const [token, setToken] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  async function save() {
+    setBusy(true); setMsg(null);
+    try {
+      const r = await fetch("/api/admin/instagram", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "ig-token", token }) });
+      const j = await r.json();
+      if (j.ok) { setToken(""); setMsg({ ok: true, text: `✅ Reconnecté à @${j.username}. Les publications automatiques reprennent.` }); setTimeout(() => window.location.reload(), 1800); }
+      else setMsg({ ok: false, text: j.error || "Erreur" });
+    } catch { setMsg({ ok: false, text: "Erreur réseau" }); }
+    setBusy(false);
+  }
+  return (
+    <div className="admin-warn ig-reconnect" style={{ marginBottom: 22 }}>
+      <b>⚠️ Instagram ne laisse plus le site publier</b>
+      <p style={{ margin: "6px 0 10px" }}>{reason}</p>
+      <ol style={{ margin: "0 0 12px", paddingLeft: 20, lineHeight: 1.6 }}>
+        <li>Sur ton ordinateur, ouvre <a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener noreferrer">developers.facebook.com/apps</a> et clique sur ton app IdeaForge.</li>
+        <li>Dans le menu de gauche : <b>Cas d&apos;usage</b>, puis <b>Personnaliser</b> à côté d&apos;Instagram, puis <b>Configuration de l&apos;API avec connexion Instagram</b>.</li>
+        <li>Partie « Générer des jetons d&apos;accès » : clique sur <b>Générer un jeton</b> à côté de @ideasforge.io (ou <b>Ajouter un compte</b>), connecte-toi et <b>coche tout</b>, surtout « publier du contenu ».</li>
+        <li>Copie le jeton (il commence par <b>IGAA</b>) et colle-le ci-dessous.</li>
+      </ol>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <input type="password" autoComplete="off" placeholder="Colle ton nouveau jeton ici" value={token} onChange={(e) => setToken(e.target.value)} style={{ flex: "1 1 260px", padding: "10px 12px", borderRadius: 10, border: "1px solid var(--line, #dcded7)", fontSize: 15 }} />
+        <button type="button" className="btn primary" disabled={busy || token.trim().length < 40} onClick={save}>{busy ? "Vérification…" : "🔌 Reconnecter Instagram"}</button>
+      </div>
+      {msg && <p className={`msg ${msg.ok ? "ok" : "err"}`} style={{ marginTop: 8 }}>{msg.text}</p>}
+    </div>
+  );
+}

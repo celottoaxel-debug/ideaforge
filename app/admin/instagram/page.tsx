@@ -1,11 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin";
-import { igAccount, recentStories, getReel, recentUgc, ugcFaces, ugcEndings, recentUgcRequests, UGC_HOOKS, recentPolls, igMedia, tiktokDone } from "@/lib/instagram/publish";
+import { igAccount, recentStories, getReel, recentUgc, ugcFaces, ugcEndings, recentUgcRequests, UGC_HOOKS, recentPolls, igMedia, tiktokDone, igPermissionLost } from "@/lib/instagram/publish";
 import { allIdeas } from "@/lib/seo";
 import { watchAccounts, watchData, customHooks } from "@/lib/instagram/watch";
 import { scoreIdea } from "@/lib/score";
-import { GenerateCarousel, PublishButton, CopyCaption, StoryButtons, ReelButtons, UgcPublish, UgcStudio, WatchAdd, WatchRemove, UseHook, Reproduce, ShareToInstagram, ArchiveButton, ShareToTikTok } from "@/components/AdminInstagram";
+import { GenerateCarousel, PublishButton, CopyCaption, StoryButtons, ReelButtons, UgcPublish, UgcStudio, WatchAdd, WatchRemove, UseHook, Reproduce, ShareToInstagram, ArchiveButton, ShareToTikTok, IgReconnect } from "@/components/AdminInstagram";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Instagram · Admin", robots: { index: false, follow: false } };
@@ -33,6 +33,7 @@ export default async function AdminInstagram({ searchParams }: { searchParams?: 
     posts = (data ?? []) as Post[];
   } catch (e) { err = e instanceof Error ? e.message : "Erreur"; }
   const acc = await igAccount();
+  const lost = await igPermissionLost().catch(() => ({ lost: false } as { lost: boolean; at?: string }));
   let stories: Awaited<ReturnType<typeof recentStories>> = [];
   try { stories = await recentStories(7); } catch {}
   const reels = new Map<number, Awaited<ReturnType<typeof getReel>>>();
@@ -58,6 +59,7 @@ export default async function AdminInstagram({ searchParams }: { searchParams?: 
         <a className={tab === "veille" ? "on" : ""} href="/admin/instagram?tab=veille">🔍 Veille concurrents</a>
       </nav>
       {tab === "veille" ? <Veille /> : tab === "archives" ? <Archives canPublish={acc.ok} /> : <>
+      {(lost.lost || !acc.ok) && <IgReconnect reason={!acc.ok ? `Le site n'arrive plus à se connecter à ton compte (${acc.error}).` : `Depuis le ${new Date(lost.at!).toLocaleString("fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" })}, Instagram refuse les publications automatiques : la connexion a perdu le droit de publier. Il faut la refaire une fois (2 minutes).`} />}
       {err && <div className="admin-warn">Les carrousels ne sont pas encore activés dans la base de données ({err}).</div>}
 
       <div className="tiles" style={{ marginBottom: 22 }}>

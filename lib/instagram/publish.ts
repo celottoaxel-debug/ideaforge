@@ -824,3 +824,32 @@ export async function markTikTok(key: string) {
   await saveSetting(`tt_done:${key}`, JSON.stringify({ at: new Date().toISOString() }));
   return { ok: true };
 }
+
+// ───────── Reconnexion Instagram depuis le panel (sans passer par Vercel) ─────────
+/** Vérifie un nouveau jeton puis l'enregistre (il passe avant celui de Vercel). */
+export async function saveIgToken(raw: string): Promise<{ ok: boolean; username?: string; error?: string }> {
+  const token = raw.trim();
+  if (!/^(IG|EAA)[A-Za-z0-9_\-]{40,600}$/.test(token)) return { ok: false, error: "Ce n'est pas un jeton Instagram : il commence par « IGAA » (ou « EAA ») et fait plus de 100 caractères." };
+  API = apiFor(token);
+  try {
+    const me = API === IG_API
+      ? await ig("me", { fields: "user_id,username", access_token: token }, "GET")
+      : await ig(IG_USER_ID, { fields: "id,username", access_token: token }, "GET");
+    await saveSetting("ig_token", token);
+    await saveSetting("ig_token_at", new Date().toISOString());
+    return { ok: true, username: me.username };
+  } catch (e) {
+    return { ok: false, error: `Instagram refuse ce jeton : ${e instanceof Error ? e.message : String(e)}` };
+  }
+}
+/** Le site a-t-il perdu le droit de publier ? (dernière tâche refusée pour une question d'autorisation, sans reconnexion depuis) */
+export async function igPermissionLost(): Promise<{ lost: boolean; at?: string; error?: string }> {
+  try {
+    const run = JSON.parse((await setting("ig_last_run")) || "{}");
+    const err = String(run.error || run.story?.error || "");
+    if (!/permission|access token|session has expired|OAuthException|Error validating/i.test(err)) return { lost: false };
+    const since = await setting("ig_token_at");
+    if (since && new Date(since) > new Date(run.at)) return { lost: false };
+    return { lost: true, at: run.at, error: err };
+  } catch { return { lost: false }; }
+}
